@@ -1,0 +1,14 @@
+﻿<span class="material-icons" style="font-size: @(FontSize+"px")">help</span>
+
+@code {
+    [Parameter]
+    public int FontSize { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        FontSize = 18;
+        await base.OnInitializedAsync();
+    }
+
+    
+}

@@ -1,0 +1,61 @@
+﻿@inherits WebControlBase<FlexView, IFlexControl>
+@implements IFlexControl
+
+@code 
+{
+
+
+    [Parameter]
+    public override RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    [InputBool]
+    [Label("Fill Direction")]
+    public bool CenterContent { get; set; } = true;
+
+    [Parameter]
+    [InputBool]
+    [Label("Fill Direction")]
+    public bool FillDirection { get => Model.FillDirection; set => Model.FillDirection = value; }
+
+    [Parameter]
+    [InputBool]
+    [Label("Wrap Contents")]
+    public bool WrapContents { get => Model.WrapContents; set => Model.WrapContents = value; }
+
+    [Parameter]
+    [Label("Направление")]
+    [Description("Направление размещения элементов в контейнере")]
+    [InputSelect("LeftToRight,TopDown,RightToLeft,BottomUp")]
+    public string Direction { get => Model.Direction; set => Model.Direction = value; }
+
+    [Parameter]
+    public FlexView Model { get; set; }
+}
+ 
+<style>
+    .fill-direction > * ,
+    .fill-direction > * > * ,
+    .fill-direction > * > * > * ,
+    .fill-direction > * > * > * > * ,
+    .fill-direction > * > * > * > * > * , 
+    .fill-direction > * > * > * > * > * > *
+    {
+        flex: 1;
+    } 
+    .flex-center > *
+        .fill-center > *,
+        .fill-center > * > *,
+        .fill-center > * > * > *,
+        .fill-center > * > * > * > *,
+        .fill-center > * > * > * > * > *,
+    .fill-center > * > * > * > * > * > * {
+        align-self: center;
+        margin: auto;
+    }
+</style>
+<div class="flex-view @(FillDirection ? "fill-direction" : "") @(CenterContent ? "flex-center" : "")"
+     style="display: flex; flex-direction: @((Model.Direction=="LeftToRight"?"row":"column")); flex-wrap: @((Model.WrapContents?"wrap":"nowrap")); @((FillDirection?"":""))">
+    @ChildContent
+</div>
+ 

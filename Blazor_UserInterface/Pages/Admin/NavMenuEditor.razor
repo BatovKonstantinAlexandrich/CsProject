@@ -1,0 +1,155 @@
+﻿@page "/admin/nav-menu-editor"
+@inject INavMenuService NavMenuService
+@inherits LayoutComponentBase
+@inject OpenIconsService IconsService
+
+<div>
+    <div class="sidebar">
+        @if (NavLinks == null)
+        {
+            <p>Загрузка...</p>
+        }
+        else
+        {
+            <div style="display: flex; flex-direction: row; flex-wrap: wrap; justify-content: space-around;">
+                @foreach (var navLink in NavLinks)
+                {
+                    <NavLink class="nav-link" href="@navLink.Href">
+                        <span class="oi oi-@navLink.Icon" aria-hidden="true"></span>
+                        @navLink.Label
+                    </NavLink>
+                }
+            </div>
+        }
+
+    </div>
+
+    <div class="main">
+        <div class="top-row px-4">
+        </div>
+
+        <div class="content px-4">
+            @Body
+        </div>
+    </div>
+</div>
+<div class="card">
+
+
+    <div class="card-header" style="padding: 20px">
+        <div class="card-title"><h3 style="padding: 20px">NavMenuEditor</h3></div>
+        <div class="card-subtitle flex-row" style="padding: 20px">
+            Редактор главного меню позволяет создавать/изменять/удалять ссылки навигации.
+        </div>
+        <div>
+            <button class="btn btn-primary" @onclick="@OnAddNavLinkClicked">добавить</button>
+        </div>
+    </div>
+    <div class="card-body" style="max-height: 480px; overflow-y: auto;">
+        <div style="display: flex; flex-direction: row; flex-wrap: wrap;">
+
+            @foreach (var navLink in NavMenuService.GetNavLinks())
+            {
+                <div class="card" style="margin: 20px; max-width: 320px;">
+                    <div class="card-title">
+                        <h4 class="btn btn-primary w-100" style="padding: 20px">Пункт меню</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>Подпись</label>
+                            <input class="form-control" value="@navLink.Label" @oninput="@((e)=> { OnNavLinkLabelHasChangedHandler(navLink)(e); })" />
+                        </div>
+                        <div class="form-group">
+                            <label>Ссылка</label>
+                            <input class="form-control" value="@navLink.Href" @oninput="@((e)=> { OnNavLinkHrefHasChangedHandler(navLink)(e); })" />
+                        </div>
+                        <div class="form-group">
+                            <label>Иконка</label> 
+                            <span class="oi oi-@navLink.Icon"></span>
+                            <select class="form-control" @onchange="@((e)=> { OnNavLinkIconHasChangedHandler(navLink)(e); })">
+                                @foreach (var icon in IconsService.Icons)
+                                {
+                                    <option value="@icon" style="display: block;">@icon</option>
+                                }
+
+                            </select>
+                        </div>
+
+                    </div>
+                    <div class="card-actions flex-row" style="padding: 20px">
+
+                        <button class="btn btn-warning" @onclick="@((e)=> { OnRemoveClickedHandler(navLink)(e); })">удалить</button>
+                        <button class="btn btn-secondary" style="justify-self: flex-end; margin-left: auto;">вверх</button>
+                        <button class="btn btn-secondary">вниз</button>
+                    </div>
+
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private global::NavLink[] NavLinks;
+    public void OnAddNavLinkClicked()
+    {
+        NavMenuService.CreateNavLink();
+        StateHasChanged();
+        NavLinks = NavMenuService.GetNavLinks();
+    }
+    
+    public Action<MouseEventArgs> OnRemoveClickedHandler(global::NavLink link)
+    {
+        return ( e ) =>
+        {            
+            NavMenuService.Remove(link);
+            NavLinks = NavMenuService.GetNavLinks();
+            StateHasChanged();
+        };
+    }
+    public Action<ChangeEventArgs> OnNavLinkHrefHasChangedHandler(global::NavLink link)
+    {
+        return (evt) =>
+        {
+            link.Href = evt.Value.ToString();
+            NavMenuService.Update(link);
+
+            NavLinks = NavMenuService.GetNavLinks();
+            StateHasChanged();
+        };
+    }
+    public Action<ChangeEventArgs> OnNavLinkLabelHasChangedHandler(global::NavLink link)
+    {
+        return (evt) =>
+        {
+            link.Label = evt.Value.ToString();
+            NavMenuService.Update(link);
+
+            NavLinks = NavMenuService.GetNavLinks();
+            StateHasChanged();
+        };
+    }
+    public Action<ChangeEventArgs> OnNavLinkIconHasChangedHandler( global::NavLink link )
+    {
+        return (evt) =>
+        {
+            link.Icon = evt.Value.ToString();
+            NavMenuService.Update(link);
+
+            NavLinks = NavMenuService.GetNavLinks();
+            StateHasChanged();
+        };
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        NavLinks = NavMenuService.GetNavLinks();
+    }
+
+    // nav-menu implementation
+    private bool collapseNavMenu = true;
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

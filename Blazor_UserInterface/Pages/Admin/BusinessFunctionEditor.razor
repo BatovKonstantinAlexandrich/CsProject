@@ -1,0 +1,36 @@
+﻿@page "/admin/business-functions-editor"
+<h3>BusinessFunctionEditor</h3>
+@Attrs.GetInputType(typeof(BusinessFunction),"Name")
+
+
+@code {
+
+    /// <summary>
+    /// Если ID не задан тогда создаём новую функцию
+    /// </summary>
+    [Parameter]
+    public int? ID { get; set; }
+
+
+    public BusinessFunction businessFunction { get; set; }
+    public Form editForm { get; set; }
+
+    public InputFormModel InputBusinessFunctionForm { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        if( ID == null)
+        {
+            businessFunction = new BusinessFunction();
+            editForm = new Form(businessFunction);
+        }
+
+
+
+
+
+    }
+
+}
+

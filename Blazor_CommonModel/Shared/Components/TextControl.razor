@@ -1,0 +1,70 @@
+@using Console_CommonModel.CommonLib.LibViews.AppViews.InputModule
+@using Newtonsoft.Json
+@inherits WebControlBase<TextView,TextControl>
+@implements ITextView
+
+@code {
+
+
+    [Parameter]
+    public override AppViewBase ViewModel { get; set; }
+
+    [Parameter]
+    [System.Text.Json.Serialization.JsonIgnore]
+    [InputNumber(null)]
+    [Units("px")]
+    [Label("Размер шрифта")]
+    [InputSelect("11,12,13,14,15,16,17,18")]
+    public float FontSize { get; set; }
+
+    [Parameter]
+    [Label("Выравнивание текста")]
+    [InputSelect("left,right,center")]
+    public string TextAlign { get; set; }
+
+    [Parameter]
+    [Units("px")]
+    [Label("Красная строка")]
+    public int TextIndent { get; set; }
+
+    [Parameter]
+    [Label("Цвет текста")]
+    [System.Text.Json.Serialization.JsonIgnore]
+    [InputColor(null)]
+    public string Color { get; set; }
+
+    [Parameter]
+    [Label("Текст")]
+    public override string Text { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();             
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+    }
+
+}
+<MudCard>
+@if (!Initiallized || ViewModel is null)
+{
+    <MudProgressCircular>Выполняется инициализация</MudProgressCircular>
+}
+else
+{
+    if (ErrorMessage != "")
+    {
+        <MudAlert>@ErrorMessage</MudAlert>
+    }
+    else
+    {            
+        <span style="@ViewModel.GetCssText()" @onclick="@(evt => ViewModel.OnClick(this,evt) )">
+            @Text
+        </span>
+    }
+}
+</MudCard>

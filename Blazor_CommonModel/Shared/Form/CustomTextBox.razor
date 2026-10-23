@@ -1,0 +1,61 @@
+﻿@* CustomTextBox.razor *@
+@using MudBlazor
+
+<MudTextField Label="@Label"
+              Placeholder="@Placeholder"
+              Variant="@Variant"
+              Margin="@Margin"
+              Value="@Value"
+              HelperText="@HelperText"
+              Disabled="@Disabled"
+              ReadOnly="@ReadOnly"
+              Required="@Required"
+              RequiredError="@RequiredError"
+              Error="@HasError"
+              ErrorText="@ErrorText"
+              Adornment="@Adornment"
+              AdornmentIcon="@AdornmentIcon"
+              AdornmentColor="@AdornmentColor"
+              Immediate="@Immediate"
+              DebounceInterval="@DebounceInterval"
+              InputType="@InputType"
+              ValueChanged="@ValueChanged"
+              Counter="@MaxLength"
+              Lines="@Lines"
+              Clearable="@Clearable"
+              OnAdornmentClick="@OnAdornmentClick"
+              @attributes="AdditionalAttributes" />
+
+@code {
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public string? Placeholder { get; set; }
+    [Parameter] public string? HelperText { get; set; }
+    [Parameter] public string? ErrorText { get; set; }
+    [Parameter] public string? RequiredError { get; set; }
+
+    [Parameter] public Variant Variant { get; set; } = Variant.Outlined;
+    [Parameter] public Margin Margin { get; set; } = Margin.Dense;
+    [Parameter] public InputType InputType { get; set; } = InputType.Text;
+
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public bool ReadOnly { get; set; }
+    [Parameter] public bool Required { get; set; }
+    [Parameter] public bool HasError { get; set; }
+    [Parameter] public bool Immediate { get; set; } = true;
+    [Parameter] public bool Clearable { get; set; }
+
+    [Parameter] public int DebounceInterval { get; set; }
+    [Parameter] public int? MaxLength { get; set; }
+    [Parameter] public int Lines { get; set; } = 1;
+
+    [Parameter] public Adornment Adornment { get; set; } = Adornment.None;
+    [Parameter] public string? AdornmentIcon { get; set; }
+    [Parameter] public Color AdornmentColor { get; set; } = Color.Default;
+    [Parameter] public EventCallback<MouseEventArgs> OnAdornmentClick { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object> AdditionalAttributes { get; set; } = new();
+}

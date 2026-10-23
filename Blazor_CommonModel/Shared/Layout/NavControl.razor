@@ -1,0 +1,16 @@
+﻿@inherits WebControlBase<NavView, IControlBase>
+@code 
+{
+    [Parameter]
+    public NavView Model { get; set; }
+
+    [Parameter]
+    public override RenderFragment? ChildContent { get; set; }
+}
+<div style="@(Model.GetCssText())">
+    @if (ChildContent is not null)
+    {
+        @ChildContent
+    }
+</div>
+

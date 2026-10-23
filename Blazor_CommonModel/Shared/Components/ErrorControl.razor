@@ -1,0 +1,44 @@
+﻿@inherits BaseComponent
+@code
+{
+    [Label("Тип перехвативший ислючение")]
+    [Parameter]
+    public string Catcher { get; set; }
+
+    [Label("Ссылка на исключение")]
+    [NotNullNotEmpty]
+    [Parameter]
+    public Exception Exception { get; set; }
+
+
+    [Parameter]
+    public Dictionary<string,object> Parameters { get; set; }
+
+    public ListView ErrorMessagesView { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        if (this.Exception is not null)
+        {
+
+            
+            this.ViewModel.PutAction("Валидация модели представления",()=> {
+                
+                var info = this.Exception.ToDocument();
+                
+            },3000);
+        }
+    }
+
+}
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h5" Class="mb-4">@Exception?.Message</MudText>
+
+    <MudGrid>
+         <TableControl></TableControl>
+         <MudAlert></MudAlert>
+
+    </MudGrid>
+</MudContainer>

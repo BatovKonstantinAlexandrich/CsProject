@@ -1,0 +1,21 @@
+﻿@page "/doctor/medical-card/{PersonID}"
+@inject global::IMedicalCardService service
+
+<h3>MedicalCard</h3>
+
+@if (Result != null)
+{
+    <p>@Result</p>
+}
+
+
+@code {
+    public MedicalCard[] Result { get; set; }
+    [Parameter]
+    public string PersonID { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+    }
+}

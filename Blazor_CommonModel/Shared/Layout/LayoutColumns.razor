@@ -1,0 +1,12 @@
+﻿
+<div style="-moz-column-count: @ColumnsCount; /* Для Firefox */ -webkit-column-count: @ColumnsCount; /* Для Safari и Chrome */ column-count: @ColumnsCount;">
+    @ChildContent
+</div>
+
+@code {
+    [Parameter]
+    public int ColumnsCount { get; set; }
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+}

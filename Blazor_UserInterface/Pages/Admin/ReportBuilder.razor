@@ -1,0 +1,19 @@
+﻿@page "/admin/report-builder"
+@inherits BaseComponent
+<h3>ReportBuilder</h3>
+<div>
+    Построитель отчётов предоставляет инструменты для управления функцией генерации отчётных форм.
+</div>
+<div style="display: flex; flex-direction: row; flex-wrap: nowrap; width: 100%; ">
+    <InputForm Model="Customizer"></InputForm>
+    
+</div>
+@code {
+ 
+    public Form Customizer { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+
+    }
+
+}

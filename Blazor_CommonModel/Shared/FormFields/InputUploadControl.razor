@@ -1,0 +1,42 @@
+@using Console_CommonModel.CommonLib.LibViews.AppViews.InputModule
+@inherits WebControlBase<InputUploadView,InputUploadControl>
+InputUploadControl
+
+@code{
+    [Parameter]
+    public override AppViewBase ViewModel { get; set; }
+
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+
+        try
+        {
+            this.BindComponent();            
+        }
+        catch(Exception ex)
+        {
+            this.ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            this.Initiallized = true;
+        }
+    }
+}
+<MudCard>
+    @if(!Initiallized)
+    {
+        <MudProgressCircular>Выполняется инициализация</MudProgressCircular>
+    }
+    else
+    {
+        if(ErrorMessage != "" )
+        {
+            <MudAlert>@ErrorMessage</MudAlert>
+        }
+        else
+        {
+            <MudBlazor.Charts.Line></MudBlazor.Charts.Line>
+        }
+    }
+</MudCard>

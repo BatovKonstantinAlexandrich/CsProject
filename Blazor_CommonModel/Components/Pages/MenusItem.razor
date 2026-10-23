@@ -1,0 +1,36 @@
+﻿@using Console_CommonModel.CommonLib.LibViews.AppViewModules.MenuModule
+@using MudBlazor
+@inherits BaseComponent
+@code
+{
+    [Parameter]
+    public ContextView Item { get; set; }
+
+    [Parameter]
+    public bool IsRoot { get; set; } = false;
+}
+@if (IsRoot)
+{
+    @foreach (var item in Item.Items)
+    {
+        <MenusItem Item="@item" ></MenusItem>
+    }
+}
+else
+{
+
+    @if (Item.Items is null || Item.Items.Count() == 0)
+    {
+        <MudMenuItem Label="@Item.Label" Icon="@Icons.Material.Filled.Summarize" OnClick="@(evt => Item.OnClick(this,new()))"></MudMenuItem>
+    }
+    else
+    {
+        
+        <MudMenu Label="@Item.Label" StartIcon="@Item.Icon">
+            @foreach (var item in Item.Items)
+            {
+                <MenusItem Item="@item"></MenusItem>
+            }
+        </MudMenu>
+    }
+}

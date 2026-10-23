@@ -1,0 +1,44 @@
+﻿@using Blazor_CommonModel.Components.Dialogs
+@using Blazor_CommonModel.Components.Modal
+@using Blazor_CommonModel.Services.DataModel
+@using Blazor_CommonModel.Shared
+@using Blazor_CommonModel.Shared.Charts
+@using Blazor_CommonModel.Shared.Collections
+@using Blazor_CommonModel.Shared.Components
+@using MudBlazor
+@inject IAppModalService clientModal
+@inject IServiceProvider provider
+<p>1</p>
+<p>2</p>
+<p>3</p>
+
+
+<MenuControl Item="@menuView"></MenuControl>
+
+
+@code
+{
+    public MenuView menuView { get; set; } = new() { Text = "Test"};    
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+        menuView.MenuItems.Add(new(){
+            Text = "File",
+            MenuItems = new(){
+                new(){ Text = "Open", OnClick=(s,e)=>{
+
+                    menuView.MenuItems.Last().Text = DateTime.Now.ToString();
+                    menuView.MenuItems.Add(new(){
+                        Text = "File",
+                        MenuItems = new(){
+                            new(){ Text = "Open", OnClick=(s,e)=>{
+
+
+                            } }
+                        }
+                    });
+                    StateHasChanged();
+                } }
+            }
+        });
+    }
+}

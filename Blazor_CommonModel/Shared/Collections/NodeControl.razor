@@ -1,0 +1,187 @@
+﻿@* Максимально упрощенное представление иерархии *@
+@inherits BaseComponent
+@code
+{
+    [Parameter]
+    public TreeViewNodeModel Model { get; set; }
+
+    [Parameter]
+    public bool UseMudBlazor { get; set; } = true;
+
+    public async Task OnTreeNodeClicked(MouseEventArgs evt){
+        if (Model?.OnClick is not null)
+        {
+            Model.OnClick(this, evt);
+        }
+        await Task.CompletedTask;
+    }
+
+}
+@if (Model == null)
+{
+    <div class="alert alert-warning"> Модель не задана </div>
+}
+else
+{
+    
+    @if(Model.Visible)
+    {
+        @if(!UseMudBlazor)
+        {
+            <div>
+                <div @onclick="@OnTreeNodeClicked" @onclick:preventDefault>                    
+                    <Blazor_CommonModel.Shared.Layout.FlexRow>
+
+                        <MudIconButton Style="@("height: 20px; width: 20px;")" OnClick="@Model.Expand">@(Model.Children.Count() <= 0 ? "   " : (Model.Expanded) ? "-" : "+")</MudIconButton>                        
+                        <div><MudText style="word-break: break-word;">@Model.Title</MudText></div>
+                    </Blazor_CommonModel.Shared.Layout.FlexRow>
+                </div>
+                @if (Model.Expanded)
+                {
+                    <span>
+                        @if (Model.Children != null)
+                        {
+                            @foreach (var child in Model.Children)
+                            {
+                                <div style="margin-left: 20px;">
+                                    <NodeControl Model="@child" UseMudBlazor="@UseMudBlazor"></NodeControl>
+                                </div>
+                            }
+                        }
+                    </span>
+                }
+            </div>
+        }
+        else
+        {
+            
+            <MudTreeViewItem Value='"Components"' OnClick="@OnTreeNodeClicked">
+                @if (Model.Expanded && Model.Children != null)
+                {
+                    @foreach (var child in Model.Children)
+                    {
+                        <div style="margin-left: 20px;">
+                            <NodeControl Model="@child" UseMudBlazor="@UseMudBlazor"></NodeControl>
+                        </div>
+                    }
+                }                
+            </MudTreeViewItem>
+            
+        }
+    }
+}
+@*
+     
+@inherits BaseComponent
+@code
+{
+    [Parameter]
+    public TreeViewNodeModel Model { get; set; }
+
+    public ContextView ContextMenu { get; set; } = new()
+    {
+        Label = "file" 
+    };
+    public void OnMouseLeaveAspNet()
+    {
+        if (ViewModel is not null && ViewModel.GetAppRootView() is not null && ViewModel.GetAppRootView().FocusedViews is not null && ViewModel.GetAppRootView().FocusedViews.Contains(ViewModel))
+        {
+            ViewModel.GetAppRootView().FocusedViews.Remove(ViewModel);
+        }
+
+    }
+    public void OnMouseEnterAspNet()
+    {
+        if (ViewModel is not null)
+        {
+            var root = ViewModel.GetAppRootView();
+            if (root is not null)
+                root.FocusedViews.Add(ViewModel);
+        }
+    }
+    public void OnContextMenuClicked(MouseEventArgs args)
+    {
+        OpenWorkspaceMenu(args).Wait();
+    }
+
+    public void OnClicked(){
+        if (Model.OnClick is not null)
+            Model.OnClick(this,null);
+    }
+
+    public string ContextTitle { get; set; } = "Меню";
+    private MudMenu _menu = null!;
+
+    private Task OpenWorkspaceMenu(MouseEventArgs args)
+    {
+        // this.Info("OpenWorkspaceMenu => " + ViewModel.GetAppRootView().FocusedViews.Select(v => v.GetTypeName()).ToJson());
+        // this.Info("OpenWorkspaceMenu => " + ViewModel.GetTypeName());
+        // await Task.CompletedTask;
+        this.Info(this.Model.GetParentViews<AppViewBase>().Select(p => p.GetTypeName()).ToList().ToJson());
+        var view = Model.GetAppRootView().FocusedViews.LastOrDefault();
+        ContextTitle = view.GetLabel();
+        view.ContextMenu.Items.Add(new() { 
+            Label = "Информация"
+        });
+        ContextMenu.Items.Clear();
+        ContextMenu.Items.AddRange(view.ContextMenu.Items);
+
+        StateHasChanged();
+        return OpenMenu(args);
+    }
+    private async Task OpenMenu(MouseEventArgs args)
+    {
+        await _menu.OpenMenuAsync(args);
+    }
+
+
+}
+@if (Model == null)
+{
+    <div class="alert alert-warning"> Модель не задана </div>
+}
+else
+{
+    <MudMenu @ref="_menu" PositionAtCursor="true" Dense="true" AnchorOrigin="Origin.TopLeft">
+        <MudMenuItem Label="@ContextTitle" Disabled="true" />
+        <MenusItem Item="@ContextMenu" IsRoot="@true"></MenusItem>
+    </MudMenu>
+    
+    @if(Model.Visible)
+    {
+        <div>
+            <div @oncontextmenu="@OnContextMenuClicked"
+                 @onmouseleave="@OnMouseLeaveAspNet"
+                 @onmouseenter="@OnMouseEnterAspNet"
+                 @oncontextmenu:stopPropagation="true"
+                 @oncontextmenu:preventDefault="true"
+                 @onclick="@OnClicked">
+                <Blazor_CommonModel.Shared.Layout.FlexRow>
+
+                    <MudIconButton Style="@("height: 20px; width: 20px;")" OnClick="@Model.Expand">@(Model.Children.Count() <= 0 ? "   " : (Model.Expanded) ? "-" : "+")</MudIconButton>
+
+                    <div style="cursor: crosshair;" @onclick="@(evt => Model.OnClick(this, evt))" @onclick:preventDefault><MudText style="word-break: break-word;">@Model.Title</MudText></div>
+                </Blazor_CommonModel.Shared.Layout.FlexRow>
+            </div>
+            @if (Model.Expanded)
+            {
+                <span>
+                    @if (Model.Children != null)
+                    {
+                        @foreach (var child in Model.Children)
+                        {
+                            <div style="margin-left: 20px;">
+                                <NodeControl Model="@child"></NodeControl>
+                            </div>
+                        }
+                    }
+                </span>
+            }
+        </div>
+    }
+}
+
+
+
+**@
+

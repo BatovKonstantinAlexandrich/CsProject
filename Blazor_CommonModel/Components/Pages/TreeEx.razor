@@ -1,0 +1,100 @@
+﻿@page "/tree"
+@using System.Globalization
+<MudTreeView T="TreeViewNodeModel" Items="@_rootItems" ServerData="@LoadServerData" ExpandOnClick="true">
+    <ItemTemplate>
+        <MudTreeViewItem Text="@context.Value?.Title" Value="@context.Value" />
+    </ItemTemplate>
+</MudTreeView>
+
+@code 
+{
+    
+
+    private List<TreeViewNodeModel> _allData = new(); // Имитация базы данных
+    private IReadOnlyCollection<TreeItemData<TreeViewNodeModel>> _rootItems = Array.Empty<TreeItemData<TreeViewNodeModel>>();
+
+    protected override void OnInitialized()
+    {
+        // Имитация данных (в реальности — загрузка из API)
+
+        //_rootItems = CreateClassTree(typeof(AppViewBase), selected => { });
+        var tree = new TreeFactory().CreateClassTreeView<AppViewBase>(selected=> { });        
+        _rootItems = LoadServerData(tree.root).Result;
+    }
+
+    // Вызывается при раскрытии узла
+    private async Task<IReadOnlyCollection<TreeItemData<TreeViewNodeModel>>> LoadServerData(TreeViewNodeModel parentValue)
+    {
+
+        /*var factory = new TreeFactory();
+        var children = CreateClassTree(typeof(AppViewBase), selected =>
+        {
+        }).ToList();
+
+        return children;*/
+
+        var children = parentValue.Children.Select(p => new TreeItemData<TreeViewNodeModel>() { Value=p }).ToList();
+        return children;
+    }
+    public List<TreeItemData<TreeViewNodeModel>> CreateTreeItemDatas<TEntity>(
+            IEnumerable<TEntity> items,
+            Func<TEntity, TreeItemData<TreeViewNodeModel>> createNode,
+            Func<TEntity, IEnumerable<TEntity>> getChildren,
+            Action<TEntity> onclicked)
+    {
+        List<TreeItemData<TreeViewNodeModel>> nodes = new();
+        foreach (var item in items)
+        {
+            var pitem = item;
+            var p = createNode(item);
+            p.Value.OnClick += (s, e) =>
+            {
+                if (onclicked is not null)
+                    onclicked(pitem);
+            };
+            nodes.Add(p);
+            p.Children = new();
+            var children = CreateTreeItemDatas(getChildren(item), createNode, getChildren, onclicked);
+            children.ForEach(c => p.Children.Add(c));
+        }
+        return nodes;
+    }
+    public List<TreeItemData<TreeViewNodeModel>> CreateClassTree(Type rootType, Action<Type> onclicked)
+    {
+        ServiceFactory.Get().AddTypes(rootType.Assembly);
+        var all = rootType.Assembly.GetTypes().Where(c => !c.IsAbstract).Select(type => type.GetTypeName()).ToList();
+        all.Sort();
+        //all.ToJsonOnScreen().WriteToConsole();
+        var types = rootType.Assembly.GetTypes().Where(p => p.BaseType == rootType).ToList().SortItems(
+            (t1, t2) =>
+            {
+                var comparer = StringComparer.Create(CultureInfo.CurrentCulture, true);
+                return comparer.Compare(t1.GetTypeName(), t2.GetTypeName());
+            }
+        );
+
+        Func<Type, IEnumerable<Type>> getChildren = entity => rootType.Assembly.GetTypes().Where(p => p.BaseType == entity).ToList().SortItems(
+            (t1, t2) =>
+            {
+                var comparer = StringComparer.Create(CultureInfo.CurrentCulture, true);
+                return comparer.Compare(t1.GetTypeName(), t2.GetTypeName());
+            }
+        );
+        Func<Type, TreeItemData<TreeViewNodeModel>> createNode = (entity) => new TreeItemData<TreeViewNodeModel>() { 
+                Value = new()
+                {
+                    Title = $"{entity.GetLabel()}.[{entity.GetTypeName()}]",
+                    Item = entity,
+                    Expanded = true
+                }
+        };
+        var tree = new TreeControlView()
+            {
+                Expanded = true
+            };
+        tree.root.Title = $"{rootType.GetLabel()}.[{rootType.GetTypeName()}]";
+        tree.root.Expanded = true;
+        var children = CreateTreeItemDatas(types, createNode, getChildren, onclicked);
+        return children;
+    }
+}

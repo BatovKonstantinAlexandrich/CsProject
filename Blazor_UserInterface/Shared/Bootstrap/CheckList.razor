@@ -1,0 +1,6 @@
+﻿@typeparam TItem
+<ListGroup TItem="TItem" Items="Items"></ListGroup>
+@code {
+    [Parameter]
+    public TItem[] Items { get; set; }
+}

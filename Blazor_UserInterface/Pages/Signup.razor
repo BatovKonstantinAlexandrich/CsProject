@@ -1,0 +1,10 @@
+﻿@page "/signup"
+@using Microsoft.AspNetCore.Components
+@inject NavigationManager navigation
+
+@code {
+    protected override void OnInitialized()
+    {
+        navigation.NavigateTo("/registration", replace: true);
+    }
+}

@@ -1,0 +1,58 @@
+@*
+    По-умолчаню поля для ввода занимают всю ширину
+*@
+@using Console_CommonModel.CommonLib.LibViews.AppViews.EditModule
+@inherits WebControlBase<EditView,EditControl>
+@code{
+    [Parameter]
+    public EditView Model { get; set; }
+
+    [Parameter]
+    public override AppViewBase ViewModel { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        
+        await base.OnInitializedAsync();
+        this.Initiallized = true;
+    }
+}
+<MudCard>
+    @if (!Initiallized)
+    {
+        <MudProgressCircular>Выполняется инициализация</MudProgressCircular>
+    }
+    else
+    {
+        if (ErrorMessage != "")
+        {
+            <MudAlert>@ErrorMessage</MudAlert>
+        }
+        else
+        {
+            
+          
+            <Blazor_CommonModel.Shared.Layout.SubmitControl WidthCss="@("100%")" HeightCss="@("100%")">
+                @if (Model is null)
+                {
+                    <MudAlert> @(this.GetTypeName()) Не установлена ссылка на параметр @(nameof(Model))</MudAlert>
+                }
+                else
+                {
+                    <Blazor_CommonModel.Shared.Layout.FlexColumn MaxWidth="@true">
+                        @foreach (var inputField in Model.FormFields)
+                        {
+                            <MudText>@inputField.Label</MudText>
+                            <Blazor_CommonModel.Shared.FormFields._1.InputFormFieldControl Model="@inputField">
+
+                            </Blazor_CommonModel.Shared.FormFields._1.InputFormFieldControl>
+                            <MudText Color="MudBlazor.Color.Warning">@inputField.GetErrorMessage()</MudText>
+                        }
+                    </Blazor_CommonModel.Shared.Layout.FlexColumn>
+                }
+            </Blazor_CommonModel.Shared.Layout.SubmitControl>
+           
+        }
+    }
+
+</MudCard>

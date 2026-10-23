@@ -1,0 +1,162 @@
+﻿@inherits BaseComponent
+@code {
+    [Parameter]
+    public global::InputFormField Model { get; set; }
+
+    public HashSet<Action> AfterInitiallized { get; set; } = new HashSet<Action>();
+
+    [Parameter]
+    public EventCallback<NetCoreConstructorAngular.ActionEvent.EventsAndMessages.InputEvent> AfterInput { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        if (Model != null && Model.Type != null)
+        {
+            Model.Type = Model.Type.ToLower();
+        }
+    }
+}
+@if (Model == null)
+{
+    <div class="alert alert-danger">Отсутсвует ссылка в свойстве Model</div>
+}
+else
+{
+    <div class="input-group flex-column" style="width: 100%; justify-content: flex-start; align-items: flex-start;">
+        
+
+        @if (Model.Type == "hidden")
+        {
+            <input type="hidden" value="@Model.GetHtmlInputValue()" id="@Model.GetInputId()" name="@Model.GetInputName()" />
+        }
+        else
+        {
+           
+            <label>@Model.Label</label>
+           
+            
+            @if (Model.Type == "number" || Model.Type == "email" || Model.Type == "text" || Model.Type == "date" || Model.Type == "datetime" || Model.Type == "password" || Model.Type == "color")
+            {
+                <input type="@Model.Type.ToLower()"
+                       value="@Model.GetHtmlInputValue()"
+                       name="@Model.GetInputName()"
+                       id="@Model.GetInputId()"
+                       style="width: 100%;"
+                       @oninput:preventDefault
+                       @onfocus="@((e) => OnFocused(Model.Name)(e))"
+                       @oninput="@((e) => OnInputValue(Model.Name)(e))"
+                       class="form-control is-@Model.State" />
+            }
+            else if (Model.Type == "phone")
+            {
+                <input type="text"
+                       value="@Model.GetHtmlInputValue()"
+                       name="@Model.GetInputName()"
+                       style="width: 100%;"
+                       id="@Model.GetInputId()"
+                       @oninput:preventDefault
+                       @oninput="@((e) => OnInputValue(Model.Name)(e))"
+                       class="form-control is-@Model.State" />
+            }
+            else if (Model.Type == "multilinetext")
+            {
+                <textarea type="text"
+                          name="@Model.GetInputName()"
+                          style="width: 100%; resize: none; height: 320px;"
+                          id="@Model.GetInputId()"
+                          @oninput:preventDefault
+                          @oninput="@((e) => OnInputValue(Model.Name)(e))"
+                          class="form-control is-@Model.State">@Model.GetHtmlInputValue()</textarea>
+            }
+            else if (Model.Type == "icon")
+            {
+
+            }
+            else if (Model.Type == "bool" || Model.Type == "checkbox")
+            {
+
+                <div class="form-check">
+                    <input class="form-check-input"
+                           style="width: 100%;"
+                           value="@Model.GetHtmlInputValue()"
+                           @oninput:preventDefault
+                           @oninput="@((e) => OnInputValue(Model.Name)(e))"
+                           type="checkbox" checked="@Model.Value" id="@Model.GetInputId()" name="@Model.GetInputName()">                    
+                </div>
+                <br />
+            }
+    
+            else if (Model.Type.ToLower() == "selectcontrol")
+            {
+                <select class="form-control" style="width: 100%;">
+                    @foreach (var option in (((Select)Model.Control).Options))
+                    {
+
+                        <option value="@option.Value">@option.Key</option>
+                    }
+
+                </select>
+            }
+            else if (Model.Type == "image")
+            {
+                <div>
+                    <input type="image" />
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning">Тип поля ввода @Model.Type не зарегистрирован в @GetType().Name</div>
+            }
+
+            @if (string.IsNullOrEmpty(Model.Help) == false)
+            {
+
+                <small class="form-text text-info">@Model.Help</small>
+            }
+            @foreach (var error in Model.Errors)
+            {
+                <div><small class="form-text text-danger">@error</small></div>
+            }
+        }
+    </div>
+}
+
+
+
+
+
+@code
+{
+    /// <summary>
+    /// Обработчик события ввода данных в поле формы передаёт специальное сообщение родительскому компоненту
+    /// </summary>
+    /// <param name="name"></param>
+    /// <returns></returns>
+    public Action<ChangeEventArgs> OnInputValue(string name)
+    {
+        return (changes) =>
+        {
+
+            Info(name + "=" + (changes.Value == null ? "" : changes.Value.ToString()));
+            AfterInput.InvokeAsync(new NetCoreConstructorAngular.ActionEvent.EventsAndMessages.InputEvent()
+            {
+                Type = "input",
+                Property = name,
+                Value = changes.Value == null ? "" : changes.Value.ToString()
+            });
+        };
+    }
+
+    public Action<FocusEventArgs> OnFocused(string name)
+    {
+        return (evt) =>
+        {
+            Info(name + "=" + evt.GetType().Name);
+            if (Model.State == "untouched")
+            {
+                Model.State = "invalid";
+            }
+        };
+    }
+}

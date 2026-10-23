@@ -1,0 +1,12 @@
+﻿@if (Model != null)
+{
+    <div>
+        <ContentBox></ContentBox>
+    </div>    
+}
+
+@code {
+
+    [Parameter]
+    public object Model { get; set; }
+}

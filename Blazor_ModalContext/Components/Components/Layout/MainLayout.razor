@@ -1,0 +1,25 @@
+﻿@inherits LayoutComponentBase
+
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+<ContextMenuHost />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Dense="true">
+        <MudText Typo="Typo.h6">Blazor Designer App</MudText>
+        <MudSpacer />
+        <MudButton Href="/" Color="Color.Inherit" Variant="Variant.Text">Home</MudButton>
+        <MudButton Href="/services-demo" Color="Color.Inherit" Variant="Variant.Text">Демо сервисов</MudButton>
+    </MudAppBar>
+    <MudMainContent Class="pt-2">
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>

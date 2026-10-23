@@ -1,0 +1,28 @@
+﻿@inherits BaseComponent
+@code 
+{
+    [Parameter]
+    public TabsView Model { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        Model.Tabs.OnChanged += (s,e)=> {
+            StateHasChanged();
+        };
+
+    }
+}
+@if(Model is not null)
+{
+    @Model.GetHashCode()
+    
+    <MudTabs Elevation="2" Rounded="true" PanelClass="pa-6">
+        @foreach (var tab in Model.Tabs)
+        {
+            <MudTabPanel Text="@tab.Key">
+                <ContainerControl ViewModel="@tab.Value"></ContainerControl>
+            </MudTabPanel>
+        }
+    </MudTabs>
+}

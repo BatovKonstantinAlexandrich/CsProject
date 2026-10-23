@@ -1,0 +1,65 @@
+﻿<h3>BootstrapMulticast</h3>
+@if (Type == "Button")
+{
+    <Button></Button>
+}
+else if (Type == "ButtonGoup")
+{
+}
+else if (Type == "DropDown")
+{
+    <DropDown></DropDown>
+}
+else if (Type == "Icon")
+{
+    <Icon></Icon>
+}
+else if (Type == "IconButton")
+{
+    <IconButton></IconButton>
+}
+else if (Type == "ListGroup")
+{
+
+    <ListGroup TItem="System.Object"></ListGroup>
+}
+else if (Type == "ListPanel")
+{
+    <ListPanel></ListPanel>
+}
+else if (Type == "MediaList")
+{
+    <MediaList></MediaList>
+}
+else if (Type == "NavForm")
+{
+    <NavForm></NavForm>
+}
+else if (Type == "Panel")
+{
+    <Panel></Panel>
+}
+else if (Type == "Row")
+{
+    <Row></Row>
+}
+else if (Type == "TablePanel")
+{
+    <TablePanel></TablePanel>
+}
+else if (Type == "Tabs")
+{
+    <Tabs></Tabs>
+}
+else
+{
+    <div class="alert alert-danger">Тип компонента не зарегистрирован в @GetType().Name</div>
+}
+@code {
+
+    [Parameter]
+    public object Item { get; set; }
+
+    [Parameter]
+    public string Type { get; set; }
+}

@@ -1,0 +1,124 @@
+﻿@page "/admin/input-forms"
+@using Blazored.Modal
+@using Blazored.Modal.Services
+@using BlazorContextMenu
+ 
+@inject IInputFormService InputFormService
+@inject IInputModalService InputModalService
+
+ 
+
+
+
+
+
+
+<ContextMenuTrigger MenuId="myMenu">
+
+    <div>
+        <span class="oi" style="padding: 3px;" @onclick="@AddInputForm"> добавить </span>
+    </div>
+    <div style="display: flex; flex-direction: row; flex-wrap: wrap;">
+        @foreach (var form in InputFormService.GetForms())
+        {
+            <ContextMenu Id="baseContextMenu">
+                <Item>
+                    Вид
+                    <SubMenu>
+                        <Item>Весь экран</Item>
+                        <Item>Свернуть</Item>
+                    </SubMenu>
+                </Item>
+                <Seperator />
+                <Item OnClick="@(()=> { OnSettingsClicked(form)();  })">Свойства</Item>
+
+            </ContextMenu>
+            <ContextMenuTrigger MenuId="baseContextMenu">
+
+
+                <div class="card" style="width: 25rem; max-width: 320px;">
+                    <div class="btn btn-primary card-header">
+                        <h3>InputFormsEditor</h3>
+                        <div>
+                            <span class="oi" style="padding: 3px;" @onclick:preventDefault @onclick="@(()=> { AddFormField(form)();  })"> добавить </span>
+                        </div>
+                        <div style="padding: 3px;">
+
+                            <span class="oi oi-home" style="justify-self: flex-end; margin-left: auto;"></span>
+                            <span class="oi oi-person" style="justify-self: flex-end; margin-left: auto;"></span>
+                            <span class="oi oi-lock-locked" checkgrid-three-up" style="justify-self: flex-end; margin-left: auto;"></span>
+                            <span class="oi oi-grid-three-up" style="justify-self: flex-end; margin-left: auto;"></span>
+                            <span class="oi oi-lock-unlocked" style="justify-self: flex-end; margin-left: auto;"></span>
+                            <span class="oi oi-wrench" style="justify-self: flex-end; margin-left: auto;"></span>
+                            <span class="oi oi-star" style="justify-self: flex-end; margin-left: auto;"></span>
+                            <span class="oi oi-sort-descending" style="justify-self: flex-end; margin-left: auto;"></span>
+                            <span class="oi oi-info" style="justify-self: flex-end; margin-left: auto;"></span>
+
+                        </div>
+                    </div>
+
+                    <EditForm EditContext="@new(form)">
+
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <ul class="list-group list-group-flush">
+                            @foreach (var field in form.FormFields)
+                            {
+
+                                <li class="list-group-item">
+                                    <div class="form-group">
+                                        <div style="display: flex; flex-direction: row; flex-wrap: nowrap;">
+                                            <label for="exampleInputEmail1">Email address</label>
+                                            <span class="oi oi-delete" style="justify-self: flex-end; margin-left: auto;"></span>
+                                        </div>
+
+ 
+                                        <!--<input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter email">-->
+                                        <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
+                                    </div>
+
+                                </li>
+
+
+                            }
+                        </ul>
+                    </EditForm>
+                    <div style="display: flex; flex-direction: row; flex-wrap: nowrap;">
+                        <button class="btn btn-primary" style="justify-self: flex-end; margin-left: auto;">ok</button>
+                        <button class="btn btn-danger">cancel</button>
+                    </div>
+                </div>
+            </ContextMenuTrigger>
+        }
+    </div>
+</ContextMenuTrigger>
+
+@code {
+    public int CountOfForms;
+   
+    public Action OnSettingsClicked(InputFormModel form)
+    {
+        return () =>
+        {
+
+            global::InputFormModel created = InputModalService.Edit<global::InputFormModel>(form);
+        };
+    }
+    public Action AddFormField(InputFormModel form)
+    {
+        return () =>
+        {
+            InputFormService.CreateFormField(form);
+            StateHasChanged();
+        };
+    }
+    public void AddInputForm()
+    {
+        InputFormService.Create();
+
+
+        CountOfForms = InputFormService.GetForms().Count();
+        StateHasChanged();
+    }
+}

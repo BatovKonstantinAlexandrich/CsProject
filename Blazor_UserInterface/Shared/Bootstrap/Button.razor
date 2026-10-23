@@ -1,0 +1,35 @@
+﻿@page "/bootstrap/button"
+@inherits BaseComponent
+<button class="btn @GetColorClass()" @onclick="@OnButtonClicked">@ChildContent</button>
+
+@code {
+    [Parameter]
+    public string Color { get; set; }
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    [Parameter]
+    public EventCallback OnClicked { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        Info("OnInitializedAsync");
+        await base.OnInitializedAsync( );
+        Color = Color == null ? "btn-primary" : Color;
+    }
+
+    public async Task OnButtonClicked()
+    {
+
+        Info("OnButtonClicked()");
+        await OnClicked.InvokeAsync();
+    }
+
+
+    public string GetColorClass()
+    {
+        return Color;
+    }
+}

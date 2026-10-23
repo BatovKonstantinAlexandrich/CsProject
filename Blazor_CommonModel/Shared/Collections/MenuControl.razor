@@ -1,0 +1,96 @@
+@using Console_CommonModel.CommonLib.LibViews.AppViewModules.MenuModule
+@using MudBlazor
+@inherits WebControlBase<MenuView,MenuControl>
+@code
+{
+    [Parameter]
+    public MenuView Item { get; set; }
+}
+ 
+@if (!Initiallized)
+{
+    <MudProgressCircular>Выполняется инициализация</MudProgressCircular>
+}
+else
+{
+    if (ErrorMessage != "")
+    {
+        <MudAlert>@ErrorMessage</MudAlert>
+    }
+    else
+    {
+        @if (Item is null)
+        {
+            <MudAlert>Не установлена ссылка в параметре @nameof(Item)</MudAlert>
+        }
+        else
+        {
+            if (Item.Parent is null || !(Item.Parent is MenuView))
+            {
+                <div style="min-height:25px;">                     
+                    @foreach (MenuView menuItem in Item.MenuItems)
+                    {                        
+                        if (menuItem.MenuItems is null || menuItem.MenuItems.Count() == 0)
+                        {
+                            <MudMenuItem OnClick="@((evt)=>{ menuItem.OnClick(this, evt); })">
+                                @if (!String.IsNullOrWhiteSpace(menuItem.Icon))
+                                {
+                                    <MudIcon Icon="@menuItem.Icon" Class="mr-2" />
+                                }
+                                @menuItem.Text
+                            </MudMenuItem>
+                        }
+                        else
+                        {
+                            <MenuControl Item="@menuItem"></MenuControl>
+                        }
+                    }                   
+                </div>
+            }
+            else
+            {
+                <MudMenu Label="@Item.Text"
+                         FullWidth="@true"
+                         Variant="Variant.Filled"
+                         Color="MudBlazor.Color.Primary"
+                         StartIcon="@Icons.Material.Filled.Person"
+                         EndIcon="@Icons.Material.Filled.KeyboardArrowDown"
+                         AnchorOrigin="Origin.BottomLeft"
+                         TransformOrigin="Origin.TopLeft"
+                         Dense="true">
+
+                    @foreach (MenuView menuItem in Item.MenuItems)
+                    {
+                        if (menuItem.MenuItems is null || menuItem.MenuItems.Count() == 0)
+                        {
+                            <MudMenuItem OnClick="@((evt)=>{ menuItem.OnClick(this, evt); })">
+                                @if (!String.IsNullOrWhiteSpace(menuItem.Icon))
+                                {
+                                    <MudIcon Icon="@menuItem.Icon" Class="mr-2" />
+                                }
+                                @menuItem.Text
+                            </MudMenuItem>
+                        }
+                        else
+                        {
+                            <MenuControl Item="@menuItem"></MenuControl>
+                        }
+                    }
+                </MudMenu>
+            }
+            
+        }
+    }
+} 
+@code{
+
+
+    [Parameter]
+    public override AppViewBase ViewModel { get; set; }
+
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+    }
+}
+
+

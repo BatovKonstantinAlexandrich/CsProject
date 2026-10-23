@@ -1,0 +1,13 @@
+﻿@page "/signout"
+@inject APIAuthorization auth
+@inject NavigationManager navigation
+
+@code {
+    protected override void OnInitialized()
+    {
+        auth.Signout(true);
+        navigation.NavigateTo("/signin", replace: true);
+    }
+}
+
+<p>Выход из системы…</p>

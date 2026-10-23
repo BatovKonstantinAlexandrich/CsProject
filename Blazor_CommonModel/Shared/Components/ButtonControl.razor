@@ -1,0 +1,117 @@
+@using WinFormsApp.AppComponents.AppControls
+@inherits WebControlBase<ButtonView, IButtonControl>
+@implements IButtonControl
+@code
+{
+    [InputSelectExpression("GetColors()")]
+    //[InputEnum(nameof(MudBlazor.Colors))]
+    public string MudColor { get; set; } = "Primary";
+
+    public List<string> GetColors(){
+        return typeof(MudBlazor.Color).GetEnumNames().ToList();
+    }
+}
+@if (!Initiallized)
+{
+    <MudProgressCircular>Выполняется инициализация</MudProgressCircular>
+}
+else
+{
+    if (ErrorMessage != "")
+    {
+        <MudAlert Severity="Severity.Error">@ErrorMessage</MudAlert>
+    }
+    else
+    {        
+        <MudButton Variant="Variant.Filled"     
+                   Style="@(Model.GetCssText())"
+                   Disabled="@(!Enabled)"            
+                   OnClick="@(OnButtonClicked)">
+            @if (IconOrText && !string.IsNullOrWhiteSpace(Icon))
+            {
+                <MudIcon Icon="@Icon" />
+            }
+            else
+            {
+                @Text                
+            }
+        </MudButton>
+    }
+}
+
+
+@code 
+{
+    [Parameter]
+    public ButtonView Model { get; set; }
+
+    [Parameter]
+    [Label("Надпись")]
+    [NotNullNotEmpty()]
+    public string Text { get; set; } = "Ok";
+
+    [Parameter]
+    [Label("Включена/Выключена")]
+    public bool Enabled { get; set; } = true;
+
+    [Parameter]
+    [Label("Иконка")]
+    [InputIcon()]
+    public string Icon { get; set; } = null;
+
+    [Parameter]
+    [Label("Только иконка")]
+    public bool IconOrText { get; set; } = false;
+
+    [Parameter]
+    [NotInput]
+    [Newtonsoft.Json.JsonIgnore]
+    [System.Text.Json.Serialization.JsonIgnore]
+    [Label("OnClick")]
+    public override System.Action<object, EventArgs> OnClick { get; set; } = (p, e) => { };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        try
+        {
+            if (this.Model is null)
+            {
+                Model = new();
+                //throw new Exception($"Не задан параметр {nameof(Model)}");
+            }
+            if (Model.component is null)
+            {
+                Model.component = new ButtonComponent(Model, this);
+            }            
+        }       
+        catch (Exception ex)
+        {
+            this.ErrorMessage = ex.ToTextDocument();
+        }
+        finally
+        {
+            this.Initiallized = true;
+        }        
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        this.Debug(nameof(OnParametersSetAsync));
+        await base.OnParametersSetAsync();
+    }
+
+    public async Task OnButtonClicked(MouseEventArgs evt){
+        try
+        {
+            this.Debug(evt.GetHashCode());
+
+            this.Model.OnClick(this, evt);
+            await Task.CompletedTask;
+        }
+        catch(Exception ex)
+        {
+            this.Error("OnButtonClicked() => " + ex.Message);
+        }
+    }
+}

@@ -1,0 +1,49 @@
+@inherits WebControlBase<CheckboxView,CheckboxControl>
+@code
+{
+    [Parameter]
+    public CheckboxView Model { get; set; }
+
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+
+        try
+        {
+            this.BindComponent();            
+        }
+        catch(Exception ex)
+        {
+            this.ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            this.Initiallized = true;
+        }
+    } 
+}
+@if(!Initiallized)
+{
+    <MudProgressCircular>Выполняется инициализация</MudProgressCircular>
+}
+else
+{
+    if(ErrorMessage != "" )
+    {
+        <MudAlert>@ErrorMessage</MudAlert>
+    }
+    else
+    {
+        @if(Model is null)
+        {
+            <MudAlert> @(this.GetTypeName()) Не установлена ссылка на параметр @(nameof(Model))</MudAlert>
+        }
+        else
+        {
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudCheckBox @bind-Value="@(Model.Checked)"                             
+                             Label="@(Model.Text)"
+                             Disabled="@(!Model.Enabled)" />
+            </MudPaper>
+        }
+    }
+}

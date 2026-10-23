@@ -1,0 +1,31 @@
+﻿@* Максимально упрощенное представление иерархии *@
+@inherits BaseComponent
+@code 
+{
+    [Parameter]
+    public TreeViewNodeModel Model { get; set; }
+}
+@if (Model == null)
+{
+    <div class="alert alert-warning"> Модель не задана </div>
+}
+else
+{
+    <details style="margin-left: (@(Model.GetNamesPath))px;">
+      
+
+        <TextBoxControl Text="@Model.Title"></TextBoxControl>
+        <div>
+            @if (Model.Children != null)
+            {
+                @foreach (var child in Model.Children)
+                {
+                    <TreeViewNodeBase Model="@child"></TreeViewNodeBase>
+                }
+            }
+
+        </div>
+    </details>
+}
+
+

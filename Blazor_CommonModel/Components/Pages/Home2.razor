@@ -1,0 +1,231 @@
+﻿@page "/home2" 
+
+@inherits BaseComponent
+
+@using Blazor_CommonModel.Components.Dialogs
+@using Blazor_CommonModel.Components.Modal
+@using Blazor_CommonModel.Services.DataModel
+@using Blazor_CommonModel.Shared
+@using Blazor_CommonModel.Shared.Charts
+@using Blazor_CommonModel.Shared.Collections
+@using Blazor_CommonModel.Shared.Components
+@using Blazor_CommonModel.Shared.Layout
+@using Console_CommonModel.CommonLib.LibData.Console_DataModule.DataModels.MessageModel
+@using MudBlazor
+@implements IDisposable
+@inject IJSRuntime JS
+@inject IAppModalService clientModal
+@inject IServiceProvider provider
+
+<div style="position: fixed; width: 100%; height: 100%;" @oncontextmenu:stopPropagation @oncontextmenu:preventDefault>
+    <div style="position: relative; width: 100%; height: 100%;">
+        <ContainerControl FullSize="@true" ViewModel="@rootViewBase"></ContainerControl>
+    </div>
+</div>
+
+@code
+{
+
+    public AppViewRoot rootViewBase { get; set; } = new AppViewRoot();
+
+    public TreeControlView treeControlView { get; set; } = new();
+    public AppViewBase currentView { get; set; }
+
+    public override void AfterInit()
+    {        
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);         
+    }
+
+    private DotNetObjectReference<Home2>? _objRef;
+
+
+    private string LastKey = "—";
+    private string LastCode = "—";
+
+    [JSInvokable]
+    public Task OnKeyDown(string key, string code)
+    {
+        LastKey = key;
+        LastCode = code;
+        this.rootViewBase.OnKeyDown(this.rootViewBase, new(){
+            KeyCodeStr  = code
+        });
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    [JSInvokable]
+    public Task OnKeyPress(string key, string code)
+    {
+        LastKey = key;
+        LastCode = code;
+        if (code.StartsWith("Key"))
+            code = code.Substring(3).ToLower();
+        this.rootViewBase.OnKeyPressed(this.rootViewBase, new()
+        {
+            KeyChar = code
+        });
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    [JSInvokable]
+    public Task OnKeyUp(string key, string code)
+    {
+        LastKey = key;
+        LastCode = code;
+        this.rootViewBase.OnKeyUp(this.rootViewBase, new()
+            {
+                KeyCodeStr = code
+            });
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        _objRef = DotNetObjectReference.Create(this);
+
+        this.OnRendered += async () => {
+            await JS.InvokeVoidAsync("keyboardHandler.register", _objRef);            
+        };
+
+        rootViewBase.keyboardConfig["q"] = () =>
+        {
+            rootViewBase.DesignMode = !rootViewBase.DesignMode;
+
+        };
+        rootViewBase.WidthUnit = rootViewBase.HeightUnit = "%";
+        rootViewBase.Set(new TreeControlView() {  });
+        rootViewBase.AddContextSelectOption("Расположение", rootViewBase.Dock, new("Left,Right,Bottom,Top,Fill,None".Split(",").ToList()), selected => { } );
+        rootViewBase.OnKeyDown += (s, e) => {
+            this.Info(e);
+        };
+
+        rootViewBase.Left = rootViewBase.CreateEditFormView<UserAccount>(new(), UserAccount => { });
+        rootViewBase.Top = rootViewBase.CreateSelectList(
+            "Элементы управления",
+            new List<string>(){
+                nameof(TextBoxView),
+                nameof(CheckboxView),
+                nameof(ComboboxView)
+            },
+            OnViewTypeNameSelected
+        );
+        var menu = rootViewBase.MenuView;
+
+        menu.CreateMenuActions("Режим разработки",new() { 
+            { "Включить",  ()=>{ rootViewBase.DesignMode = true; } },
+            { "Отключить", ()=>{ rootViewBase.DesignMode = false; } },
+        });
+
+        rootViewBase.AddPropertyChangeListener(nameof(rootViewBase.DesignMode), evt => { 
+            menu.AddMenuActions("Представление", new() {
+                // { "Настроить DragAndDrop",      () => rootViewBase.PutAction("Настройка DragAndDrop", rootViewBase.ActivateDragAndDrop) },
+                // { "Добавить контекстное меню",  () => rootViewBase.PutAction("Добавление контекстного меню", rootViewBase.ActivateContextMenu) },
+                // { "Настройки клавиатуры",       () => rootViewBase.PutAction("Настройки клавиатуры", rootViewBase.OpenKeyboardCustomizer) },
+            });
+            rootViewBase.MenuView.CreateMenuViewDbContextInitializerActions();
+            rootViewBase.MenuView.AddMenuActions("Операции с данными", new() {
+
+                { "Отчистить базу данных пользователей",()=>{
+                    rootViewBase.PutAction("Отчистить базу данных пользователей",()=>{
+                        var initiallizer = new DbContextUserInitializer();
+                        initiallizer.Init(new DeliveryDbContext());
+                    });
+                } },
+
+                { "Регистрация бизнес модели",()=>{
+                    rootViewBase.PutAction("Регистрация бизнес модели",()=>{
+                        var initiallizer = new BusinessDbContextInitiallizer();
+                        initiallizer.InitData(new DeliveryDbContext());
+                    });
+                } },
+
+                { "Пересобрать данные для базы службы доставки",()=>{
+                    rootViewBase.PutAction("Пересобрать данные для базы службы доставки",()=>{
+                        using (var db = new DeliveryDbContext())
+                        {
+                            db.Database.EnsureDeleted();
+                            db.Database.EnsureCreated();
+
+                            var dbContextUserInitiallizer = new DbContextUserInitializer();
+                            dbContextUserInitiallizer.Init(db);
+
+                            var messagesInitiallizer = new MessagesDbContextInitializer();
+                            var messageContext = new DeliveryDbContext();
+                            messagesInitiallizer.Init(messageContext);
+
+                            var initiallizer = new DeliveryDbContextInitiallizer();
+                            initiallizer.InitFromFiles(db, "D:\\System-Config\\ProjectsConsole\\Console_BusinessModel\\wwwroot\\Resources");
+                        }
+                    });
+                } }
+            });
+        });
+
+        rootViewBase.Top = menu;
+
+        rootViewBase.LayoutFill(currentView = new ButtonView(){
+            OnClick = (p,e)=> {
+
+                rootViewBase.StatusView.DoAction("wait",()=> {
+                    Thread.Sleep(2000);
+                });
+            }
+
+        });
+        rootViewBase.ForEach(p => { 
+            p.Cast<AppViewBase>().ResolveDesignMode = true;
+        });
+
+        rootViewBase.Bottom = rootViewBase.StatusView;
+
+        rootViewBase.Trace();
+
+        treeControlView.CreateClassTreeView<AppViewBase>(OnViewTypeSelected);
+
+        treeControlView.AddContextMenuItems(new List<string>() { "Поиск включен", "Поиск выключен"}, action => { 
+            switch(action)
+            {
+                case "Поиск включен": treeControlView.Searchable = true; break;
+                case "Поиск выключен": treeControlView.Searchable = false; break;
+            }
+        });
+        treeControlView.Expanded = true;
+        treeControlView.Dock = "Fill";       
+        rootViewBase.Right=treeControlView;
+        rootViewBase.Searchable = true;
+        rootViewBase.ResolveDesignMode = true;
+        treeControlView.ContextMenu.AddContextMethods("test",new() { 
+            { "dialog", async ()=>{
+                await rootViewBase.ShowView<ButtonView>("test",new(), (p,e)=>{ });
+            } }
+        });
+
+    }
+
+    public void OnViewTypeNameSelected(string viewType)
+        => OnViewTypeSelected(viewType.ToType());
+
+    public void OnViewTypeSelected(Type viewType)
+    {         
+        try
+        {
+            this.currentView = viewType.New<AppViewBase>();
+            this.rootViewBase.Set(currentView);
+            
+            this.StateHasChanged();
+        }
+        catch(Exception ex)
+        {
+            this.ErrorMessage = ex.Message;
+        }
+    }
+}

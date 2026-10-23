@@ -1,0 +1,10 @@
+﻿@page "/person/file-upload"
+@inherits BaseComponent
+<h3>FileUpload</h3>
+<input id="File1" type="file" @onchange="@OnFileChanged" />
+@code {
+    public void OnFileChanged(ChangeEventArgs evt)
+    {
+        Info(evt.Value.ToString());
+    }
+}

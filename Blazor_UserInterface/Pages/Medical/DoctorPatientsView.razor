@@ -1,0 +1,39 @@
+﻿@page "/doctor/doctor-patients"
+@inject IDoctorService doctorService
+
+
+@inherits BaseComponent
+<h3>Пациенты</h3>
+@if (Persons == null)
+{
+    <div class="alert alert-info">Загружаем данные ... </div>
+}
+else
+{
+
+
+
+    <NavListGroup TItem="UserPerson" Items="Persons" Context="person">
+        <a class="nav-link" href="/doctor/medical-card/@person.ID">
+            <span class="oi oi-person" aria-hidden="true"></span>
+            @person.GetFullName()
+        </a>
+    </NavListGroup>
+
+}
+
+
+
+
+@code {
+    public IEnumerable<UserPerson> Persons { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        Info("OnInitializedAsync");
+        await base.OnInitializedAsync();
+        int id = 1;
+        Persons = doctorService.GetDoctorPatients(id);
+    }
+
+}
+

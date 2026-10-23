@@ -1,0 +1,22 @@
+﻿@page "/"
+@rendermode InteractiveServer
+
+@inject IModalService ms
+@Counter
+
+<button class="btn btn-primary" @onclick="OnButtonClicked">Dialog</button>
+@code{
+
+
+    [CascadingParameter]
+    public BlazoredModalInstance ModalInstance { get; set; }
+
+    public int Counter { get; set; } = 1;
+    public async Task OnButtonClicked(){
+        Counter++;
+        this.StateHasChanged();
+
+        var d = ms.Show<Counter>();
+        await d.Result;
+    }
+}

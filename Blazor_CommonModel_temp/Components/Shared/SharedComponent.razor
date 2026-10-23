@@ -1,0 +1,38 @@
+﻿@inherits WebComponentBase
+@code {
+
+    [Parameter]
+    public object Model { get; set; }
+    public string Type { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        if (this.Model is not null)
+        {
+            this.Type = this.Model.GetTypeName();
+        }
+    }
+
+}
+<div>
+    @if(Model is null)
+    {
+        <div class="alert alert-warning">Не задано значение параметра @nameof(Model)</div>
+    }
+    else
+    {
+        @if(Type == nameof(ButtonView))
+        {
+            <Blazor_CommonModel.Components.Shared.Components.ButtonControl></Blazor_CommonModel.Components.Shared.Components.ButtonControl>
+        }
+        else if (Type == nameof(CheckboxView))
+        {
+
+        }
+        else
+        {
+            <div class="alert alert-warning">Тип компонента @Type не зарегистрирован в SharedComponent</div>
+        }
+    }
+</div>

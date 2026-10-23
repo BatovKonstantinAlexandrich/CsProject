@@ -1,0 +1,408 @@
+﻿@using Blazor_CommonModel.Shared.Components
+@using MudBlazor
+@using System
+@using Blazor_CommonModel.Shared.Layout
+@using Console_CommonModel.ActionModels
+@using Blazor_CommonModel.Components.Context
+@using Blazor_CommonModel.Components.Dialogs
+@using Blazor_CommonModel.Components.Modal
+@using Microsoft.AspNetCore.Components.Web
+@using System.ComponentModel.DataAnnotations
+@using static WinFormsApp.API.DesignerResizeTool
+
+@inherits Blazor_CommonModel.Shared.BaseComponent
+@implements IStyledItem
+
+@inject IAppModalService ModalService
+@inject IContextMenuService ContextMenuService
+@inject ISnackbar Snackbar
+@inject IServiceProvider provider
+@code
+{
+    [Parameter]
+    public CommonModel CommonModelRef { get; set; }
+
+    [Parameter] public bool AnchorBottom { get => ((IStyledItem)ViewModel).AnchorBottom; set => ((IStyledItem)ViewModel).AnchorBottom = value; }
+    [Parameter] public bool AnchorLeft { get => ((IStyledItem)ViewModel).AnchorLeft; set => ((IStyledItem)ViewModel).AnchorLeft = value; }
+    [Parameter] public bool AnchorRight { get => ((IStyledItem)ViewModel).AnchorRight; set => ((IStyledItem)ViewModel).AnchorRight = value; }
+    [Parameter] public bool AnchorTop { get => ((IStyledItem)ViewModel).AnchorTop; set => ((IStyledItem)ViewModel).AnchorTop = value; }
+    [Parameter] public bool AutoSize { get => ((IStyledItem)ViewModel).AutoSize; set => ((IStyledItem)ViewModel).AutoSize = value; }
+    [Parameter] public string BackgroundColor { get => ((IStyledItem)ViewModel).BackgroundColor; set => ((IStyledItem)ViewModel).BackgroundColor = value; }
+    [Parameter] public string BorderColor { get => ((IStyledItem)ViewModel).BorderColor; set => ((IStyledItem)ViewModel).BorderColor = value; }
+    [Parameter] public float BorderWidth { get => ((IStyledItem)ViewModel).BorderWidth; set => ((IStyledItem)ViewModel).BorderWidth = value; }
+    [Parameter] public string Color { get => ((IStyledItem)ViewModel).Color; set => ((IStyledItem)ViewModel).Color = value; }
+    [Parameter] public Cursors Cursor { get => ((IStyledItem)ViewModel).Cursor; set => ((IStyledItem)ViewModel).Cursor = value; }
+    [Parameter] public string Dock { get => ((IStyledItem)ViewModel).Dock; set => ((IStyledItem)ViewModel).Dock = value; }
+    [Parameter] public float FontSize { get => ((IStyledItem)ViewModel).FontSize; set => ((IStyledItem)ViewModel).FontSize = value; }
+    [Parameter] public int Height { get => ((IStyledItem)ViewModel).Height; set => ((IStyledItem)ViewModel).Height = value; }
+    [Parameter] public int Margin { get => ((IStyledItem)ViewModel).Margin; set => ((IStyledItem)ViewModel).Margin = value; }
+    [Parameter] public int MinHeight { get => ((IStyledItem)ViewModel).MinHeight; set => ((IStyledItem)ViewModel).MinHeight = value; }
+    [Parameter] public int MinWidth { get => ((IStyledItem)ViewModel).MinWidth; set => ((IStyledItem)ViewModel).MinWidth = value; }
+    [Parameter] public int Padding { get => ((IStyledItem)ViewModel).Padding; set => ((IStyledItem)ViewModel).Padding = value; }
+    [Parameter] public string TextAlign { get => ((IStyledItem)ViewModel).TextAlign; set => ((IStyledItem)ViewModel).TextAlign = value; }
+    [Parameter] public int TextIndent { get => ((IStyledItem)ViewModel).TextIndent; set => ((IStyledItem)ViewModel).TextIndent = value; }
+    [Parameter] public int Width { get => ((IStyledItem)ViewModel).Width; set => ((IStyledItem)ViewModel).Width = value; }
+    [Parameter] public string HeightUnit { get => (ViewModel).HeightUnit; set => (ViewModel).HeightUnit = value; }
+    [Parameter] public string WidthUnit { get => (ViewModel).WidthUnit; set => (ViewModel).WidthUnit = value; }
+    [Parameter] public int X { get => ((IStyledItem)ViewModel).X; set => ((IStyledItem)ViewModel).X = value; }
+    [Parameter] public int Y { get => ((IStyledItem)ViewModel).Y; set => ((IStyledItem)ViewModel).Y = value; }
+
+    public string GetCssText() => ViewModel.GetCssText();
+
+    public void SetBaseTextStyle() => ViewModel.SetBaseTextStyle();
+
+
+    public ContainerControl2 ContainerControlRef { get; set; }
+
+
+    [Parameter]
+    public string Id { get; set; }
+
+    [Parameter]
+    public EventCallback<DragEventArgs> OnDropAspNet { get; set; }
+
+    [Parameter]
+    public EventCallback<DragEventArgs> OnDragAspNet { get; set; }
+
+    [Parameter]
+    public EventCallback<DragEventArgs> OnDragEnterAspNet { get; set; }
+
+    [Parameter]
+    public EventCallback<DragEventArgs> OnDragLeaveAspNet { get; set; }
+
+    [Parameter]
+    public EventCallback OnMouseDoubleClickAspNet { get; set; }
+
+    public void ConnectBroadcastEventSendng(){
+        /*OnDropAspNet = async evt => {
+        this.Info($"OnDropAspNet");
+        }; 
+        OnDragAspNet = async evt => {
+        this.Info($"OnDragAspNet");
+        }; 
+        OnDragEnterAspNet = async evt => {
+        this.Info($"OnDragEnterAspNet");
+        }; 
+        OnDragLeaveAspNet = async evt => {
+            this.Info($"OnDragLeaveAspNet");
+        }; */
+    }
+
+    [Parameter()] 
+    [Required]
+    public override AppViewBase ViewModel { get; set; }
+
+    [Parameter] 
+    public RenderFragment? Center { get; set; }
+
+
+    public void OnMouseLeaveAspNet(){}
+    public void OnMouseEnterAspNet( ){}
+
+
+    [Parameter]
+    public bool FullSize { get; set; } = false;
+
+    [Parameter]
+    public bool FullWidth { get; set; } = false;
+
+    [Parameter]
+
+    public bool FullHeight { get; set; } = false;
+
+    public void OpenContextMenuAspNet(object sender ){}
+
+    public void OnControlInited(BaseComponent control)
+    {
+        try
+        {
+            this.ViewModel.control = control;
+            // if (this.ViewModel.control is null)
+            // {
+            //     throw new Exception("Не задана ссылка на элемент управления");
+            // }
+            //TODO validate hashcode
+            this.ViewModel.control.Controls.Add(control);
+        }
+        catch(Exception ex)
+        {
+            this.Error(nameof(OnControlInited)+" "+ex);
+        }
+    }
+
+    [Parameter]
+    public override IControlBase Parent { get; set; }
+}
+
+
+@code {
+    public string ContextTitle { get; set; } = "Меню";
+    private MudMenu _menu = null!;
+
+    protected override void OnInitialized()
+    {
+        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomRight;
+    }
+
+    private Task OpenWorkspaceMenu(MouseEventArgs args)
+    {
+        return OpenMenu(args);
+    }
+
+    private async Task OpenMenu(MouseEventArgs args)
+    {
+        await _menu.OpenMenuAsync(args);
+    }
+
+}
+
+@try
+{
+    @if(ViewModel is null)
+    {
+        <MudAlert>@(GetType().GetTypeName()) Не установлен обязательный параметр @nameof(ViewModel)</MudAlert>
+    }
+    else
+    {
+        <div @oncontextmenu="OpenWorkspaceMenu"
+             @oncontextmenu:preventDefault="true"
+             @oncontextmenu:stopPropagation="true">
+            <div style="border: 1px solid black; width: 225px; height:225px;">
+
+                test
+            </div>
+        </div>
+
+        <MudMenu @ref="_menu" PositionAtCursor="true" Dense="true" AnchorOrigin="Origin.TopLeft">
+            <MudMenuItem Label="@ContextTitle" Disabled="true" />
+            <MenusItem Item="@ViewModel.ContextMenu"></MenusItem>
+        </MudMenu>
+        
+        <div style="display: flex; flex-direction: column; @(FullSize?"width: 100%; height: 100%;":FullWidth?"width: 100%;":FullHeight?"height:100%;":"") @((ViewModel is not null && ViewModel.DesignMode? "border: 1px solid black;":""))"
+            class="@(this.ViewModel.GetContainerCssClassName())"
+            id="@(this.ViewModel.GetContainerDomId())"
+            @onkeypress="@(evt=>{ ViewModel.OnKeyPressed(this,new(){ KeyChar=evt.Key }); })"
+            @onmouseleave="OnMouseLeaveAspNet"
+            @onmouseenter="OnMouseEnterAspNet"
+            @ondrag="OnDragAspNet"
+            @ondrop="OnDropAspNet"
+            @ondragenter="OnDragEnterAspNet"
+            @ondragleave="OnDragLeaveAspNet"
+            @ondblclick="OnMouseDoubleClickAspNet"
+            @oncontextmenu="OpenContextMenuAsync"
+            @oncontextmenu:preventDefault="true">
+
+            <TransclusionPanel FullSize="@true"> 
+                <Header> 
+                    @if (ViewModel.Top is not null) 
+                    {
+                        <ContainerControl ViewModel="@((AppViewBase)ViewModel.Top)" Width="@(100)" WidthUnit="@("%")" FullWidth="@true"></ContainerControl>
+                    } 
+
+                </Header> 
+                <Left>
+                    @if (ViewModel.Left is not null) 
+                    {
+                        <ContainerControl ViewModel="@((AppViewBase)ViewModel.Left)" Height="@(100)" HeightUnit="@("%")" FullHeight="@true"></ContainerControl>
+                    } 
+                </Left>
+                <Center>
+                    <div style="@(FullSize? "width: 100%; height: 100%;":FullWidth?"width: 100%;":FullHeight?"height:100%;":"")">
+                        @if (Center is not null)
+                        {
+                            @Center
+                        }
+                        @if (ViewModel is not null)
+                        {
+                            <CommonModel Model="@ViewModel" @ref="CommonModelRef"  FullWidth="@FullWidth" FullHeight="@FullWidth">
+                                <TransclusionPanel FullSize="true">
+                                    <Header>
+                                        @foreach (AppViewBase childView in ViewModel.Controls.Where(c => c.Cast<AppViewBase>().Dock == "Top"))
+                                        {
+                                            <ContainerControl ViewModel="@childView" OnInit="@OnControlInited" Width="@(100)" WidthUnit="@("%")" FullWidth="@true"></ContainerControl>
+                                        }
+                                    </Header>
+                                    <Left>
+                                        @foreach (AppViewBase childView in ViewModel.Controls.Where(c => c.Cast<AppViewBase>().Dock == "Left"))
+                                        {
+                                            <ContainerControl ViewModel="@childView" OnInit="@OnControlInited" Height="@(100)" HeightUnit="@("%")" FullHeight="@true"></ContainerControl>
+                                        }
+                                    </Left>
+                                    <Center>
+
+
+                                        @foreach (AppViewBase childView in ViewModel.Controls.Where(c => c.Cast<AppViewBase>().Dock == "Fill" || c.Cast<AppViewBase>().Dock == "None"))
+                                        {
+                                            @if (childView.Dock == "Fill")
+                                            {
+                                                <ContainerControl ViewModel="@childView" OnInit="@OnControlInited" Width="@(100)" WidthUnit="@("%")" Height="@(100)" HeightUnit="@("%")" FullSize="@true"></ContainerControl>
+                                            }
+                                            else
+                                            {
+                                                <ContainerControl ViewModel="@childView" OnInit="@OnControlInited"></ContainerControl>
+                                            }
+                                        }
+                                    </Center>
+                                    <Right>
+                                        @foreach (AppViewBase childView in ViewModel.Controls.Where(c => c.Cast<AppViewBase>().Dock == "Right"))
+                                        {
+                                            <ContainerControl ViewModel="@childView" OnInit="@OnControlInited" Height="@(100)" HeightUnit="@("%")" FullHeight="@true"></ContainerControl>
+                                        }
+                                    </Right>
+                                    <Footer>
+                                        @foreach (AppViewBase childView in ViewModel.Controls.Where(c => c.Cast<AppViewBase>().Dock == "Bottom"))
+                                        {
+                                            <ContainerControl ViewModel="@childView" OnInit="@OnControlInited" Width="@(100)" WidthUnit="@("%")" FullWidth="@true"></ContainerControl>
+                                        }
+                                    </Footer>
+                                </TransclusionPanel>
+                            </CommonModel>
+                        }
+                    </div>
+                </Center>
+                <Right> 
+                    @if (ViewModel.Right is not null) 
+                    {
+                        <ContainerControl ViewModel="@((AppViewBase)ViewModel.Right)" Height="@(100)" HeightUnit="@("%")" FullHeight="@true">></ContainerControl>
+                    } 
+                </Right> 
+                <Footer> 
+                    @if (ViewModel.Bottom is not null) 
+                    {
+                        <ContainerControl FullWidth="@true" ViewModel="@((AppViewBase)ViewModel.Bottom)" Width="@(100)" WidthUnit="@("%")"></ContainerControl>
+                    } 
+                </Footer> 
+            </TransclusionPanel> 
+        </div>
+    }
+}
+catch(Exception ex)
+{
+    <ErrorControl Exception="@ex" Catcher="@(GetType().GetTypeName())" Parameters="@(new Dictionary<string,object>(){ { nameof(ViewModel), ViewModel }})"></ErrorControl>
+}
+
+@functions
+{
+    [Parameter]
+    public string Description { get; set; }
+    [Parameter] public virtual Action<object, ActionModels.DragEventArgs> OnDragEnter { get => ((IViewEventSupport)ViewModel).OnDragEnter; set => ((IViewEventSupport)ViewModel).OnDragEnter = value; }
+    [Parameter] public virtual Action<object, ActionModels.DragEventArgs> OnDragOver { get => ((IViewEventSupport)ViewModel).OnDragOver; set => ((IViewEventSupport)ViewModel).OnDragOver = value; }
+    [Parameter] public virtual Action<object, ActionModels.MouseEventArgs> OnMouseDoubleClick { get => ((IViewEventSupport)ViewModel).OnMouseDoubleClick; set => ((IViewEventSupport)ViewModel).OnMouseDoubleClick = value; }
+    [Parameter] public virtual Action<object, ActionModels.MouseEventArgs> OnMouseDown { get => ((IViewEventSupport)ViewModel).OnMouseDown; set => ((IViewEventSupport)ViewModel).OnMouseDown = value; }
+    [Parameter] public virtual Action<object, ActionModels.MouseEventArgs> OnMouseMove { get => ((IViewEventSupport)ViewModel).OnMouseMove; set => ((IViewEventSupport)ViewModel).OnMouseMove = value; }
+    [Parameter] public virtual Action<object, ActionModels.MouseEventArgs> OnMouseUp { get => ((IViewEventSupport)ViewModel).OnMouseUp; set => ((IViewEventSupport)ViewModel).OnMouseUp = value; }
+    [Parameter] public virtual Action<object, ActionModels.ScrollEventArgs> OnScrollChanged { get => ((IViewEventSupport)ViewModel).OnScrollChanged; set => ((IViewEventSupport)ViewModel).OnScrollChanged = value; }
+
+    [Parameter] public virtual Action<object, EventArgs> OnClick { get => ((IViewEventSupport)ViewModel).OnClick; set => ((IViewEventSupport)ViewModel).OnClick = value; }
+    [Parameter] public virtual Action<object, EventArgs> OnDragged { get => ((IViewEventSupport)ViewModel).OnDragged; set => ((IViewEventSupport)ViewModel).OnDragged = value; }
+    [Parameter] public virtual Action<object, EventArgs> OnDragLeave { get => ((IViewEventSupport)ViewModel).OnDragLeave; set => ((IViewEventSupport)ViewModel).OnDragLeave = value; }
+    [Parameter] public virtual Action<object, EventArgs> OnDropped { get => ((IViewEventSupport)ViewModel).OnDropped; set => ((IViewEventSupport)ViewModel).OnDropped = value; }
+    [Parameter] public virtual Action<object, EventArgs> OnKeyClicked { get => ((IViewEventSupport)ViewModel).OnKeyClicked; set => ((IViewEventSupport)ViewModel).OnKeyClicked = value; }
+    [Parameter] public virtual Action<object, KeyEventArgs> OnKeyDown { get => ((IViewEventSupport)ViewModel).OnKeyDown; set => ((IViewEventSupport)ViewModel).OnKeyDown = value; }
+    [Parameter] public virtual Action<object, KeyPressEventArgs> OnKeyPressed { get => ((IViewEventSupport)ViewModel).OnKeyPressed; set => ((IViewEventSupport)ViewModel).OnKeyPressed = value; }
+    [Parameter] public virtual Action<object, KeyEventArgs> OnKeyUp { get => ((IViewEventSupport)ViewModel).OnKeyUp; set => ((IViewEventSupport)ViewModel).OnKeyUp = value; }
+    [Parameter] public virtual Action<object, EventArgs> OnLoad { get => ((IViewEventSupport)ViewModel).OnLoad; set => ((IViewEventSupport)ViewModel).OnLoad = value; }
+    [Parameter] public virtual Action<object, EventArgs> OnLocationChanged { get => ((IViewEventSupport)ViewModel).OnLocationChanged; set => ((IViewEventSupport)ViewModel).OnLocationChanged = value; }
+    [Parameter] public virtual Action<object, EventArgs> OnMouseEnter { get => ((IViewEventSupport)ViewModel).OnMouseEnter; set => ((IViewEventSupport)ViewModel).OnMouseEnter = value; }
+    [Parameter] public virtual Action<object, EventArgs> OnMouseLeave { get => ((IViewEventSupport)ViewModel).OnMouseLeave; set => ((IViewEventSupport)ViewModel).OnMouseLeave = value; }
+    [Parameter] public virtual Action<object, EventArgs> OnResized { get => ((IViewEventSupport)ViewModel).OnResized; set => ((IViewEventSupport)ViewModel).OnResized = value; }
+    [Parameter] public virtual Action<object, EventArgs> OnValidated { get => ((IViewEventSupport)ViewModel).OnValidated; set => ((IViewEventSupport)ViewModel).OnValidated = value; }
+}
+@code
+{
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        this.OnRendered += async () => {
+            await Task.CompletedTask;
+        };
+        this.ContainerControlRef = this;
+    }
+
+    public override void AfterInit() {
+        base.AfterInit();
+        // if(this.ViewHashCode != this.GetHashCode())
+        // {
+        //     throw new Exception("Изменился контекст элемента управления, гнобходима проверка на повторное выполнение кrazor компонентов");
+        // }
+         
+
+        this.Eval("alert(this.id)");
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        if (this.ViewModel is not null)
+        {
+            this.ViewHashCode = this.ViewModel.GetHashCode();
+            this.ViewModel.Trace();
+            AppProviderService.GetInstance().AddServiceImplementation<IAppModalService>(
+                provider.Get<IAppModalService>()
+            );
+        }
+    }
+
+}
+
+@code {
+    private string _lastDialogResult = string.Empty;
+    private string _lastMenuAction = string.Empty;
+
+    private async Task ShowMessageAsync()
+    {
+        await ModalService.ShowMessageAsync("Информация", "Это модальное окно открыто через IAppModalService.");
+        _lastDialogResult = "Закрыто окно сообщения.";
+    }
+
+    private async Task ShowConfirmAsync()
+    {
+        var confirmed = await ModalService.ShowConfirmAsync(
+            "Подтверждение",
+            "Вы действительно хотите выполнить действие?");
+
+        _lastDialogResult = confirmed ? "Пользователь подтвердил действие." : "Пользователь отменил действие.";
+    }
+
+    private async Task ShowInputDialogAsync()
+    {
+        var parameters = new DialogParameters<DemoInputDialog>
+        {
+            { x => x.Label,         "Название элемента" },
+            { x => x.InitialValue,  "Новый элемент" }
+        };
+        var dp = new Dictionary<string, object>();        var value = await ((AppModalService)ModalService).ShowDialogAsync<DemoInputDialog, string>(
+            "Редактирование",
+            parameters);
+
+        _lastDialogResult = value is null
+            ? "Диалог ввода отменён."
+            : $"Сохранено значение: «{value}»";
+    }
+
+    private Task OpenContextMenuAsync(MouseEventArgs e)
+    {
+        var entities = this.ViewModel.ContextMenu.Items.Select(menuItem => new MenuItemItem<object>()
+        {
+            Text = menuItem.Label,
+            OnClick = menuItem.OnClick,
+            Todo = menuItem.OnClick
+            
+        }).ToArray().ToList();
+
+        return ContextMenuService.ShowAsync(entities, new ActionModels.MouseEventArgs()
+            {
+                X = (int)e.ClientX,
+                Y = (int)e.ClientY
+        }, entry =>
+        {
+            _lastMenuAction = $"Выбран пункт: «{entry.Text}»";
+            entry.OnClick(this, new EventArgs());
+            entry.Todo(this, new EventArgs());
+            Snackbar.Add(_lastMenuAction, Severity.Normal);
+            return Task.CompletedTask;
+        });
+    }
+}

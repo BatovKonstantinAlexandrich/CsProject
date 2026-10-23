@@ -1,0 +1,48 @@
+﻿@using Microsoft.AspNetCore.Components
+@using MudBlazor
+@typeparam T
+@code{
+}
+@if (Item.Children?.Any() == true)
+{
+    <MudMenu ActivationEvent="MouseEvent.MouseOver"
+             AnchorOrigin="Origin.TopRight"
+             TransformOrigin="Origin.TopLeft"
+             Dense="true"
+             DisableRipple="true">
+        <ActivatorContent>
+            <MudListItem T="T"
+                         Text="@Item.Text"
+                         Icon="@Item.Icon"
+                         Disabled="@Item.Disabled"
+                         Class="d-flex justify-space-between align-center"
+                         Style="width: 100%;">
+                <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small" />
+            </MudListItem>
+        </ActivatorContent>
+        <ChildContent>
+            <MudList T="T" Dense="true" Class="pa-0">
+                @foreach (var child in Item.Children)
+                {
+                    <RecursiveListItem T="T"
+                                       Item="child"
+                                       OnItemClick="OnItemClick" />
+                }
+            </MudList>
+        </ChildContent>
+    </MudMenu>
+}
+else
+{
+    <MudListItem T="T"
+                 Text="@Item.Text"
+                 Icon="@Item.Icon"
+                 Disabled="@Item.Disabled"
+                 OnClick="@(() => OnItemClick.InvokeAsync(Item))" />
+}
+
+@code {
+    [Parameter] public ContextView View { get; set; } = default!;
+    [Parameter, EditorRequired] public MenuItemItem<T> Item { get; set; } = default!;
+    [Parameter] public EventCallback<MenuItemItem<T>> OnItemClick { get; set; }
+}

@@ -1,0 +1,86 @@
+@using WinFormsApp.AppComponents.AppControls
+@inherits WebControlBase<SearchView,ISearchControl>
+@implements Console_CommonModel.CommonLib.LibViews.AppViewModules.SearchModule.ISearchControl
+@code{
+    [Parameter]
+    public SearchView Model { get; set; }
+
+    [Parameter]
+    public Action<string> oninput { get; set; } = text => { };
+
+    [Parameter]
+    public Action<string> onsearch { get; set; } = text => { };
+
+    [Parameter]
+    public ChangingList<string> SearchOptions { get; set; } = new();
+
+    [Parameter]
+    public string SearchQuery { get => Get<string>(nameof(SearchQuery)); set=>Set<string>(nameof(SearchQuery),value); }
+
+    [Parameter]
+    public bool ShowSearchOptions { get; set; } = false;
+
+    public SearchControl(): base()
+    {
+        this.SearchQuery = "";
+        this.oninput += text => {
+            this.Info(text);
+        };
+
+
+    }
+
+    private TextBoxView TextBoxViewModel { get; set; } = new TextBoxView(){
+        Width = 100
+    };
+
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+        try
+        {
+            //this.component = new SearchComponent(Model,this);      
+            this.SearchQuery = Model.SearchQuery;
+            this.SearchOptions = Model.SearchOptions;
+            this.oninput = Model.oninput;
+            this.onsearch = Model.onsearch;
+            Model.AddPropertyChangeListener(nameof(Model.SearchQuery), evt => this.SearchQuery = Model.SearchQuery);
+        }
+        catch(Exception ex)
+        {
+            this.ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            this.Initiallized = true;
+        }
+    }
+
+
+    public void OnTextChanged(string query)
+    {
+        this.oninput(this.SearchQuery = query);
+    }
+}
+@if(!Initiallized)
+{
+    <MudProgressCircular>Выполняется инициализация</MudProgressCircular>
+}
+else
+{
+    if(ErrorMessage != "" )
+    {
+        <MudAlert>@ErrorMessage</MudAlert>
+    }
+    else
+    {
+        <MudAutocomplete T="string"
+                 TextChanged="@OnTextChanged"                
+                 @bind-Value="SearchQuery"
+                 Style="@(Model.GetCssText())"
+                 Variant="Variant.Outlined"
+                 Adornment="Adornment.Start"
+                 AdornmentIcon="@Icons.Material.Filled.Search"
+        />
+
+    }
+}

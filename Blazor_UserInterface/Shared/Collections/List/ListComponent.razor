@@ -1,0 +1,16 @@
+﻿@code {
+    [Parameter]
+    public List<string> ListItems { get; set; } = new();
+}
+<div class="card" style="width: 18rem;">
+    <div class="btn btn-primary card-header">
+        <h3>InputFormsEditor</h3>
+    </div>
+    <ul class="list-group list-group-flush">
+        @foreach(var item in ListItems)
+        {
+            <li class="list-group-item">@item</li>
+        }                
+    </ul>
+</div>
+

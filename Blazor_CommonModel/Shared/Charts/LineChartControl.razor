@@ -1,0 +1,113 @@
+﻿@inherits WebComponentBase
+@using MudBlazor
+@code
+{
+    [Parameter]
+    public override AppViewBase ViewModel { get; set; }
+
+    [Parameter]
+    [Label("Заголовок 1")]
+    [NotNullNotEmpty]
+    public string Title { get; set; }
+
+    [Parameter]
+    [Label("Название диаграммы")]
+    [NotNullNotEmpty]
+    public string Label { get; set; }
+
+    [Parameter]
+    [Label("Значения по оси X")]
+    [NotNullNotEmpty]
+    public List<string> XLabels { get; set; }
+
+    [Parameter]
+    [Label("Динамика показателей")]
+    [NotNullNotEmpty]
+    public Dictionary<string,List<double>> LineSeries { get; set; }
+
+    public Dictionary<string,List<string>> ValidateOptional(){
+        Dictionary<string, List<string>> results = new();
+        if (LineSeries is null || XLabels is null)
+        {
+            results[nameof(XLabels)] = new() { "не может быть равно нулю" };
+            results[nameof(LineSeries)] = new() { "не может быть равно нулю" };
+        }
+        if (!LineSeries.All(series => series.Value.Count() == XLabels.Count())){
+            results[nameof(LineSeries)] = new() { "Не полный набор данных"};
+        }
+        return results;
+    }
+}   
+<MudChart ChartType="ChartType.Line"
+                                ChartSeries="@_lineSeries"
+                                XAxisLabels="@_lineXAxisLabels"                             
+                                ChartOptions="@_lineOptions" />
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h5" Class="mb-4">@Title</MudText>
+
+    <MudGrid>
+
+
+            @* 1. Линейный график *@
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4">
+                    <MudText Typo="Typo.h6" Class="mb-2">@Label</MudText>
+                    <MudChart ChartType="ChartType.Line"
+                                ChartSeries="@_lineSeries"
+                                Width="100%"
+                                HEIght="100%"
+                                XAxisLabels="@_lineXAxisLabels"                             
+                                ChartOptions="@_lineOptions" />
+                </MudPaper>
+            </MudItem>
+
+    </MudGrid>
+</MudContainer>
+@code {
+    // --- Данные для линейного графика ---
+    private List<ChartSeries> _lineSeries = new();
+    private string[] _lineXAxisLabels = { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс" };
+    private ChartOptions _lineOptions = new()
+    {
+        InterpolationOption = InterpolationOption.NaturalSpline,
+        YAxisLines = true,
+        ShowLegend = true
+    };
+
+
+    protected override void OnInitialized()
+    {
+        this.Height = this.Width = 100;
+        // Инициализация линейного графика
+        _lineSeries.Add(new ChartSeries { Name = "Пользователи", Data = new double[] { 120, 150, 180, 220, 260, 300, 350 } });
+        _lineSeries.Add(new ChartSeries { Name = "Заказы", Data = new double[] { 30, 45, 60, 80, 100, 130, 160 } });
+
+
+    }
+    private bool Binded = false;
+    protected override async Task OnParametersSetAsync()
+    {
+        base.OnParametersSet();
+        if(ViewModel is not null)
+        {
+            if (!Binded)
+            {
+                this.Bind(nameof(this.Width), ViewModel, nameof(this.Width));
+                Binded = true;
+            }
+        }
+
+    }
+
+
+    public void UpdateChartData(){
+        _lineXAxisLabels = this.XLabels.ToArray();
+        _lineSeries.Clear();
+        foreach (var kv in LineSeries)
+        {
+            _lineSeries.Add(new ChartSeries { Name = kv.Key, Data = kv.Value.ToArray() });
+
+
+        }
+    }
+}

@@ -1,0 +1,59 @@
+@inherits Blazor_CommonModel.Shared.BaseComponent
+
+<MudDialog>
+    <DialogContent>
+        <Blazor_CommonModel.Shared.Layout.FlexColumn>
+           
+            @if (ViewModel is not null)
+            {                                                        
+                try
+                {
+                    <CommonModel Model="@ViewModel">
+
+                    </CommonModel>
+                }                           
+                catch(Exception ex)
+                {
+                    <MudAlert>@ex.Message</MudAlert>
+                }
+            }
+            
+        </Blazor_CommonModel.Shared.Layout.FlexColumn>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel">Отменить</MudButton>
+        <MudButton Color="MudBlazor.Color.Primary" Variant="Variant.Filled" OnClick="Confirm">Подтвердить</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public override RenderFragment? ChildContent { get; set; }
+
+
+    [Parameter]
+    public AppViewBase ViewModel { get; set; }
+
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();  
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        if (ViewModel is not null)
+        {
+            
+        }
+    }
+     
+    private void Confirm() => MudDialog.Close(DialogResult.Ok(true));
+    private void Cancel() => MudDialog.Close(DialogResult.Cancel());
+}

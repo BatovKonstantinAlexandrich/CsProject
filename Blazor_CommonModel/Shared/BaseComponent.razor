@@ -1,0 +1,160 @@
+﻿@using Blazor_CommonModel.Components.Context
+@using Microsoft.JSInterop
+@using MudBlazor
+
+@inherits WebComponentBase
+
+@inject IJSRuntime JSR
+@inject IContextMenuService contextMenuService
+
+
+@code {
+    [Parameter]
+    public Action<object> OnEvent { get; set; } = evt => { };
+
+    [Parameter]
+    public Action<BaseComponent> OnInit { get; set; } = comp => { };
+
+    [Parameter]
+    public Action OnRendered { get; set; } = () => { };
+
+    [Parameter]
+    public virtual RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public int ViewId { get; set; }
+
+    [Parameter]
+    public int ViewHashCode { get; set; }
+
+    public virtual string ErrorMessage { get; set; } = "";
+    public virtual bool Initiallized { get; set; } = false;
+    private static readonly string[] DemoMenuValues =
+    [
+        "Копировать",
+    "Вставить",
+    "Вырезать",
+    "---",
+    "Свойства"
+    ];
+
+    public async Task OpenContextMenuAsync(object sender, Microsoft.AspNetCore.Components.Web.MouseEventArgs evt)
+    {
+        var entries = DemoMenuValues
+            .Select(value => new MenuItemItem<object>
+                {
+                    Text = value,
+                    Disabled = value == "---",
+                    Icon = value switch
+                    {
+                        "Копировать" => Icons.Material.Filled.ContentCopy,
+                        "Вставить" => Icons.Material.Filled.ContentPaste,
+                        "Вырезать" => Icons.Material.Filled.ContentCut,
+                        "Свойства" => Icons.Material.Filled.Info,
+                        _ => null
+                    }
+                })
+            .Where(x => x.Text != "---")
+            .ToList();
+
+        await contextMenuService.ShowAsync(entries, new ActionModels.MouseEventArgs()
+        {
+                X = (int)evt.ClientX,
+                Y = (int)evt.ClientY
+
+        }, onItemSelected => Task.CompletedTask);
+    }
+
+    /// <summary>
+    /// Метод упрощает написание кода в дочерних классах, т.к. OnInitializedAsync() трудно запомнить
+    /// </summary>
+    public virtual void AfterInit() {
+    }
+
+    public int Status { get; set; } = 200;
+    public string StatusMessage { get; set; } = "";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+        if(firstRender)
+        {
+            this.OnRendered();
+        }
+    }
+
+    public string GetElementId() => $"p_{GetHashCode()}";
+    public string GetContainerId() => $"p_{GetHashCode()}";
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        this.Initiallized = true;
+        this.Id = this.GetHashCode().ToString();
+        if (OnInit is null)
+            OnInit = p => { };
+        OnInit(this);
+        this.AfterInit();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+    }
+
+
+    public async Task OnChildInitiallized(BaseComponent child)
+    {
+        Info($"OnChildInitiallized({child.GetHashCode()})");
+        if (child.Parent != null)
+        {
+            child.Parent.Controls.Remove(child.Parent);
+        }
+        child.Parent = this;
+        Controls.Add(child);
+        OnInit(child);
+    }
+
+    public void OnEventSubmited(object evt)
+    {
+        Info($"OnEventSubmited({evt.GetHashCode()})");
+        OnEvent(evt);
+    }
+
+    public void Error(Exception ex)
+    {
+        Console.WriteLine($"[{GetType().GetTypeName()}]: {ex.Message}");
+        Console.WriteLine($"[{GetType().GetTypeName()}]: {ex.StackTrace}");
+    }
+
+    public void Info(object item)
+    {
+        Console.WriteLine($"[{GetType().GetTypeName()}]: {item}");
+    }
+
+    public async Task<T> Eval<T>( string js )
+    {
+        Info($"Eval({js})");
+        return await JSR.InvokeAsync<T>("eval",@"(function () {            
+            try {
+                " +js+@"    
+            } catch (e) {
+                alert('Ошибка при разборе JSON: ' + e);
+            }             
+        })()");
+    }
+
+    public async Task<T> EvalAsync<T>( string js )
+    {
+        Info($"Eval({js})");
+        return await JSR.InvokeAsync<T>("eval",@"(function () {            
+            try {
+                " +js+@"    
+            } catch (e) {
+                alert('Ошибка при разборе JSON: ' + e);
+            }             
+        })()");
+    }
+
+}

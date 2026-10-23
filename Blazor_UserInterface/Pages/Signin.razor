@@ -1,0 +1,143 @@
+﻿@page "/user-login"
+@inject APIAuthorization auth
+@inject ITokenStorage tokens
+@inject AuthStateService state
+@code
+{
+    [NotNullNotEmpty("Необходимо ввести адрес электронной почты")]
+    [InputEmail]
+    public string Email { get; set; } = "eckumocuk@gmail.com";
+
+    [NotNullNotEmpty("Необходимо ввести пароль")]
+    public string Password { get; set; } = "eckumocuk@gmail.com";
+    public string Info { get; set; }
+    public string Error { get; set; }
+    public bool RememberMe { get; set; }
+
+    public bool Enabled { get; set; } = true;
+    public Dictionary<string, List<string>> ValidationResult { get; set; } = new Dictionary<string, List<string>>();
+
+    public string Token { get; set; }
+}
+<!-- Вспомогательные функции -->
+<form>
+
+    <h1>Авторизация</h1>
+    @if (state.State.Signed)
+    {
+        <div class="alert alert-info">@Info</div>
+    }
+    else
+    {
+        <div class="alert alert-danger">@Error</div>
+    }
+
+    <div>@Token</div>
+    <div class="form-group">
+        <label for="inputEmail">Электронная почта</label>
+        <input @bind-value="@Email"
+        type="email"
+        class="form-control is-@(ValidationResult.ContainsKey("Email")?"invalid":"valid")"
+        placeholder="Электронная почта">
+
+        @if (ValidationResult.ContainsKey("Email"))
+        {
+            foreach (var error in ValidationResult["Email"])
+            {
+                <small id="emailHelp" class="form-text text-danger">@error</small>
+            }
+        }
+        else
+        {
+            <small id="emailHelp" class="form-text text-info">Электронный адрес или имя пользователя</small>
+        }
+
+    </div>
+    <div class="form-group">
+
+        <label for="inputPassword">Пароль</label>
+        <input @bind="@Password" type="password" class="form-control form is-@(ValidationResult.ContainsKey("Password")?"invalid":"valid")" id="inputPassword" placeholder="Пароль">
+
+        @if (ValidationResult.ContainsKey("Password"))
+        {
+            foreach (var error in ValidationResult["Password"])
+            {
+                <small class="form-text text-danger">@error</small>
+            }
+        }
+        else
+        {
+            <small class="form-text text-info">Пароль к учетной записи</small>
+        }
+    </div>
+    <div class="form-check">
+
+        <input @bind="@RememberMe" type="checkbox" class="form-check-input" id="exampleCheck">
+        <label class="form-check-label">Запомнить меня</label>
+    </div>
+
+    <div style="padding-top: 5px;" align="right">
+        <button type="submit" class="btn btn-primary @(Enabled==false? "disabled":"")" @ @onclick="@OnSubmit2">Выполнить</button>
+    </div>
+    <div>
+        @Message
+    </div>
+</form>
+
+@inject NavigationManager nav
+@code {
+
+    [CascadingParameter]
+    public AuthState State { get; set; }
+    public string Message { get; set; }
+    public void OnSubmit2()
+    {
+        this.Message = "123";
+    }
+    public async Task OnSubmit()
+    {
+        this.Enabled = false;
+        this.Info = "Выполняется запрос...";
+        try
+        {
+            var request = new LoginRequest(Email, Password);
+            ValidationResult = request.Validate();
+            if (ValidationResult.Count() == 0)
+            {
+                var user = auth.Signin(Email, Password,true);
+                string token = user != null ? user.SecretKey : null;                
+                Console.WriteLine(auth.IsSignin());
+                Console.WriteLine(auth.IsSignin());
+                Console.WriteLine(auth.IsSignin());
+                if (string.IsNullOrEmpty(token))
+                {
+                    Error = "Учетные данные не зарегистрированы";
+                    state.State.Signed = false;
+                }
+                else
+                {
+                    await tokens.Set(token);
+                    nav.NavigateTo("/");
+                    Error = null;
+                    state.State.Signed = true;
+                }
+            }
+            else
+            {
+                Error = "Введённые данные содержат ошибки";
+            }
+        }
+        catch(Exception ex)
+        {
+            Error = ex.Message;
+        }
+        finally
+
+        {
+            state.StateChanged(state.State);
+            this.Info = null;
+            this.Enabled = true;
+        }
+    }
+
+}

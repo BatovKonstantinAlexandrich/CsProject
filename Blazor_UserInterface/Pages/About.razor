@@ -1,0 +1,60 @@
+﻿@page "/about"
+@inherits BaseComponent
+<h2>Справка</h2>
+<h3>Компоненты</h3>
+@code{
+    public void OnClicked(string name)
+    {
+        FormModel = new();
+    }
+}
+@if (Type == null)
+{
+    <ul class="list-group">
+        @foreach (var type in typeof(BaseComponent).Namespace.GetTypesAll().Where(t => t.Name != nameof(BaseComponent)))
+        {
+            <li class="list-group-item" @onclick="@(()=>{ OnClicked(type.Name); })">@type.Name</li>
+        }
+    </ul>
+}
+else
+{
+    <div>@Type</div>
+    @if (FormModel != null)
+    {
+        <InputForm Model="@FormModel"></InputForm>
+    }
+
+}
+
+
+@code {
+
+    [Parameter]
+    public string Type { get; set; }
+
+    public object DataModel { get; set; }
+    public Form FormModel { get; set; }
+
+
+    public void OnSelected(Type? ptype)
+    {
+
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Info("OnInitializedAsync");
+        await base.OnInitializedAsync();
+        if (Type != null)
+        {
+            string CapitalStyle = Type.ToCapitalStyle();
+            DataModel = CapitalStyle.ToType().New();
+            FormModel = new Form(DataModel);
+
+        }
+    }
+
+
+
+}

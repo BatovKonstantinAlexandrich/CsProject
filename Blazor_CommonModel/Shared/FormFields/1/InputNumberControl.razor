@@ -1,0 +1,55 @@
+@using Console_CommonModel.CommonLib.LibViews.AppViews.InputModule
+@inherits BaseComponent
+@code{
+    [Parameter]
+    public override AppViewBase ViewModel { get; set; }
+
+    [Parameter]
+    public InputNumberView Model { get; set; }
+
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();        
+        try
+        {
+            if(Model is not null)
+            {
+                ViewModel = Model;
+            }
+        }
+        catch(Exception ex)
+        {
+            //this.ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            //this.Initiallized = true;
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        if (Model is not null)
+        {
+            ViewModel = Model;
+        }
+    }
+
+}
+<MudCard>
+    @if(!Initiallized)
+    {
+        <MudProgressCircular>Выполняется инициализация</MudProgressCircular>
+    }
+    else
+    {
+        if(ErrorMessage != "" )
+        {
+            <MudAlert>@ErrorMessage</MudAlert>
+        }
+        else
+        {
+            <MudBlazor.Charts.Line></MudBlazor.Charts.Line>
+        }
+    }
+</MudCard>

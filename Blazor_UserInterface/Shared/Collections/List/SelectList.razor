@@ -1,0 +1,44 @@
+﻿@typeparam TItem
+<ul class="list-group">
+    @foreach (SelectableListItem<TItem> item in ListItems)
+    {
+        @if (item.Selected)
+        {
+            <li class="list-group-item active"
+                @onclick="@(async()=> { await OnListItemClicked(item); })">
+                @item.Label
+                <span class="badge badge-primary badge-pill">@item.Badge</span>
+            </li>
+        }
+        else
+        {
+            <li class="list-group-item d-flex justify-content-between align-items-center"
+                @onclick="@(async()=> {  await OnListItemClicked(item); })">
+                @item.Label
+                <span class="badge badge-primary badge-pill">@item.Badge</span>
+            </li>
+        }
+
+    }
+</ul>
+
+@code {
+    [Parameter]
+    public IEnumerable<global::SelectableListItem<TItem>> ListItems { get; set; }
+
+    [Parameter]
+    public EventCallback<TItem> OnSelected { get; set; }
+
+    public global::SelectableListItem<TItem> Selected { get; set; }
+
+    public async Task OnListItemClicked(SelectableListItem<TItem> selected)
+    {
+        if(Selected != null)
+        {
+            Selected.Selected = false;
+        }
+        Selected = selected;
+        Selected.Selected = true;
+        await OnSelected.InvokeAsync(selected.Item);
+    }
+}

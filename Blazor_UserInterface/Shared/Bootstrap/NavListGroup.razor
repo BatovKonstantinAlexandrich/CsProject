@@ -1,0 +1,49 @@
+﻿@typeparam TItem
+
+<div class="list-group">
+    <a href="#" class="list-group-item active">
+        <h4 class="list-group-item-heading">Заголовок пункта списка группы</h4>
+        <p class="list-group-item-text">...</p>
+    </a>
+</div>
+
+ 
+@code {
+    [Parameter]
+    public RenderFragment HeaderTemplate { get; set; }
+
+    [Parameter]
+    public IEnumerable<TItem> Items { get; set; }
+
+    [Parameter]
+    public RenderFragment<TItem> ChildContent { get; set; }
+}
+
+@if (Items == null)
+{
+    <div>Загрузка..</div>
+}
+else
+{
+
+    var type = Items.GetType();
+    if (type.IsArray && Typing.IsCollectionType(type))
+    {
+        <ul class="list-group">
+            @foreach (var item in (dynamic)Items)
+            {
+                <li class="list-group-item">@ChildContent(item)</li>                
+            }
+        </ul>
+        
+    }
+    else
+    {
+        <div class="alert alert-danger">
+            Параметр Items компонента ForEach должен фактически должен
+            принимать либо коллекцию, либо массив, а не @type.Name
+        </div>
+    }
+}
+
+

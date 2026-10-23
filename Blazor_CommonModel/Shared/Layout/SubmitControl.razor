@@ -1,0 +1,71 @@
+﻿@inherits Blazor_CommonModel.Shared.BaseComponent
+<MudCard Style="@($"width: {WidthCss}; height: {HeightCss};")">
+    <MudCardHeader>
+        <MudText>@Title</MudText>
+        <p>@(Model?.ValidationSuccess)</p>
+    </MudCardHeader>
+    <MudCardContent>
+        <Blazor_CommonModel.Shared.Layout.FlexColumn>
+
+            @if(ChildContent is not null)
+            {
+                @ChildContent
+            }
+
+        </Blazor_CommonModel.Shared.Layout.FlexColumn>
+    </MudCardContent>
+
+    <MudCardActions>
+        @if(Model is not null && true==((bool)Model?.ShowButtons))
+        {
+            <MudButton OnClick="Cancel" >Отменить</MudButton>
+            <MudButton Color="MudBlazor.Color.Primary" Disabled="@((Model is not null && !Model.ValidationSuccess))"  Variant="Variant.Filled" OnClick="Confirm">Подтвердить</MudButton>
+
+        }
+    </MudCardActions>
+</MudCard>
+
+@code 
+{
+
+    [Parameter]
+    public SubmitView Model { get; set; }
+
+
+    public void OnCompleted(bool status){
+        if (Model?.oncompleted is not null)
+            Model.oncompleted(status, Model);
+    }
+
+    [Parameter]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public string WidthCss { get; set; } = string.Empty;
+
+    [Parameter]
+    public string HeightCss { get; set; } = string.Empty;
+
+    [Parameter]
+    public override RenderFragment? ChildContent { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        if(Model is not null)
+        {
+            Model.OnValidationStateChanged += state =>{
+
+            };
+        }
+
+    }
+
+    private void Confirm() => OnCompleted(true);
+    private void Cancel() => OnCompleted(false);
+}

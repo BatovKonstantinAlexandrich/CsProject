@@ -1,0 +1,26 @@
+﻿@page "/admin/content-pane-editor"
+@inject IContentPaneService ContentPaneService
+<div>
+    <h3>ContentPaneEditor</h3>
+    <div>
+        <button>создать вертикальную группу вкладок</button>
+        <button>создать горизонтальную группу вкладок</button>        
+    </div>
+    <button class="content-box" style="width: 100%; height: 100%;">
+
+        <TransclusionPanel>
+            <Left>left</Left>
+            <Right>right</Right>
+            <Header>menu</Header>
+            <ChildContent>
+
+            </ChildContent>
+            <Footer>info</Footer>
+        </TransclusionPanel>
+    </button>
+</div>
+
+@code {
+    public static string Title;
+}
+

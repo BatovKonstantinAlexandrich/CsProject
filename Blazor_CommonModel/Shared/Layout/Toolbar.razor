@@ -1,0 +1,11 @@
+﻿<FlexRow Wrap="true">
+    @ChildContent
+</FlexRow>
+
+@code {
+    [Parameter]
+    public IEnumerable<ILink> Links { get; set; }
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+}

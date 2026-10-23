@@ -1,0 +1,23 @@
+﻿@page "/"
+@code
+{
+    public ListView listView { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        listView.Options.AddRange("1,2,3".Split(",").Select(p => new Option() { Item = p, Value = p }));
+    }
+}
+<PageTitle>Home</PageTitle>
+ 
+
+<Blazor_DesignModel.Components.Controls.ListControl View="@listView">
+</Blazor_DesignModel.Components.Controls.ListControl>
+<Blazor_DesignModel.Components.Controls.ListControl2
+    Title="Справочник"
+    Options="@("1 элемент,2 элемент,3элемент,4 элемент".Split(",").ToList())">
+</Blazor_DesignModel.Components.Controls.ListControl2>
+
+
+ 

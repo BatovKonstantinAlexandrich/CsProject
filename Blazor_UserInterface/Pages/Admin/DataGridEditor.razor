@@ -1,0 +1,50 @@
+﻿@page "/admin/data-grid-editor"
+@inject ILogger<DataGridEditor> logger
+<h3>Home</h3>
+@*
+    <TransclusionPanel>
+        <Header></Header>
+        <Left>
+
+            <SelectList ListItems="@ListItems"
+                        OnSelected="@OnEntitySelected"
+                        TItem="System.String"></SelectList>
+        </Left>
+        <ChildContent>
+            @if (Selected != null)
+            {
+                <Table T></Table>
+            }
+        </ChildContent>
+        <Right>
+
+        </Right>
+        <Footer></Footer>
+    </TransclusionPanel>
+*@
+@code {
+    public string Selected { get; set; }
+    public string[] Entities { get; set; }
+    public SelectableListItem<string>[] ListItems { get; set; }
+    public InputFormModel Form { get; set; }
+    public void OnEntitySelected(string Entity)
+    {
+        logger.LogInformation("selected " + Entity);
+        Selected = Entity;
+        Form = new InputFormModel(Selected.ToType().New());
+        logger.LogInformation("Fields " + Form.ToJson());
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        Entities = typeof(ApplicationDbContext).GetEntityTypeNames().ToArray();
+        ListItems = Entities.Select(e =>
+        {
+            var type = e.ToType(); return new SelectableListItem<string>()
+            {
+                Label = type.Label(),
+                Item = e
+            };
+        }).ToArray();
+    }
+}

@@ -1,0 +1,215 @@
+﻿@page "/"
+@using Blazor_CommonModel.Shared.Components
+@using Console_CommonModel.CommonLib.LibDesigner.DesignerServices
+@inherits BaseComponent
+@inject IJSRuntime JS
+
+@code 
+{
+    public AppViewBase ViewRef { get; set; } = new();
+    public AppViewRoot ViewRootRef { get; set; } = new();
+    public DesignerView DesignerViewRef { get; set; }
+    private DotNetObjectReference<Index>? _objRef;
+
+
+    private string LastKey = "—";
+    private string LastCode = "—";
+
+    [JSInvokable]
+    public Task OnKeyDown(string key, string code)
+    {
+        LastKey = key;
+        LastCode = code;
+
+
+        this.DesignerViewRef.OnKeyDown(this.DesignerViewRef, new()
+            {
+                KeyCodeStr = code
+            });
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    [JSInvokable]
+    public Task OnKeyPress(string key, string code)
+    {
+        LastKey = key;
+        LastCode = code;
+        if (code.StartsWith("Key"))
+            code = code.Substring(3).ToLower();
+        this.DesignerViewRef.OnKeyPressed(this.DesignerViewRef, new()
+            {
+                KeyChar = code
+            });
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    [JSInvokable]
+    public Task OnKeyUp(string key, string code)
+    {
+        LastKey = key;
+        LastCode = code;
+        this.DesignerViewRef.OnKeyUp(this.DesignerViewRef, new()
+            {
+                KeyCodeStr = code
+            });
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private RenderFragment CreateComponent() => builder =>
+    {
+        // 1. Открываем компонент, указывая его тип
+        builder.OpenComponent(0, typeof(ContainerControl));
+
+        // 2. Добавляем параметры (название параметра и значение)
+        // Важно: числа (0, 1, 2...) — это "sequence numbers".
+        // Они должны быть уникальными и постоянными для каждой строки кода.
+        var designer = new DesignerView() {   };
+
+        builder.AddAttribute(1, nameof(ContainerControl.ViewModel), designer);
+        // builder.AddAttribute(1, nameof(ButtonControl.Text), "Someone's best friend!");
+
+        // 3. Закрываем компонент
+        builder.CloseComponent();
+    };
+
+
+
+    public FlexView FlexViewModel { get; set; } = new FlexView() { Direction = "LeftToRight", WrapContents = false, FillDirection = false  };
+
+    /*public RenderFragment GetRenderFragment(){
+    RenderFragment fragment = builder =>
+    {
+    builder.OpenComponent<ContainerControl>(0);
+    builder.AddComponentParameter(1, nameof(ContainerControl.ViewModel), new ButtonView());
+    builder.SetProperty(nameof(ContainerControl.ViewModel), new ButtonView());
+        builder.AddComponentReferenceCapture(2, compRef =>
+        {
+        var container = compRef.Cast<ContainerControl>();
+        container.Refresh();
+        container.ViewModel = new ButtonView();                
+    });
+    builder.CloseComponent();
+    };
+    return fragment;
+    }*/
+
+}
+<div style="position: fixed; width: 100%; height: 100%;" @oncontextmenu:stopPropagation @oncontextmenu:preventDefault>
+    <div style="position: relative; width: 100%; height: 100%;">        
+        @* <div style="width: 100%; height: 100%;  display: flex;"> *@
+             @* <div style="align-self: center; justify-self: center; margin: auto;">  *@
+        <ContainerControl FullSize="@true" ViewModel="@ViewRef"></ContainerControl>
+                @* @CreateComponent() *@
+            @* </div> *@
+        @* </div> *@        
+    </div>
+</div>
+@code
+{
+    protected override async Task OnInitializedAsync()
+    {
+        DesignerViewRef = new DesignerView();
+        ButtonView buttonView = null;
+        // ViewRef.Append(buttonView = new ButtonView()
+        //     {
+        //         OnClick = (p,e)=> {
+        //             buttonView.PutAction("Wait",()=> {
+        //                 Thread.Sleep(1000);
+        //             }
+        //         );
+        //     }
+        // });
+        ViewRef.Top = new StatusView();
+        ViewRef.LayoutFill(new ButtonView() { Height = 66, HeightUnit = "%"});
+        ViewRef.Bottom = new StatusView();
+        await base.OnInitializedAsync();
+        var designer = DesignerViewRef;
+
+
+        _objRef = DotNetObjectReference.Create(this);
+
+        this.OnRendered += async () =>
+        {
+            await JS.InvokeVoidAsync("keyboardHandler.register", _objRef);
+        };
+
+        // designer.keyboardConfig["q"] = () =>
+        // {
+        //     designer.DesignMode = !designer.DesignMode;
+
+        // };
+
+        designer.Name = nameof(AppViewRoot);
+        if (designer.GetAppRootView() != designer)
+            throw new Exception("designer.GetAppRootView() != designer");
+        // designer.Append(designer.CreateButton("Диалог", async () => {
+        //     var account = new UserAccount();
+        //     await designer.CreateEditDialog(account);
+        // }));
+        // designer.Append(designer.CreateButton("Бизнес моделирование", async () =>
+        // {
+        //     designer.OnNavSelected("Бизнес моделирование");
+        // }));
+        // designer.Append(designer.CreateButton("Регистрация", async () =>
+        // {
+        //     designer.LayoutFill(new BusinessModelView());
+        // }));
+
+        // designer.LayoutTop(new ButtonView(){
+        //     OnClick = (p,e)=> {
+        //             designer.AddNavOption("Бизнес моделирование", new BusinessModelView());
+        //             designer.OnNavSelected("Бизнес моделирование");
+        //     }
+        // });
+        // designer.AddNavOption("Личный кабинет", new UserHomeView());
+        // designer.AddNavOption("Вход", signIn);
+        // designer.AddNavOption("Бизнес моделирование", new BusinessModelView());
+        // designer.AddNavOption("Регистрация", new UserSignupView());
+        // var signin = new UserSigninView<DeliveryDbContext>();
+
+        // var editView = EditView.CreateEditViewBase(new UserAccount(), (s, e) =>
+        // {
+        //     this.Info("Completed");
+        //     this.Info(s);
+        //     this.Info(e);
+        // });
+
+        // EditViewDesignerService designerService = new EditViewDesignerService();
+        // designerService.SetControl(editView);
+        // editView.ViewDesigner = designerService;
+
+        // designer.LayoutFill(signin);
+
+        // this.DesignerViewRef.OpenFile(@"C:\CsProject\Blazor_CommonModel\Projects\app.xml");
+        // designer.OnNavSelected("Вход");
+        // designer.DesignMode = true;
+
+    }
+    private static void CreateUserBusinessFunctionsMenuView(UserContext user, DesignerView designer)
+    {
+        var userMenu = new MenuView()
+            {
+                Alignment = "right",
+                Text = user.Account.Email,
+                Icon = "person"
+            };
+        foreach (var kv in user.ActiveFunctions)
+        {
+            var todo = kv.Value;
+            userMenu.MenuItems.Add(new()
+                {
+                    Text = kv.Key,
+                    OnClick = (s, e) =>
+                    {
+                        todo();
+                    }
+                });
+        }
+        designer.MenuView.MenuItems.Add(userMenu);
+        designer.DesignMode = false;
+    }
+
+}

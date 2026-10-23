@@ -1,0 +1,136 @@
+@page "/services-demo"
+@using Blazor_CommonModel.Components.Context
+@using Blazor_CommonModel.Components.Dialogs
+@using Blazor_CommonModel.Components.Modal
+@using Microsoft.AspNetCore.Components.Web
+@using MudBlazor
+@inject IAppModalService ModalService
+@inject IContextMenuService ContextMenuService
+@inject ISnackbar Snackbar
+@code
+{
+    public TreeControlView TreeViewModelRef { get; set; } = new();
+}
+<PageTitle>Демо сервисов</PageTitle>
+<ContainerBase ViewModel="@TreeViewModelRef">
+</ContainerBase>
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-4">
+    <MudText Typo="Typo.h4" GutterBottom="true">Модальные окна и контекстное меню</MudText>
+    <MudText Typo="Typo.body2" Class="mb-4 mud-text-secondary">
+        Примеры сервисов на базе MudBlazor: диалоги и меню по правому клику с пунктами из переданного списка.
+    </MudText>
+
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudText Typo="Typo.h6" GutterBottom="true">IAppModalService</MudText>
+        <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowMessageAsync">
+                Сообщение
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ShowConfirmAsync">
+                Подтверждение
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ShowInputDialogAsync">
+                Ввод текста
+            </MudButton>
+        </MudStack>
+        @if (!string.IsNullOrEmpty(_lastDialogResult))
+        {
+            <MudAlert Severity="Severity.Info" Class="mt-3" Dense="true">@_lastDialogResult</MudAlert>
+        }
+    </MudPaper>
+
+    <MudPaper Class="pa-4" Elevation="1">
+        <MudText Typo="Typo.h6" GutterBottom="true">IContextMenuService</MudText>
+        <MudText Typo="Typo.body2" Class="mb-3">
+            Нажмите правой кнопкой мыши в области ниже. Сервис получит список пунктов и построит меню динамически.
+        </MudText>
+
+        <div class="context-menu-demo-area"
+             @oncontextmenu="OpenContextMenuAsync"
+             @oncontextmenu:preventDefault="true">
+            <MudIcon Icon="@Icons.Material.Filled.TouchApp" Size="Size.Large" />
+            <MudText Typo="Typo.body1">Область контекстного меню</MudText>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_lastMenuAction))
+        {
+            <MudAlert Severity="Severity.Success" Class="mt-3" Dense="true">@_lastMenuAction</MudAlert>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private string _lastDialogResult = string.Empty;
+    private string _lastMenuAction = string.Empty;
+
+    private static readonly string[] DemoMenuValues =
+    [
+        "Копировать",
+        "Вставить",
+        "Вырезать",
+        "---",
+        "Свойства"
+    ];
+
+    private async Task ShowMessageAsync()
+    {
+        await ModalService.ShowMessageAsync("Информация", "Это модальное окно открыто через IAppModalService.");
+        _lastDialogResult = "Закрыто окно сообщения.";
+    }
+
+    private async Task ShowConfirmAsync()
+    {
+        var confirmed = await ModalService.ShowConfirmAsync(
+            "Подтверждение",
+            "Вы действительно хотите выполнить действие?");
+
+        _lastDialogResult = confirmed ? "Пользователь подтвердил действие." : "Пользователь отменил действие.";
+    }
+
+    private async Task ShowInputDialogAsync()
+    {
+        var parameters = new DialogParameters<DemoInputDialog>
+        {
+            { x => x.Label,         "Название элемента" },
+            { x => x.InitialValue,  "Новый элемент" }
+        };
+
+        var value = await ((AppModalService)ModalService).ShowDialogAsync<DemoInputDialog, string>(
+            "Редактирование",
+            parameters );
+
+        _lastDialogResult = value is null
+            ? "Диалог ввода отменён."
+            : $"Сохранено значение: «{value}»";
+    }
+
+    private Task OpenContextMenuAsync(MouseEventArgs e)
+    {
+         var entries = DemoMenuValues
+            .Select(value => new MenuItemItem<object>
+                {
+                    Text = value,
+                    Disabled = value == "---",
+                    Icon = value switch
+                    {
+                        "Копировать" => Icons.Material.Filled.ContentCopy,
+                        "Вставить" => Icons.Material.Filled.ContentPaste,
+                        "Вырезать" => Icons.Material.Filled.ContentCut,
+                        "Свойства" => Icons.Material.Filled.Info,
+                        _ => null
+                    }
+                })
+            .Where(x => x.Text != "---")
+            .ToList();
+
+        return ContextMenuService.ShowAsync(entries, new(){
+                X = (int)e.ClientX,
+                Y = (int)e.ClientY
+        }, entry =>
+        {
+            _lastMenuAction = $"Выбран пункт: «{entry.Text}»";
+            Snackbar.Add(_lastMenuAction, Severity.Normal);
+            return Task.CompletedTask;
+        });
+    }
+}

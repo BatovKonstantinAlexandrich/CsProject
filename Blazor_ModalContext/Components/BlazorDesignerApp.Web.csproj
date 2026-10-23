@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>BlazorDesignerApp.Web</RootNamespace>
+    <UseWindowsForms>false</UseWindowsForms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MudBlazor" Version="7.16.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Projects\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

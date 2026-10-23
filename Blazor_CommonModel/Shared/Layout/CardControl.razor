@@ -1,0 +1,15 @@
+﻿@inherits BaseComponent
+@code 
+{
+    [Parameter]
+    public CardView Model { get; set; }
+
+    [Parameter]
+    public override RenderFragment? ChildContent { get; set; }
+}
+@if (Model is not null)
+{    
+    <MudCard Sstyle="@(Model.GetCssText())">
+        @ChildContent
+    </MudCard>
+}

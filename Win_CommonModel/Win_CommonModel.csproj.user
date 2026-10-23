@@ -1,0 +1,360 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup />
+  <ItemGroup>
+    <Compile Update="CommonModel\AppControlsModule\AudioControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\AudioRecorderControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\ButtonViewHost.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\CameraControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\CheckedListControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\DataTableControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\DragDropTreeView.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\ImageControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\ImageSliderControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\InputDecimalControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\InputNaturalControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\InputPanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\InputPanelExp.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\LayoutControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\MenuControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\NavigationControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\PanelsControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\RecaptchaControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\SignalRVideoControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\TableControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\TableFieldsControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\TableFieldsView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\TableViewControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\TextBoxControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\TreeViewControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\VideoControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\ViewContainerControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControlsModule\ViewControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\AppComponentRoot.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\AppControlRoot.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\BarChartComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\BarChartControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ButtonComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ButtonControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ButtonToggleComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\CalendarControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ChartComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ChartControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ChartDiagramComponentBase.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ChartDiagramControlBase.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ChartViewExample.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\CheckboxComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\CheckboxControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\CollectionControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ColorStyleForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ColumnChartComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ColumnChartControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ColumnsComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ColumnsControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ColumnsPanel.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ComboboxComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ComboboxControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ContentPanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ControlBase.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ControlControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\CoreChartComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\CoreChartControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\DateTimeControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ExpansionControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\FieldControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\FlexComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\FlexControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\FormControl.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\Highcharts\HighchartComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\Highcharts\HighchartControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\InputColorComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\InputColorControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\InputControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\InputCreditCardComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\InputCreditCardControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\InputDialogForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\InputFilePathComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\InputFilePathControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\InputFormControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\InputIconControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\InputInterfaceCollectionControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\InputTcpIpAddressComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\InputTcpIpAddressControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\LineChartComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\LineChartControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\LineViewControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ListComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ListControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\MessageControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\MultiComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\MultiLineTextComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\MultiLineTextControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\NavListComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\NavListControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\SearchComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\SearchControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\SideComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\SidePanelForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\SingleComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\SplitComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\SplitControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\StatusComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\StatusControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\StatusUserControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\SubmitControl.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\SubmitDialogForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\SubmitForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\TabsComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\TabsControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\TextComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\TextControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ToolBoxPanel.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ToolsComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ToolsControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ToolsCtrl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\ToolsPanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\TreeViewCreateForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\TreeViewEfService.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\TypedComponent.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="CommonModel\AppControls\TypedControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\ControlBase.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="CommonModel\InputPanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Form1.cs">
+      <SubType>Form</SubType>
+    </Compile>
+  </ItemGroup>
+</Project>

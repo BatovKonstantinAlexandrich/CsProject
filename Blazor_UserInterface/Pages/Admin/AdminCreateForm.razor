@@ -1,0 +1,45 @@
+﻿@page "/admin/input-forms-editor"
+@page "/admin/input-forms-editor/{name}"
+@inject IInputModalService InputModal
+@inject ILogger<CreateForm> Logger
+@inject IBusinessPageService BusinessPage
+
+@code {
+    [Parameter]
+    public string Name { get; set; } = "https://localhost:5001/form-page/login";
+    private InputFormModel Model { get; set; } = new InputFormModel(new Dictionary<string,object>());
+}
+
+<div>
+    <h2>Редактор экранных форм</h2>
+    <div>
+        <MatButton Icon="add" OnClicked="@OnAddFieldClicked"></MatButton>
+    </div>
+    <ValidationForm Model="@Model" @ref="@Ref"></ValidationForm>
+    @* <input type="text" @bind="Name" /> *@
+    @* <CreateForm TypeName="@(nameof(InputFormModel))"  *@
+    @*             OnCreate="@OnFormCreated"></CreateForm> *@
+</div>
+@functions
+{
+    public void OnFormCreated()
+    {
+        BusinessPage.CreateBusinessPage(Name);
+    }
+    public ValidationForm Ref { get; set; }
+
+    public async Task OnAddFieldClicked()
+    {
+        var NewFormField = await InputModal.Create<InputFormField>();
+        if (NewFormField != null)
+        {
+            Logger.LogInformation(Formating.ToJson(NewFormField));
+            Console.WriteLine(Formating.ToJson(NewFormField));
+            Model.FormFields.Add(NewFormField);
+            Ref.Model = new InputFormModel(new UserAccount());
+            StateHasChanged();
+            Ref.Model = Model;
+            StateHasChanged();
+        }
+    }
+}

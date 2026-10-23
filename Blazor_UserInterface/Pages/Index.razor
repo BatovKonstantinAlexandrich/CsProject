@@ -1,0 +1,41 @@
+﻿@page "/"
+@inject IAngularJS js
+@code
+{
+
+    public Type EntityType { get; set; } = typeof(BusinessPageModel);
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+        js.CompileNode("MaterialForm");
+    }
+    protected void Compile()
+    {
+        js.CompileNode("MaterialForm");
+    }
+}
+
+@code {
+
+    public IEnumerable<SelectableListItem<BusinessFunction>> BusinessFunctionsList { get; set; } = new List<SelectableListItem<BusinessFunction>>()
+    {
+        new SelectableListItem<BusinessFunction>(){ Item = new BusinessFunction(){ Name = "Создать заказ" } },
+        new SelectableListItem<BusinessFunction>(){ Item = new BusinessFunction(){ Name = "Отменить заказ" } }
+    };
+    public void OnBusinessFunctionSelected(BusinessFunction businessFunction)
+    {
+        //modal.ConfirmDialog(businessFunction.Name, businessFunction.Name);
+    }
+}
+
+<SelectList 
+    TItem="BusinessFunction"
+    ListItems="@BusinessFunctionsList"
+    OnSelected="@OnBusinessFunctionSelected">
+    
+</SelectList>
+@* <ListComponent ListItems="@("1,2,3".Split(",").ToList())" ></ListComponent> *@
+
+
+

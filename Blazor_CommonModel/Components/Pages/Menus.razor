@@ -1,0 +1,55 @@
+﻿@page "/menus"
+@inject ISnackbar Snackbar
+@code
+{
+    public ContextView ContextMenu { get; set; } = new()
+    {
+        Label = "file" 
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        ContextMenu.Items.Add(new() { 
+            Label = "File1"
+        });
+        ContextMenu.Items.Add(new()
+            {
+                Label = "File1"
+            });
+    }
+}
+<div @oncontextmenu="OpenWorkspaceMenu"
+     @oncontextmenu:preventDefault="true"
+     @oncontextmenu:stopPropagation="true">
+    <div style="border: 1px solid black; width: 225px; height:225px;">
+
+        test
+    </div>
+</div>
+
+<MudMenu @ref="_menu" PositionAtCursor="true" Dense="true" AnchorOrigin="Origin.TopLeft">
+    <MudMenuItem Label="@ContextTitle" Disabled="true" />
+    <MenusItem Item="@ContextMenu"></MenusItem>
+</MudMenu>
+
+@code {
+    public string ContextTitle { get; set; } = "Меню";
+    private MudMenu _menu = null!;
+
+    protected override void OnInitialized()
+    {
+        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomRight;
+    }
+
+    private Task OpenWorkspaceMenu(MouseEventArgs args)
+    {
+        return OpenMenu(args);
+    }
+
+    private async Task OpenMenu(MouseEventArgs args)
+    {
+        await _menu.OpenMenuAsync(args);
+    }
+                    
+}

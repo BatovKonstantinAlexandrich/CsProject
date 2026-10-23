@@ -1,0 +1,9 @@
+﻿@typeparam TItem
+<h3>CheckboxList</h3>
+<NavListGroup TItem="TItem" Context="item" Items="Items">
+    <p>@item.ToString()</p>
+</NavListGroup>
+@code {
+    [Parameter]
+    public TItem[] Items { get; set; }
+}

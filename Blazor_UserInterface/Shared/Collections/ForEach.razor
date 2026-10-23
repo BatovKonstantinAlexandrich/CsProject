@@ -1,0 +1,24 @@
+@typeparam TItem
+@code {
+    [Parameter]
+    public RenderFragment HeaderTemplate { get; set; }
+
+    [Parameter]
+    public IEnumerable<TItem> Items { get; set; }
+
+    [Parameter]
+    public RenderFragment<TItem> ChildContent { get; set; }
+}
+@if (Items == null)
+{
+    <div>Загрузка..</div>
+}
+else if (ChildContent != null)
+{
+    foreach (var item in Items)
+    {
+        @ChildContent(item)
+    }
+}
+
+

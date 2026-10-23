@@ -1,0 +1,285 @@
+﻿=== Отчёт тестирования CommonModel ===
+Дата: 2026-09-25 11:15:09
+Рабочая папка: C:\CsProject\Blazor_CommonModel
+
+--- Сводка ---
+Листовых тестов: 2
+Успех: 2
+Провал: 0
+
+--- Дерево отчётов ---
+[Успех] CommonModelUnit
+  1/1: Модуль тестирования библиотек в сборки Console_CommonModel
+  [Успех] Модуль тестирования библиотек в сборки Console_CommonModel
+    1/1: Тестирование модели BusinessDbContext. Функциональная модель
+    [Успех] Тестирование модели BusinessDbContext. Функциональная модель
+      1/2: StatisticsModule: создание BusinessProcess
+      [Успех] StatisticsModule: создание BusinessProcess
+        BusinessProcess с Name=Checkout
+        BusinessProcess.Name = Checkout, BusinessFunctions = OK
+      2/2: StatisticsModule: DbSet в BusinessDbContext
+      [Успех] StatisticsModule: DbSet в BusinessDbContext
+        BusinessDbContext: обнаружено свойств DbSet — 37
+
+--- JSON (краткая сериализация корня) ---
+{
+  "Messages": [],
+  "Children": [
+    {
+      "Messages": [],
+      "Children": [
+        {
+          "Messages": [],
+          "Children": [
+            {
+              "Messages": [
+                "BusinessProcess с Name=Checkout",
+                "BusinessProcess.Name = Checkout, BusinessFunctions = OK"
+              ],
+              "Children": [],
+              "Name": "StatisticsModule: создание BusinessProcess",
+              "Failed": false,
+              "Started": "2026-09-25T11:15:04.839474+03:00",
+              "Ended": "2026-09-25T11:15:04.8441841+03:00",
+              "SubReports": {}
+            },
+            {
+              "Messages": [
+                "BusinessDbContext: обнаружено свойств DbSet — 37"
+              ],
+              "Children": [],
+              "Name": "StatisticsModule: DbSet в BusinessDbContext",
+              "Failed": false,
+              "Started": "2026-09-25T11:15:04.8531719+03:00",
+              "Ended": "2026-09-25T11:15:04.8587407+03:00",
+              "SubReports": {}
+            }
+          ],
+          "Name": "Тестирование модели BusinessDbContext. Функциональная модель",
+          "Failed": false,
+          "Started": "2026-09-25T11:15:04.8259244+03:00",
+          "Ended": "2026-09-25T11:15:04.8302334+03:00",
+          "SubReports": {
+            "StatisticsModule: создание BusinessProcess": {
+              "Messages": [
+                "BusinessProcess с Name=Checkout",
+                "BusinessProcess.Name = Checkout, BusinessFunctions = OK"
+              ],
+              "Children": [],
+              "Name": "StatisticsModule: создание BusinessProcess",
+              "Failed": false,
+              "Started": "2026-09-25T11:15:04.839474+03:00",
+              "Ended": "2026-09-25T11:15:04.8441841+03:00",
+              "SubReports": {}
+            },
+            "StatisticsModule: DbSet в BusinessDbContext": {
+              "Messages": [
+                "BusinessDbContext: обнаружено свойств DbSet — 37"
+              ],
+              "Children": [],
+              "Name": "StatisticsModule: DbSet в BusinessDbContext",
+              "Failed": false,
+              "Started": "2026-09-25T11:15:04.8531719+03:00",
+              "Ended": "2026-09-25T11:15:04.8587407+03:00",
+              "SubReports": {}
+            }
+          }
+        }
+      ],
+      "Name": "Модуль тестирования библиотек в сборки Console_CommonModel",
+      "Failed": false,
+      "Started": "2026-09-25T11:15:04.8114308+03:00",
+      "Ended": "2026-09-25T11:15:04.8164218+03:00",
+      "SubReports": {
+        "Тестирование модели BusinessDbContext. Функциональная модель": {
+          "Messages": [],
+          "Children": [
+            {
+              "Messages": [
+                "BusinessProcess с Name=Checkout",
+                "BusinessProcess.Name = Checkout, BusinessFunctions = OK"
+              ],
+              "Children": [],
+              "Name": "StatisticsModule: создание BusinessProcess",
+              "Failed": false,
+              "Started": "2026-09-25T11:15:04.839474+03:00",
+              "Ended": "2026-09-25T11:15:04.8441841+03:00",
+              "SubReports": {}
+            },
+            {
+              "Messages": [
+                "BusinessDbContext: обнаружено свойств DbSet — 37"
+              ],
+              "Children": [],
+              "Name": "StatisticsModule: DbSet в BusinessDbContext",
+              "Failed": false,
+              "Started": "2026-09-25T11:15:04.8531719+03:00",
+              "Ended": "2026-09-25T11:15:04.8587407+03:00",
+              "SubReports": {}
+            }
+          ],
+          "Name": "Тестирование модели BusinessDbContext. Функциональная модель",
+          "Failed": false,
+          "Started": "2026-09-25T11:15:04.8259244+03:00",
+          "Ended": "2026-09-25T11:15:04.8302334+03:00",
+          "SubReports": {
+            "StatisticsModule: создание BusinessProcess": {
+              "Messages": [
+                "BusinessProcess с Name=Checkout",
+                "BusinessProcess.Name = Checkout, BusinessFunctions = OK"
+              ],
+              "Children": [],
+              "Name": "StatisticsModule: создание BusinessProcess",
+              "Failed": false,
+              "Started": "2026-09-25T11:15:04.839474+03:00",
+              "Ended": "2026-09-25T11:15:04.8441841+03:00",
+              "SubReports": {}
+            },
+            "StatisticsModule: DbSet в BusinessDbContext": {
+              "Messages": [
+                "BusinessDbContext: обнаружено свойств DbSet — 37"
+              ],
+              "Children": [],
+              "Name": "StatisticsModule: DbSet в BusinessDbContext",
+              "Failed": false,
+              "Started": "2026-09-25T11:15:04.8531719+03:00",
+              "Ended": "2026-09-25T11:15:04.8587407+03:00",
+              "SubReports": {}
+            }
+          }
+        }
+      }
+    }
+  ],
+  "Name": "CommonModelUnit",
+  "Failed": false,
+  "Started": "2026-09-25T11:15:04.7700141+03:00",
+  "Ended": "2026-09-25T11:15:04.7950874+03:00",
+  "SubReports": {
+    "Модуль тестирования библиотек в сборки Console_CommonModel": {
+      "Messages": [],
+      "Children": [
+        {
+          "Messages": [],
+          "Children": [
+            {
+              "Messages": [
+                "BusinessProcess с Name=Checkout",
+                "BusinessProcess.Name = Checkout, BusinessFunctions = OK"
+              ],
+              "Children": [],
+              "Name": "StatisticsModule: создание BusinessProcess",
+              "Failed": false,
+              "Started": "2026-09-25T11:15:04.839474+03:00",
+              "Ended": "2026-09-25T11:15:04.8441841+03:00",
+              "SubReports": {}
+            },
+            {
+              "Messages": [
+                "BusinessDbContext: обнаружено свойств DbSet — 37"
+              ],
+              "Children": [],
+              "Name": "StatisticsModule: DbSet в BusinessDbContext",
+              "Failed": false,
+              "Started": "2026-09-25T11:15:04.8531719+03:00",
+              "Ended": "2026-09-25T11:15:04.8587407+03:00",
+              "SubReports": {}
+            }
+          ],
+          "Name": "Тестирование модели BusinessDbContext. Функциональная модель",
+          "Failed": false,
+          "Started": "2026-09-25T11:15:04.8259244+03:00",
+          "Ended": "2026-09-25T11:15:04.8302334+03:00",
+          "SubReports": {
+            "StatisticsModule: создание BusinessProcess": {
+              "Messages": [
+                "BusinessProcess с Name=Checkout",
+                "BusinessProcess.Name = Checkout, BusinessFunctions = OK"
+              ],
+              "Children": [],
+              "Name": "StatisticsModule: создание BusinessProcess",
+              "Failed": false,
+              "Started": "2026-09-25T11:15:04.839474+03:00",
+              "Ended": "2026-09-25T11:15:04.8441841+03:00",
+              "SubReports": {}
+            },
+            "StatisticsModule: DbSet в BusinessDbContext": {
+              "Messages": [
+                "BusinessDbContext: обнаружено свойств DbSet — 37"
+              ],
+              "Children": [],
+              "Name": "StatisticsModule: DbSet в BusinessDbContext",
+              "Failed": false,
+              "Started": "2026-09-25T11:15:04.8531719+03:00",
+              "Ended": "2026-09-25T11:15:04.8587407+03:00",
+              "SubReports": {}
+            }
+          }
+        }
+      ],
+      "Name": "Модуль тестирования библиотек в сборки Console_CommonModel",
+      "Failed": false,
+      "Started": "2026-09-25T11:15:04.8114308+03:00",
+      "Ended": "2026-09-25T11:15:04.8164218+03:00",
+      "SubReports": {
+        "Тестирование модели BusinessDbContext. Функциональная модель": {
+          "Messages": [],
+          "Children": [
+            {
+              "Messages": [
+                "BusinessProcess с Name=Checkout",
+                "BusinessProcess.Name = Checkout, BusinessFunctions = OK"
+              ],
+              "Children": [],
+              "Name": "StatisticsModule: создание BusinessProcess",
+              "Failed": false,
+              "Started": "2026-09-25T11:15:04.839474+03:00",
+              "Ended": "2026-09-25T11:15:04.8441841+03:00",
+              "SubReports": {}
+            },
+            {
+              "Messages": [
+                "BusinessDbContext: обнаружено свойств DbSet — 37"
+              ],
+              "Children": [],
+              "Name": "StatisticsModule: DbSet в BusinessDbContext",
+              "Failed": false,
+              "Started": "2026-09-25T11:15:04.8531719+03:00",
+              "Ended": "2026-09-25T11:15:04.8587407+03:00",
+              "SubReports": {}
+            }
+          ],
+          "Name": "Тестирование модели BusinessDbContext. Функциональная модель",
+          "Failed": false,
+          "Started": "2026-09-25T11:15:04.8259244+03:00",
+          "Ended": "2026-09-25T11:15:04.8302334+03:00",
+          "SubReports": {
+            "StatisticsModule: создание BusinessProcess": {
+              "Messages": [
+                "BusinessProcess с Name=Checkout",
+                "BusinessProcess.Name = Checkout, BusinessFunctions = OK"
+              ],
+              "Children": [],
+              "Name": "StatisticsModule: создание BusinessProcess",
+              "Failed": false,
+              "Started": "2026-09-25T11:15:04.839474+03:00",
+              "Ended": "2026-09-25T11:15:04.8441841+03:00",
+              "SubReports": {}
+            },
+            "StatisticsModule: DbSet в BusinessDbContext": {
+              "Messages": [
+                "BusinessDbContext: обнаружено свойств DbSet — 37"
+              ],
+              "Children": [],
+              "Name": "StatisticsModule: DbSet в BusinessDbContext",
+              "Failed": false,
+              "Started": "2026-09-25T11:15:04.8531719+03:00",
+              "Ended": "2026-09-25T11:15:04.8587407+03:00",
+              "SubReports": {}
+            }
+          }
+        }
+      }
+    }
+  }
+}

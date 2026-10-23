@@ -1,0 +1,74 @@
+﻿@inject Microsoft.Extensions.Logging.ILogger<ValidationForm> Logger
+@inherits BaseComponent
+@inject IInputFormService form
+@code{
+    [Parameter]
+    public global::InputFormModel Model { get; set; }
+
+    [Parameter]
+    public bool Border { get; set; }
+
+    [Parameter]
+    public EventCallback OnInputCompleted { get; set; }
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+}
+@if (Model == null)
+{
+    <ProgressAnimation></ProgressAnimation>
+}
+else
+{
+  
+    <div style="width: 100%; border-radius: 2px; box-shadow: 0px 4px 3px -2px rgba(0, 0, 0, 0.4), 0px 2px 2px 0px rgba(0, 0, 0, 0.24), 0px 2px 6px 0px rgba(0, 0, 0, 0.22);">
+        <form style="min-width: 480px; width: 100%;">
+            <div class="text-white bg-primary"
+                 style="padding: 5px; display: flex; flex-direction: row; flex-wrap: nowrap;">
+                <MatButton Icon="menu" Color="white"></MatButton>
+                <MatButton Icon="home" Color="white"></MatButton>
+                <MatButton Icon="settings" Color="white"></MatButton>
+                <h2>@Model.Title</h2>
+            </div>          
+            <div>@Model.Description</div>
+            @if(string.IsNullOrEmpty(Model.Error)==false)
+            {
+                <div class="alert alert-danger">@Model.Error</div>
+            }
+            <div>
+                @foreach(var error in Model.Errors) 
+                {
+                    <div class="text-black-50 text-danger">@error.Key @error.Value</div>
+                }
+            </div>
+            <div style="padding: 20px; overflow-y: auto; padding: 10px;">                
+                @foreach (InputFormField property in Model.FormFields)
+                {                  
+                    <FormControl Model="@property"
+                                 AfterInput="@OnPropertyChanged"
+                                 OnEvent="@OnEventSubmited" />
+
+                }               
+            </div>
+        </form>
+        <div style="padding: 20px;" align="right">
+            
+        </div>
+    </div>
+    @ChildContent
+}
+@functions
+{
+    public void OnPropertyChanged(NetCoreConstructorAngular.ActionEvent.EventsAndMessages.InputEvent evt)
+    {
+        Info("OnPropertyChanged()");
+        Dictionary<string, List<string>> message = form.ValidateOnInput(Model, evt);
+        form.SetErrors(Model, message);
+        Model.FormFields.ForEach(item =>
+        {
+            item.State = message.ContainsKey(item.Name) && message[item.Name].Count() > 0 ? "invalid" : "valid";
+        });
+        Info(Formating.ToJson(message));
+        StateHasChanged();
+    }
+}

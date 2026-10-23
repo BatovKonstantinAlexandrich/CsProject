@@ -1,0 +1,36 @@
+﻿@page "/user/user-functions"
+@try
+{
+    @inherits BaseComponent
+    @inject IUserMessagesService userMessagesService
+    <h3>UserMessages</h3>
+    @if (Messages == null)
+    {
+        <div class="alert alert-warning">Пустоо</div>
+    }
+    else
+    {
+        @foreach (UserMessage message in Messages)
+        {
+            <div>
+                @message.Subject
+            </div>
+        }
+    }
+}
+catch (Exception ex)
+{
+    <div class="alert alert-danger">@ex.Message</div>
+}
+@code {
+
+    public List<UserMessage> Messages { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        Info("OnInitializedAsync");
+        await base.OnInitializedAsync();
+        Messages = userMessagesService.GetInbox(1);
+        this.AfterInit();
+    }
+
+}

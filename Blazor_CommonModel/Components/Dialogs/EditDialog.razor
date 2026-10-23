@@ -1,0 +1,61 @@
+@inherits Blazor_CommonModel.Shared.BaseComponent
+
+<MudDialog>
+    <DialogContent>
+        <Blazor_CommonModel.Shared.Layout.FlexColumn>
+
+            @if (EditViewModel is not null)
+            {
+                <EditControl Model="@EditViewModel">
+                </EditControl>
+            }
+
+
+        </Blazor_CommonModel.Shared.Layout.FlexColumn>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel">Отменить</MudButton>
+        <MudButton Color="MudBlazor.Color.Primary" Variant="Variant.Filled" OnClick="Confirm">Подтвердить</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public override RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public EditView EditViewModel { get; set; }
+
+    [Parameter]
+    public object Target { get => Get<object>(nameof(Target)); set => Set<object>(nameof(Target), value); }
+
+    [OnChange(nameof(Target))]
+    public void OnTargetChanged(){
+        this.EditViewModel = EditView.CreateEditViewBase(this.Target);
+    }
+
+    public EditDialog(){
+        this.Target = new();        
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();  
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+       
+    }
+     
+    private void Confirm() => MudDialog.Close(DialogResult.Ok(true));
+    private void Cancel() => MudDialog.Close(DialogResult.Cancel());
+}

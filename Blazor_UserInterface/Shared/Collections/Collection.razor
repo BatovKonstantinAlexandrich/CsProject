@@ -1,0 +1,158 @@
+﻿@inherits BaseComponent
+
+@code {
+    [Parameter]
+    public virtual bool Focusable { get; set; } = false;
+    [Parameter]
+    public virtual bool Focused { get; set; } = false;
+    [Parameter]
+    public virtual bool Selectable { get; set; } = false;
+    [Parameter]
+    public virtual bool Selected { get; set; } = false;
+    [Parameter]
+    public virtual bool MultiSelect { get; set; } = false;
+    [Parameter]
+    public virtual bool Dropable { get; set; } = false;
+    [Parameter]
+    public virtual bool Draggable { get; set; } = false;
+    [Parameter]
+    public virtual bool Editable { get; set; } = false;
+    [Parameter]
+    public virtual bool Searchable { get; set; } = false;
+    [Parameter]
+    public virtual bool Checkable { get; set; } = false;
+    [Parameter]
+    public virtual bool Checked { get; set; } = false;
+    [Parameter]
+    public virtual bool Visible { get; set; } = false;
+    [Parameter]
+    public virtual bool Expanded { get; set; } = false;
+    [Parameter]
+    public virtual bool Edited { get; set; } = false;
+
+
+
+
+    public string GetOptionsClasses()
+    {
+        var classList = new List<string>();
+        if (Dropable) classList.Add("dropable");
+        if (Draggable) classList.Add("draggable");
+        if (Selectable) classList.Add("selectable");
+        if (Focusable) classList.Add("focusable");
+        if (Searchable) classList.Add("searchable");
+        if (Focusable) classList.Add("focusable");
+        if (Focusable) classList.Add("focusable");
+        if (Editable) classList.Add("editable");
+        if (Focusable) classList.Add("focusable");
+        if (Focused) classList.Add("focused");
+        if (Selected) classList.Add("selected");
+        if (Edited) classList.Add("edited");
+        if (Expanded) classList.Add("expanded");
+        if (Checked) classList.Add("checked");
+        if (Visible) classList.Add("visible");
+        string _class = "";
+        classList.ForEach(c => { _class += " " + c; });
+        if (_class.Length > 0) _class = _class.Substring(1);
+        return _class;
+    }
+
+    public virtual void Focus()
+    {
+        if (Focusable)
+        {
+            Focused = Focused == true ? false : true;
+            //Changed = true;
+        }
+
+    }
+
+
+    public virtual void Check()
+    {
+        if (Checkable)
+        {
+            Checked = Checked == true ? false : true;
+            //Changed = true;
+        }
+    }
+
+
+    public virtual void Edit()
+    {
+        if (Editable)
+        {
+            Edited = Edited == true ? false : true;
+            //Changed = true;
+        }
+    }
+
+    public void SendEvent(object evt) { }
+
+
+    public virtual void Select()
+    {
+        if (Selectable)
+        {
+            Selected = Selected == true ? false : true;
+            //Changed = true;
+            SendEvent(new
+            {
+                Type = "Select",
+                Source = this,
+                Value = Selected
+            });
+        }
+    }
+
+    public virtual void Expand()
+    {
+        Expanded = Expanded == true ? false : true;
+        //Changed = true;
+    }
+
+    public virtual void SetSelectable(bool value)
+    {
+        Selectable = value;
+    }
+
+    public virtual void SetSelectionMode(bool multi)
+    {
+        MultiSelect = multi;
+    }
+
+    public virtual void SetCheckable(bool value)
+    {
+        Checkable = value;
+    }
+
+    public virtual void ToggleEditable()
+    {
+        Edited = Edited ? false : true;
+    }
+
+    public virtual void SetEdited(bool edited)
+    {
+        this.Edited = edited;
+    }
+
+    public virtual void SetEditable(bool editable)
+    {
+        this.Editable = editable;
+    }
+    public virtual void SetNotEditable()
+    {
+        Editable = false;
+        //Changed = true;
+    }
+    public virtual void SetEditMode()
+    {
+
+        Edited = true;
+        //Changed = false;
+    }
+    public virtual void Hide()
+    {
+        Visible = false;
+    }
+}

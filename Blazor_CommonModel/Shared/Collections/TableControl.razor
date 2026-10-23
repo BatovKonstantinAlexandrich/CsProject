@@ -1,0 +1,139 @@
+﻿@* Components/Views/TableViewComponent.razor *@
+
+@using MudBlazor
+@implements IDisposable
+@inherits BaseComponent
+@if(Model is null)
+{
+    <MudAlert>Не задана ссылка на модель представления @(GetType().GetTypeName())</MudAlert>
+}
+else
+{
+    <MudPaper Class="pa-2 table-view-component" Elevation="1">
+        @if (!string.IsNullOrEmpty(Model.Title))
+        {
+            <MudText Typo="Typo.subtitle1" Class="mb-2">@Model.Title</MudText>
+        }
+
+        <MudTable T="object"
+                  Items="@Rows"
+                  Dense="true"
+                  Hover="true"
+                  Bordered="true"
+                  Striped="true"
+                  Breakpoint="Breakpoint.Sm"
+                  MultiSelection="@_multiSelection"
+                  SelectedItemsChanged="OnSelectedItemsChanged"
+                  @bind-SelectedItem="_currentRow"
+                  OnRowClick="@((TableRowClickEventArgs<object> args) => OnRowClick(args.Item))">
+
+            <HeaderContent>
+                @foreach (var col in Columns)
+                {
+                    <MudTh>@col</MudTh>
+                }
+            </HeaderContent>
+
+            <RowTemplate Context="row">
+                @foreach (var col in Columns)
+                {
+                    <MudTd DataLabel="@col">@GetCellValue(row, col)</MudTd>
+                }
+            </RowTemplate>
+
+            <NoRecordsContent>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">Нет данных</MudText>
+            </NoRecordsContent>
+
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new[]{10,25,50,100}" />
+            </PagerContent>
+        </MudTable>
+    </MudPaper>
+
+}
+
+@code {
+    [Parameter, EditorRequired] public TableView Model { get; set; } = default!;
+
+    private object? _currentRow;
+    private bool _multiSelection;
+
+    private IEnumerable<object> Rows => Model.DataRows;
+
+    private IReadOnlyList<string> Columns =>
+        Model.VisibleColumns?.ToList()
+        ?? (IReadOnlyList<string>)Array.Empty<string>();
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        Model.DataRows.OnChanged += OnModelChanged;
+        Model.VisibleColumns.OnChanged += OnModelChanged;
+
+        _multiSelection = Model.DataRowsSelected is not null;
+    }
+
+    private void OnModelChanged(object? sender, IChangingListEvent e)
+        => InvokeAsync(StateHasChanged);
+
+    private string GetCellValue(object row, string column)
+    {
+        if (row is null) return string.Empty;
+
+        // Примитив (строка, число, дата…) — единственная колонка
+        if (Model.IsPrimitive || row.GetType().IsPrimitive || row is string)
+            return row.ToString() ?? string.Empty;
+
+        // Пытаемся достать значение свойства/поля
+        var prop = row.GetType().GetProperty(column,
+            System.Reflection.BindingFlags.Public |
+            System.Reflection.BindingFlags.Instance |
+            System.Reflection.BindingFlags.IgnoreCase);
+
+        if (prop is not null)
+        {
+            var value = prop.GetValue(row);
+            return FormatValue(value);
+        }
+
+        var field = row.GetType().GetField(column,
+            System.Reflection.BindingFlags.Public |
+            System.Reflection.BindingFlags.Instance |
+            System.Reflection.BindingFlags.IgnoreCase);
+
+        if (field is not null)
+            return FormatValue(field.GetValue(row));
+
+        return string.Empty;
+    }
+
+    private static string FormatValue(object? value)
+        => value switch
+        {
+            null => string.Empty,
+            DateTime dt => dt.ToString("yyyy-MM-dd HH:mm"),
+            bool b => b ? "✔" : "—",
+            IFormattable f => f.ToString(null, System.Globalization.CultureInfo.CurrentCulture),
+            _ => value.ToString() ?? string.Empty
+        };
+
+    private void OnRowClick(object row)
+    {
+        Model.CurrentRow = row;
+        Model.OnSelected?.Invoke(row, Model);
+    }
+
+    private void OnSelectedItemsChanged(HashSet<object> selected)
+    {
+        Model.DataRowsSelected.Clear();
+        if (selected is not null)
+            Model.DataRowsSelected.AddRange(selected);
+    }
+
+    public void Dispose()
+    {
+        Model.DataRows.OnChanged -= OnModelChanged;
+        Model.VisibleColumns.OnChanged -= OnModelChanged;
+    }
+}

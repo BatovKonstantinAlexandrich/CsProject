@@ -1,0 +1,81 @@
+﻿@typeparam TEntity
+@inject IEntityRepository<TEntity> repository
+@code
+{
+    /// <summary>
+    /// Инициаллизация
+    /// </summary>
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await this.UpdateAsync();
+    }
+
+
+    /// <summary>
+    /// Обновление страницы
+    /// </summary>
+    public async Task UpdateAsync()
+    {
+        this.Dataset = (await repository.Get()).Select(i => new TableRow((object)i)).ToArray();
+        this.Columns = typeof(TEntity).GetUserInputPropertyNames().Select(name => new TableColumn()
+        {
+            Name = name,
+            Label = Utils.LabelFor(typeof(TEntity), name),
+            Icon = Utils.IconFor(typeof(TEntity), name)
+
+        }).ToArray();
+    }
+}
+@code
+{
+    [Parameter]
+    public bool ShowLeft { get; set; }
+
+    [Parameter]
+    public bool ShowRight { get; set; }
+
+    [Parameter]
+    public TableColumn[] Columns { get; set; }
+
+    [Parameter]
+    public TableRow[] Dataset { get; set; }
+
+}
+@if (Columns != null)
+{
+    <TableView Selectable="true" 
+               Columns="@Columns" 
+               Dataset="@Dataset">
+    </TableView>
+}
+@functions
+{
+    public Task OnMenuClicked(bool state)
+    {
+        return Task.Run(() =>
+        {
+            this.ShowLeft = state;
+        });
+    }
+    public Task OnCreateClicked(bool state)
+    {
+        return Task.Run(() =>
+        {
+            this.ShowRight = state;
+        });
+    }
+    public Task OnCreateCanceled()
+    {
+        return Task.Run(() =>
+        {
+            this.ShowRight = false;
+        });
+    }
+    public async Task OnCreateCompleted(object item)
+    {
+        await repository.Create((TEntity)item);
+        await this.UpdateAsync();
+        ShowRight = false;
+    }
+}

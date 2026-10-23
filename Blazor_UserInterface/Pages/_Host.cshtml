@@ -1,0 +1,94 @@
+﻿@page "/"
+@namespace RootForms.Pages
+@using Blazor_UserInterface
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blazor_UserInterface</title>
+    <base href="~/" />
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css"
+          onerror="alert('не загрузить '+this.href)" />
+    <link href="css/site.css" rel="stylesheet"
+          onerror="alert('не загрузить '+this.href)" />
+    <link href="Blazor_UserInterface.styles.css" rel="stylesheet"
+          onerror="alert('не загрузить '+this.href)" />
+
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+          onerror="alert('не загрузить '+this.href)" rel="stylesheet" />
+
+
+    <!-- material -->
+    <link rel="stylesheet" href="deps/angular-material.min.css" onload="console.info('Загрузил '+this.src||this.href);" onerror="alert(this.href)" />
+
+    <!-- context menu -->
+    <link href="_content/Blazor.ContextMenu/blazorContextMenu.min.css" rel="stylesheet"
+          onerror="alert('Не удалось загрузить '+this.href||this.src)" />
+    <!-- modal -->
+    <link href="_content/Blazored.Modal/blazored-modal.css" rel="stylesheet"
+          onerror="alert('Не удалось загрузить '+this.href||this.src)" />
+
+</head>
+<body  ng-app="HospitalApp" ng-controller="HospitalAppCtrl">
+    <component type="typeof(App)" render-mode="ServerPrerendered" />
+
+    <div id="blazor-error-ui">
+        <environment include="Staging,Production">
+            An error has occurred. This application may no longer respond until reloaded.
+        </environment>
+        <environment include="Development">
+            An unhandled exception has occurred. See browser dev tools for details.
+        </environment>
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+    <!-- context menu -->
+    <script src="_content/Blazored.Modal/blazored.modal.js"
+            onerror="alert('Не удалось загрузить '+this.href||this.src)"></script>
+
+    <!-- modal -->
+    <script src="_content/Blazor.ContextMenu/blazorContextMenu.min.js"
+            onerror="alert('Не удалось загрузить '+this.href||this.src)"></script>
+    <script src="_framework/blazor.server.js"></script>
+
+
+    <script src="deps/jquery.min.js" onload="console.info('Загрузил '+this.src||this.href);" onerror="alert('Не удалось загрузить '+this.src)"></script>
+    <script src="deps/bootstrap.min.js" onload="console.info('Загрузил '+this.src||this.href);" onerror="alert('Не удалось загрузить '+this.src)"></script>
+    <script src="deps/angular.min.js" onload="console.info('Загрузил '+this.src||this.href);" onerror="alert('Не удалось загрузить '+this.src)"></script>
+    <script src="deps/angular-animate.min.js" onload="console.info('Загрузил '+this.src||this.href);" onerror="alert('Не удалось загрузить '+this.src)"></script>
+    <script src="deps/angular-aria.min.js" onload="console.info('Загрузил '+this.src||this.href);" onerror="alert('Не удалось загрузить '+this.src)"></script>
+    <script src="deps/angular-messages.min.js" onload="console.info('Загрузил '+this.src||this.href);" onerror="alert('Не удалось загрузить '+this.src)"></script>
+    <script src="deps/angular-material.min.js" onload="console.info('Загрузил '+this.src||this.href);" onerror="alert('Не удалось загрузить '+this.src)"></script>
+
+    <script>
+        angular
+            .module('HospitalApp', ['ngMaterial', 'ngMessages'])
+            .controller('HospitalAppCtrl', function ($scope, $interpolate, $compile) {
+
+                window['HospitalAppCtrl'] = angular.extend(this, {
+                    $scope: $scope,
+                    $interpolate: $interpolate,
+                    $compile: $compile
+                });
+                angular.extend(window, {
+                    $compile: function (pnode) {
+                        try {
+                            console.log(pnode);
+                            $compile(pnode)($scope);
+                        } catch (ex) {
+                            alert(ex);
+                        }
+
+                    }
+                });
+            });
+    </script>
+</body>
+</html>

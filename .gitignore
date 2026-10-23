@@ -1,0 +1,16 @@
+Blazor.Erp/bin/
+Blazor.Erp/obj/
+Blazor.Erp/.vs/
+Blazor.Erp/dist/
+BlazorErp.Shared/bin/
+BlazorErp.Shared/obj/
+BlazorErp.Shared/.vs/
+BlazorErp.Shared/dist/
+Console_CommonModel/bin/
+Console_CommonModel/obj/
+Console_CommonModel/.vs/
+Console_CommonModel/dist/
+bin/
+obj/
+.vs/
+dist/

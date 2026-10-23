@@ -1,0 +1,56 @@
+@using Console_CommonModel.CommonLib.LibViews.AppViewModules.StatusModule
+@using WinFormsApp.AppComponents.AppControls
+@inherits WebControlBase<StatusView,IStatusControl>
+@implements IStatusControl
+
+@code{
+    [Label("Text")]
+    public string Text { get; set; } = "Ожидание";
+
+    [InputNumber]
+    [Label("Value")]
+    public int Value { get; set; } = 0;
+
+    [InputBool]
+    [Label("Active")]
+    public bool Active { get; set; } = false;
+
+
+    public void PutAction(string name, Action todo, int timeout = 100000){
+
+    }
+
+    public void SetStatusText(string text)
+    {
+        Text = text;
+    }
+
+    public void SetValue(int value){
+        Value = value;
+    }
+
+    [Parameter]
+    public StatusView Model { get; set; }
+
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+        Model.control = this;
+        Model.AddPropertyChangeListener(nameof(Model.Active), evt => { this.Active = Model.Active;  });
+        Model.AddPropertyChangeListener(nameof(Model.Text), evt => { this.Text = Model.Text; });
+        this.component = new StatusComponent(Model, this);
+    }
+}
+
+<div style="@Model.GetCssText()">        
+    <MudProgressLinear Value="@Value" Style="@("width: 100%; z-order=1;")" Indeterminate="@Active">        
+    </MudProgressLinear>
+    <MudText>@Text</MudText>
+</div>
+@code
+{
+    public void OnTestButtonClicked(){
+        Value = 100;
+        Active = true;
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,86 @@
+﻿@page "/home"
+@inject ILogger<Home> logger
+@inject APIAuthorization auth
+<h3>Home</h3>
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+<SurveyPrompt Title="How is Blazor working for you?" />
+@auth.IsSignin()
+
+@if (ConnectedServices.Length > 0)
+{
+    <h4>Подключенные сервисы</h4>
+    <ul>
+        @foreach (var service in ConnectedServices)
+        {
+            <li>@service.Name (@service.Account?.Email)</li>
+        }
+    </ul>
+}
+else
+{
+    <p>К аккаунту пока не подключено ни одного сервиса.</p>
+}
+
+@code{
+    public Blazor.Core.SharedData.DataModels.Authorization.Service[] ConnectedServices { get; set; } =
+        Array.Empty<Blazor.Core.SharedData.DataModels.Authorization.Service>();
+
+    public void OnCreatedEvent(object item)
+    {
+        logger.LogInformation(item.ToJson());
+    }
+    public void OnCanceledEvent(object item)
+    {
+        logger.LogInformation(item.ToJson());
+    }
+}
+<TransclusionPanel>
+    <Header></Header>
+    <Left>
+
+        <SelectList ListItems="@ListItems"
+                    OnSelected="@OnEntitySelected"
+                    TItem="System.String"></SelectList>
+    </Left>
+    <ChildContent>
+        @if (Selected != null)
+        {
+            <CreateForm TypeName="@Selected" OnCreate="@OnCreatedEvent" OnCancel="@OnCanceledEvent"></CreateForm>
+        }
+    </ChildContent>
+    <Right>
+
+    </Right>
+    <Footer></Footer>
+</TransclusionPanel>
+@code {
+    public string Selected { get; set; }
+    public string[] Entities { get; set; }
+    public SelectableListItem<string>[] ListItems { get; set; }
+    public InputFormModel Form { get; set; }
+    public void OnEntitySelected(string Entity)
+    {
+        logger.LogInformation("selected " + Entity);
+        Selected = Entity;
+        Form = new InputFormModel(Selected.ToType().New());
+        logger.LogInformation("Fields " + Form.ToJson());
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        if (auth.IsSignin())
+            ConnectedServices = auth.GetConnectedServices().ToArray();
+        Entities = typeof(ApplicationDbContext).GetEntityTypeNames().ToArray();
+        ListItems = Entities.Select(e =>
+        {
+            var type = e.ToType(); return new SelectableListItem<string>()
+            {
+                Label = type.Label(),
+                Item = e
+            };
+        }).ToArray();
+    }
+}

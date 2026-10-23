@@ -1,0 +1,53 @@
+﻿<FlexColumn MaxWidth="@(FullSize)" MaxHeight="@FullSize">
+    @Header
+    <FlexRow MaxWidth="@(true)" MaxHeight="@(true)">
+        @if(ShowLeft)
+        { 
+            @Left
+        }                
+        @if (Center is not null)
+        {
+            @Center
+        }
+        @if(ShowRight)
+        { 
+            @Right
+        }                   
+    </FlexRow>
+    @Footer
+</FlexColumn>
+@code {
+    [Parameter]
+    public bool FullSize { get; set; } = false;
+ 
+    [Parameter]
+    public RenderFragment? Center { get; set; }
+
+    [Parameter]
+    public RenderFragment? Left { get; set; }
+    [Parameter]
+    public RenderFragment? Right { get; set; }
+    [Parameter]
+    public RenderFragment? Header { get; set; }
+    [Parameter]
+    public RenderFragment? Footer { get; set; }
+
+    [Parameter]
+    public bool ShowLeft { get; set; } = true;
+
+    [Parameter]
+    public bool ShowRight { get; set; } = true;
+
+    public void OnMouseOutLeftPane()
+    {
+        ShowLeft = ShowLeft ? false : true; 
+    }
+
+    public void OnMenuClicked()
+    {
+        ShowLeft = true;
+    }
+
+
+
+}

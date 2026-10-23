@@ -1,0 +1,81 @@
+﻿@inject ITableService TableService
+@inherits Collection
+@code
+{
+    protected override async Task OnParametersSetAsync()
+    {
+        Info("OnParametersSetAsync");
+        await base.OnParametersSetAsync();
+        if(Dataset != null)
+        {
+            foreach(var datarow in Dataset)
+            {
+                datarow.Focusable = this.Focusable;
+                datarow.Draggable = this.Draggable;
+                datarow.Dropable = this.Dropable;
+                datarow.Editable = this.Editable;
+                datarow.Checkable = this.Checkable;
+                datarow.Selectable = this.Selectable;
+            }
+        }
+    }
+}
+@code {
+    [Parameter]
+    public bool Bordered { get; set; }
+
+    [Parameter]
+    public bool HeadDark { get; set; } = true;
+
+    [Parameter]
+    public TableColumn[] Columns { get; set; }
+
+    [Parameter]
+    public TableRow[] Dataset { get; set; }
+
+}
+<style>
+    .border-round{
+        border-radius: 3px;
+    }
+</style>
+<table class="table @(Bordered? "table-bordered": "")">
+    <thead class="@(HeadDark? "thead-dark":"thead-light")"
+           style="height: min-content; vertical-align: top;">
+        <tr>
+            <th scope="col">#</th>
+            @foreach (var Column in TableService.GetVisibleColumnsByOrder(Columns))
+            {
+                <th scope="col">@(Column.Label)</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @for (int i = 0; i < Dataset.Length; i++)
+        {
+
+            <tr @onclick="@OnRowClicked(Dataset[i])"
+                
+                class="@(Dataset[i].Selected ? "bg-primary text-white border-round" : "")">
+                <th scope="row">@(i + 1)</th>
+                @foreach (var Column in TableService.GetVisibleColumnsByOrder(Columns))
+                {
+                    <td>@(TableService.GetValue(Dataset[i], Column.Name))</td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+@functions
+{
+    public Action OnRowClicked(TableRow datarow)
+    {
+        return ( ) => {
+            datarow.Select();
+        };
+    }
+}
+
+
+
+

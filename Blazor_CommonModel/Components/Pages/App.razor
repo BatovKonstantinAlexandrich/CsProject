@@ -1,0 +1,288 @@
+﻿@page "/app" 
+@using Blazor_CommonModel.Components.Dialogs
+@using Blazor_CommonModel.Components.Modal
+@using Blazor_CommonModel.Services.DataModel
+@using Blazor_CommonModel.Shared
+@using Blazor_CommonModel.Shared.Charts
+@using Blazor_CommonModel.Shared.Collections
+@using Blazor_CommonModel.Shared.Components
+@using MudBlazor
+@using System.Reflection
+@inject IAppModalService clientModal
+@inject IServiceProvider provider
+<p>1</p>
+<p>2</p> 
+
+
+<MudMenu Label="Профиль"
+         Variant="Variant.Filled"
+         Color="Color.Primary"
+         StartIcon="@Icons.Material.Filled.Person"
+         EndIcon="@Icons.Material.Filled.KeyboardArrowDown"
+         AnchorOrigin="Origin.BottomLeft"
+         TransformOrigin="Origin.TopLeft"
+         Dense="true">
+    <MudMenuItem  >
+        <MudIcon Icon="@Icons.Material.Outlined.AccountCircle" Class="mr-2" />
+        Мой аккаунт
+    </MudMenuItem>
+    <MudMenu Label="Профиль"
+             Variant="Variant.Filled"
+             Color="Color.Primary"
+             StartIcon="@Icons.Material.Filled.Person"
+             EndIcon="@Icons.Material.Filled.KeyboardArrowDown"
+             AnchorOrigin="Origin.BottomLeft"
+             TransformOrigin="Origin.TopLeft"
+             Dense="true">
+        <MudMenuItem>
+            <MudIcon Icon="@Icons.Material.Outlined.AccountCircle" Class="mr-2" />
+            Мой аккаунт
+        </MudMenuItem>
+        <MudMenuItem>
+            <MudIcon Icon="@Icons.Material.Outlined.Settings" Class="mr-2" />
+            Настройки
+        </MudMenuItem>
+        <MudDivider />
+        <MudMenuItem Icon="@Icons.Material.Outlined.Logout">
+            Выйти
+        </MudMenuItem>
+    </MudMenu>
+    <MudDivider />
+    <MudMenuItem   Icon="@Icons.Material.Outlined.Logout">
+        Выйти
+    </MudMenuItem>
+</MudMenu>
+
+@* <ComboboxControl ViewModel="@(new ComboboxView(){ Options = new(){ "1","2","3" }})"></ComboboxControl> *@
+@code
+{
+    public LineChartView lineChart { get; set; } = new LineChartView() { 
+        Top = new ButtonView() { Width=100, Height = 100 },
+        Left = new ButtonView() { Width=100, Height = 100 },
+
+        Right = new ButtonView() { Width=100, Height = 100 },
+        Bottom = new ButtonView() { Width=100, Height = 100 },
+    };
+}
+@* <ContainerControl ViewModel="@(lineChart)"> *@
+
+@* </ContainerControl> *@
+@* <LineChartControl></LineChartControl> *@
+
+@* @code{ *@
+@*     public void OnInitializedValidation(BaseComponent o) *@
+@*     { *@
+
+@*     } *@
+@* } *@
+
+@if (DesignerModel is not null) 
+{
+    <AppViewRootControl RootViewModel="@DesignerModel">
+    </AppViewRootControl> 
+} 
+@code
+{
+    public void OnEditButtonClicked(object source, EventArgs evt){
+
+        IClientAPI clientApi = DesignerModel.GetRoot().Cast<AppViewRoot>().control;
+        clientApi.SubmitDialog("123", new LineChartControl(), p => { });
+        var parameters = new DialogParameters<DemoInputDialog>
+        {
+            { x => x.Label,         "Название элемента" },
+            { x => x.InitialValue,  "Новый элемент" }
+        };
+
+        var success2 = clientModal.ShowDialogAsync<ComboboxControl, bool>("test", parameters, new DialogOptions()
+        {
+
+        }).Result;
+    }
+
+    public void CreateSubmitDialog<TView>(object source, EventArgs evt)
+    {
+
+        IClientAPI clientApi = DesignerModel.GetRoot().Cast<AppViewRoot>().control;
+        var view = typeof(TView).New<AppViewBase>();
+        clientApi.SubmitDialog(view.GetLabel(), new LineChartControl(), p => { });
+        var parameters = new DialogParameters<DemoInputDialog>
+        {
+            { x => x.Label,         "Название элемента" },
+            { x => x.InitialValue,  "Новый элемент" }
+        };
+
+        var success2 = clientModal.ShowDialogAsync<BaseComponent, bool>(view.GetLabel(), parameters, new DialogOptions()
+        {
+
+
+        }).Result;
+    }
+
+    private async Task ShowInputDialogAsync()
+    {
+        var controlTypes = ServiceFactory.Get().GetTypes().Where(t => t.Namespace == "Blazor_CommonModel.Shared.FormFields").Select(p => p.GetTypeName()).ToList();
+        var view = new AppViewBase();
+        var card = new CardView();
+
+        view.Append(card);
+        var combobox = view.CreateCombobox("Тип", new(controlTypes), selected =>
+        {
+            
+            try
+            {
+                MethodBase.GetCurrentMethod();
+                card.LayoutFill(selected.Replace("Control", "View").ToType().New<AppViewBase>());
+            }
+            catch (Exception ex)
+            {
+                this.Error(ex);
+            }
+        });
+        view.LayoutTop(combobox);
+
+        var ptype = controlTypes.First();
+        var pview = ptype.Replace("Control","View").ToType().New<AppViewBase>();
+        card.LayoutFill(pview);
+
+        var parameters = new DialogParameters<SubmitDialog>       
+        {
+            { x => x.ViewModel, view }
+        };
+
+        var value = await ((AppModalService)clientModal).ShowDialogAsync<SubmitDialog, string>(
+            "Редактирование",
+            parameters);
+
+        object _lastDialogResult = value is null
+            ? "Диалог ввода отменён."
+            : $"Сохранено значение: «{value}»";
+    }
+
+    public void OnRootInit(BaseComponent c)
+    {
+        var root = (AppViewRootControl)c;
+        DesignerModel = root.ViewModel;
+
+
+        var controlTypes = ServiceFactory.Get().GetTypes().Where(t => t.Namespace == "Blazor_CommonModel.Shared.FormFields").Select(p => p.GetTypeName()).ToList();
+        var view = new AppViewBase();
+        var card = new CardView();
+        view.Append(card);
+        var combobox = view.CreateCombobox("Тип", new(controlTypes), selected =>
+        {
+            try
+            {
+                card.LayoutFill(selected.Replace("Control", "View").ToType().New<AppViewBase>());
+            }
+            catch (Exception ex)
+            {
+                this.Error(ex);
+            }
+        });
+        view.LayoutTop(combobox);
+
+        var ptype = controlTypes.First();
+        var pview = ptype.Replace("Control", "View").ToType().New<AppViewBase>();
+        card.LayoutFill(pview);
+
+        DesignerModel.Append(view);
+        DesignerModel.AddContextModalDialog<TableView>(() =>
+        {
+            return provider.Get<TableViewDesigner>();
+        });
+        DesignerModel.ContextMenu.Trace();
+        DesignerModel.ContextMenu.Items.Add(new()
+            {
+                Label = "Свойства",
+                OnClick = (p, e) =>
+                {
+
+                    DesignerModel.Append(DesignerModel.CreateText("This is a test"));
+                    DesignerModel.Append(DesignerModel.CreateButton("This is a test", () => { }));
+                },
+                Items = new() { }
+            });
+        DesignerModel.Width = 1200;
+        DesignerModel.BackgroundColor = "#848484";
+        DesignerModel.Append(this.DesignerModel.CreateText("This is a test"));
+        DesignerModel.Append(new MonitoringView());
+        DesignerModel.Append(this.DesignerModel.CreateButton("Открыть диалоговое окно", async () =>
+        {
+
+            var view = new ButtonView();
+            var ctrl = view.ToControl();
+            bool completed = await clientModal.ShowView<ButtonView>(
+                "Test", new ButtonView(), (success, button) =>
+                {
+
+                }
+            );
+            StateHasChanged();
+        }));
+        DesignerModel.Append(this.DesignerModel.CreateButton("This is a test", () =>
+        {
+            // var textView = this.DesignerModel.CreateText("This is a test");
+            // var textCtrl = this.CreateControl<TextControl>(textView);
+            // RenderFragment renderFragment = textCtrl.Cast<RenderFragment>();
+            // RenderFragments.Add(renderFragment);
+            // DesignerModel.Left.Cast<AppViewBase>().ToControl();
+
+            StateHasChanged();
+        }));
+    }
+}
+
+ <CommonModel Model="DesignerModel" @ref="@SharedComponentRef"> 
+     <ContainerControl ViewModel="DesignerModel"> 
+         <a href="D:\Components\CommonModel.razor">D:\Components\CommonModel.razor</a> 
+     </ContainerControl> 
+ </CommonModel> 
+
+
+
+
+
+
+@code
+{
+
+    public BaseComponent DesignerControl { get; set; }
+    public AppViewBase DesignerModel { get; set; }
+    public List<RenderFragment> RenderFragments { get; set; } = new();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        this.Info("OnInitializedAsync");
+        await base.OnInitializedAsync();
+               
+        DesignerModel = new AppViewRoot();
+
+
+        foreach (var ptype in ServiceFactory.Get().GetTypes().Where(t => t.Namespace == "Blazor_CommonModel.Shared.FormFields"))
+        {
+            try
+            {
+                var viewType = ptype.BaseType.GetGenericArguments()[0];
+                DesignerModel.Append(viewType.New<AppViewBase>());
+            }
+            catch(Exception ex)
+            {
+            }
+
+        }
+
+        
+    }
+    
+    public CommonModel SharedComponentRef { get; set; }
+    public RenderFragment Cursor { get; set; }
+}    
+
+@if (Cursor is not null)
+{
+    @Cursor
+}
+
+
+

@@ -1,0 +1,37 @@
+﻿@page "/bootstrap"
+@inject NavigationManager nav
+<h3>BootstrapComponents</h3>
+<div class="dropdown">
+    <button class="btn dropdown-toggle sr-only" type="button" id="dropdownMenu1" data-toggle="dropdown">
+        Dropdown
+        <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu">
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Действие</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Другое действие</a></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Что-то еще</a></li>
+        <li role="presentation" class="divider"></li>
+        <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Отдельная ссылка</a></li>
+    </ul>
+</div>
+<ul class="list-group">
+    @foreach (var type in GetType().Namespace.GetTypes().Where(t=>t.Name!=nameof(BootstrapMulticast)&& t.Name != nameof(BootstrapMulticast)))
+    {
+        <li class="list-group-item" @onclick="@(()=> { OnComponentClicked(type); })">@type.Name</li>
+        
+    }
+</ul>
+@code {
+     
+    protected override async Task OnInitializedAsync()
+    {
+
+        await base.OnInitializedAsync();
+    }
+
+    public void OnComponentClicked(Type type)
+    {
+        nav.NavigateTo( "/bootstrap/"+type.Name.ToKebabStyle() );
+    }
+
+}

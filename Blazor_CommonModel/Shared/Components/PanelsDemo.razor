@@ -1,0 +1,20 @@
+﻿@page "/panels-demo"
+@inherits BaseComponent
+@code 
+{
+
+    public AppViewBase Controllable { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        Info("OnInitializedAsync");
+        await base.OnInitializedAsync();
+
+        Controllable = new AppProgramView();
+    }
+}
+@if (Controllable is not null)
+{
+    <ContainerControl ViewModel="@(Controllable)"></ContainerControl>
+}
+
+

@@ -1,0 +1,92 @@
+﻿@inherits Collection
+@code
+{
+}
+
+@if(TreeModel == null)
+{ 
+    <Alert Text="Не установлена ссылка в свойстве Model"></Alert>
+}
+else
+{
+    <ul class="list-group" style="list-style: circle;">    
+    <li class="list-group-item @(TreeModel.Selected?"active":"")" style="display: flex; flex-direction: row; padding: 5px; padding-left: @(TreeModel.GetLevel()*15)px;">
+        <div class="form-check" tabindex="1">
+            @if (TreeModel.Checkable)
+            {
+                <input class="form-check-input" type="checkbox" @bind-value="@TreeModel.Checked">
+            }
+
+            <label class="form-check-label"    style="vertical-align: middle; width: 100%;">
+                @*TreeModel.Label*@
+            </label>
+            @if (TreeModel.Edited)
+            {
+                <div style="padding: 10px;">
+                    @*<InputForm Model="@(typeof(TreeModel).ToForm(TreeModel))" @ref="@TreeModelEditorForm">
+                        <button class="btn btn-primary @(TreeModelEditorForm.Model.IsValid?"":"disabled")">сохранить</button>
+                        <button class="btn btn-secondary">отменить</button>
+                    </InputForm>*@
+                </div>
+            }
+
+
+        </div>
+        <div style="justify-self: flex-end; margin-left: auto"></div>
+        @if (TreeModel.Editable)
+        {
+            <div @onclick="@(TreeModel.Edit)">
+                <i class="material-icons md-secondary md-hue-3"
+                   style="justify-self: flex-end; margin-left: auto; margin-right: 5px;">
+                    edit
+                </i>
+            </div>
+            <div @onclick="@(TreeModel.Create)">
+                <i class="material-icons md-secondary md-hue-3"
+                   style="justify-self: flex-end; margin-left: auto; margin-right: 5px;">
+                    add
+                </i>
+            </div>
+        }
+
+        <div @onclick="@(TreeModel.Expand)">
+            <i class="material-icons md-secondary md-hue-3"
+               style="justify-self: flex-end; margin-left: auto; margin-right: 5px;">
+                @((TreeModel.Expanded)?"expand_more": "chevron_right")
+            </i>
+        </div>
+    </li>
+    @if (TreeModel.Expanded)
+    {
+        <div>
+            @foreach (var pchild in TreeModel.Children)
+            {@*<Tree TreeModel="@((TreeModel)pchild)"
+            Selectable="@(((TreeModel)pchild).Selectable)"
+            Checkable="@(((TreeModel)pchild).Checkable)"></Tree>*@}
+        </div>
+    }
+
+</ul>
+}
+
+
+@code{
+
+
+    [Parameter]
+    public global::Tree TreeModel { get; set; }
+
+    public override bool Checkable
+    {
+        get
+        {
+            return TreeModel.Checkable;
+        }
+        set
+        {
+            TreeModel.Checkable = value;
+        }
+    }
+
+
+}

@@ -1,0 +1,534 @@
+﻿@using Blazor_CommonModel.Components.Containers
+@using Blazor_CommonModel.Components.Layout
+@using Blazor_CommonModel.Shared.Charts
+@using Blazor_CommonModel.Shared.Collections
+@using Blazor_CommonModel.Shared.Components
+@using Blazor_CommonModel.Shared.FormFields
+@using Blazor_CommonModel.Shared.FormFields._1
+@using Blazor_CommonModel.Shared.Layout
+@using Console_CommonModel.CommonLib.Others
+@using static WinFormsApp.API.DesignerResizeTool
+@inherits BaseComponent
+
+@code 
+{
+
+    [Parameter]
+    public bool FullSize { get; set; } = false;
+
+    [Parameter]
+    public bool FullWidth { get; set; } = false;
+    [Parameter]
+    public bool FullHeight { get; set; } = false;
+
+
+    [Parameter]
+    public string Type { get; set; }
+
+    [Parameter]
+    public AppViewBase Model { get => Get<AppViewBase>(nameof(Model)); set => Set<AppViewBase>(nameof(Model), value); }
+
+    [Parameter] public bool AnchorBottom { get => ((IStyledItem)Model).AnchorBottom; set => ((IStyledItem)Model).AnchorBottom = value; }
+    [Parameter] public bool AnchorLeft { get => ((IStyledItem)Model).AnchorLeft; set => ((IStyledItem)Model).AnchorLeft = value; }
+    [Parameter] public bool AnchorRight { get => ((IStyledItem)Model).AnchorRight; set => ((IStyledItem)Model).AnchorRight = value; }
+    [Parameter] public bool AnchorTop { get => ((IStyledItem)Model).AnchorTop; set => ((IStyledItem)Model).AnchorTop = value; }
+    [Parameter] public bool AutoSize { get => ((IStyledItem)Model).AutoSize; set => ((IStyledItem)Model).AutoSize = value; }
+    [Parameter] public string BackgroundColor { get => ((IStyledItem)Model).BackgroundColor; set => ((IStyledItem)Model).BackgroundColor = value; }
+    [Parameter] public string BorderColor { get => ((IStyledItem)Model).BorderColor; set => ((IStyledItem)Model).BorderColor = value; }
+    [Parameter] public float BorderWidth { get => ((IStyledItem)Model).BorderWidth; set => ((IStyledItem)Model).BorderWidth = value; }
+    [Parameter] public string Color { get => ((IStyledItem)Model).Color; set => ((IStyledItem)Model).Color = value; }
+    [Parameter] public Cursors Cursor { get => ((IStyledItem)Model).Cursor; set => ((IStyledItem)Model).Cursor = value; }
+    [Parameter] public string Dock { get => ((IStyledItem)Model).Dock; set => ((IStyledItem)Model).Dock = value; }
+    [Parameter] public float FontSize { get => ((IStyledItem)Model).FontSize; set => ((IStyledItem)Model).FontSize = value; }
+    [Parameter] public int Height { get => ((IStyledItem)Model).Height; set => ((IStyledItem)Model).Height = value; }
+    [Parameter] public int Margin { get => ((IStyledItem)Model).Margin; set => ((IStyledItem)Model).Margin = value; }
+    [Parameter] public int MinHeight { get => ((IStyledItem)Model).MinHeight; set => ((IStyledItem)Model).MinHeight = value; }
+    [Parameter] public int MinWidth { get => ((IStyledItem)Model).MinWidth; set => ((IStyledItem)Model).MinWidth = value; }
+    [Parameter] public int Padding { get => ((IStyledItem)Model).Padding; set => ((IStyledItem)Model).Padding = value; }
+    [Parameter] public string TextAlign { get => ((IStyledItem)Model).TextAlign; set => ((IStyledItem)Model).TextAlign = value; }
+    [Parameter] public int TextIndent { get => ((IStyledItem)Model).TextIndent; set => ((IStyledItem)Model).TextIndent = value; }
+    [Parameter] public int Width { get => ((IStyledItem)Model).Width; set => ((IStyledItem)Model).Width = value; }
+    [Parameter] public int X { get => ((IStyledItem)Model).X; set => ((IStyledItem)Model).X = value; }
+    [Parameter] public int Y { get => ((IStyledItem)Model).Y; set => ((IStyledItem)Model).Y = value; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();       
+        if (this.Model is null)
+        {
+            this.Model = new ButtonView();
+        }
+        if (this.Type is null && Model is not null)
+        {
+            this.Type = this.Model.GetTypeName();
+        }
+        this.Info(nameof(OnInitializedAsync)+" "+this.GetTypeName() + " " + ViewModel.GetTypeName());
+    }
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        this.ViewModel = this.Model;         
+        if (Model is not null)
+        {
+            this.Type = this.ViewModel.Name is not null?
+                this.ViewModel.Name: this.ViewModel.GetType().GetTypeName();            
+        }
+        else
+        {
+            this.Type = null;
+        }
+        this.Info(nameof(OnParametersSetAsync) + " " + this.GetTypeName() + " " + ViewModel.GetTypeName());
+    }
+
+
+
+    /// <summary>
+    ///
+    /// </summary>
+    public IComponentBase<TViewModel, TViewControl> TryBindComponent<TViewModel, TViewControl>(TViewModel viewModel)
+        where TViewModel: AppViewBase
+        where TViewControl: WebComponentBase
+
+    {
+        try
+        {
+            var types = ServiceFactory.Get().GetTypesImplements<IComponentBase<TViewModel, TViewControl>>();
+            var componentType = types.Where(t => t != typeof(TViewControl)).FirstOrDefault();
+
+            this.Info(componentType.GetTypeName() + $" выбран для связывания {typeof(IComponentBase<TViewModel, TViewControl>).GetTypeName()}");
+            if (componentType is not null)
+            {
+                TViewControl viewControl = this.Cast<TViewControl>();
+                return componentType.New<IComponentBase<TViewModel, TViewControl>>(new object[] { viewModel, viewControl });
+            }
+            else
+            {
+                throw new Exception($"Не удалось найти подходящий компонент для связывания {typeof(IComponentBase<TViewModel, TViewControl>).GetTypeName()}");
+            }
+        }
+        catch (Exception ex)
+        {
+            this.Error($"{nameof(CommonModel.TryBindComponent)}<{typeof(TViewModel).GetTypeName()},{typeof(TViewControl).GetTypeName()}>(){ex.Message}");
+            return null;
+        }
+    }
+
+}
+
+
+
+
+
+
+@if(Model is null)
+{
+    <div class="alert alert-warning">Не задано значение параметра @nameof(Model)</div>
+}
+else
+{
+ 
+ 
+    @if (Type == "MonitoringView")
+    {
+                
+                
+            <ContextControl Model="@(new ContextView(){ Items = new ChangingList<ContextView>(){ 
+                new ContextView(){ Label = "1" },
+                new ContextView(){ Label = "2" },
+                new ContextView(){ Label = "3" },
+            }})">
+                <MonitoringControl ViewModel="@Model"></MonitoringControl>
+
+            </ContextControl>                
+    }
+    @if(Type == nameof(ButtonView) && Model is ButtonView buttonView)
+    {            
+        <ButtonControl Model="@buttonView"></ButtonControl>
+    }        
+    else if (Type == nameof(TextView) && Model is TextView textView)
+    {      
+        <TextControl Text="@textView.Text" FontSize="@textView.FontSize" TextAlign="@textView.TextAlign" ViewModel="@(textView)"></TextControl>
+    }
+    else if (Type == nameof(TextBoxView) && Model is TextBoxView textBoxView1)
+    {
+        <TextBoxControl Model="@textBoxView1" Text="@textBoxView1.Text"></TextBoxControl>
+    }
+    else if (Type == nameof(BookView))
+    {
+        <BookControl ViewModel="@Model"></BookControl>
+    } else if (Type == nameof(XmlView) && Model is XmlView xmlView){
+         
+            <XmlControl Model="@xmlView"></XmlControl>
+         
+        
+    } else if (Type == nameof(WebServiceView)){
+        <WebServiceControl ViewModel="@Model"></WebServiceControl>
+    } else if (Type == nameof(Console_CommonModel.CommonLib.LibViews.AppViews.ViewControl)){
+        <ControlContainer ViewModel="@Model"></ControlContainer>
+    } else if (Type == nameof(VideoView)){
+        <VideoControl ViewModel="@Model"></VideoControl>
+    } else if (Type == nameof(UserHomeView)){
+        <UserHomeControl ViewModel="@Model"></UserHomeControl>
+    } else if (Type == nameof(TypeView)){
+        <TypeControl ViewModel="@Model"></TypeControl>
+    } else if (Type == nameof(TypedView)){
+        <TypedControl ViewModel="@Model"></TypedControl>
+    } else if (Type == nameof(TreeViewNodeModel)){
+        <TreeControlNodeModel ViewModel="@Model"></TreeControlNodeModel>
+    } else if (Type == nameof(TreeViewModel)){
+        <TreeControlModel ViewModel="@Model"></TreeControlModel>
+    } else if (Type == nameof(TreeControlView) && (Model is TreeControlView treeControlView)){
+        <TreeControl ViewModel="@treeControlView"></TreeControl>
+    } else if (Type == nameof(TreeAdoView)){
+        <TreeAdoControl ViewModel="@Model"></TreeAdoControl>
+    } else if (Type == nameof(ToolsView)){
+        <ToolsControl ViewModel="@Model"></ToolsControl>
+    } else if (Type == nameof(ToolSItemSeparator)){
+        <ToolSItemSeparator ViewModel="@Model"></ToolSItemSeparator>
+    } else if (Type == nameof(ToolsItemRadioView)){
+        <ToolsItemRadioControl ViewModel="@Model"></ToolsItemRadioControl>
+    } else if (Type == nameof(ToolsItemPrograssView)){
+        <ToolsItemPrograssControl ViewModel="@Model"></ToolsItemPrograssControl>
+    } else if (Type == nameof(ToolsItemLabel)){
+        <ToolsItemLabel ViewModel="@Model"></ToolsItemLabel>
+    } else if (Type == nameof(ToolsItemComboboxView)){
+        <ToolsItemComboboxControl ViewModel="@Model"></ToolsItemComboboxControl>
+    } else if (Type == nameof(ToolsItemButtonView)){
+        <ToolsItemButtonControl ViewModel="@Model"></ToolsItemButtonControl>
+    } else if (Type == nameof(ToggleView)){
+        <ToggleControl ViewModel="@Model"></ToggleControl>
+    } else if (Type == nameof(TextEditorView)){
+        <TextEditorControl ViewModel="@Model"></TextEditorControl>
+    } else if (Type == nameof(TextBoxView) && (Model is TextBoxView textBoxView)){
+        <TextBoxControl Model="@textBoxView"></TextBoxControl>
+    } else if (Type == nameof(TabsView) && Model is TabsView tabsView){
+        <TabsControl Model="@tabsView"></TabsControl>
+    } else if (Type == nameof(TableView) && (Model is TableView tableView)){
+        <TableControl Model="@tableView"></TableControl>
+    } else if (Type == nameof(SubmitView)&& (Model is SubmitView submitView)){
+        <SubmitControl Model="@submitView">
+            @if(ChildContent is not null)
+            {
+                @ChildContent
+            }
+        </SubmitControl>
+    } else if (Type == nameof(StructuredCollectionView)){
+        <StructuredCollectionControl ViewModel="@Model"></StructuredCollectionControl>
+    } else if (Type == nameof(StatusView) && Model is StatusView statusView){
+        <StatusControl Model="@statusView"></StatusControl>
+    } else if (Type == nameof(SqlServerWebApi)){
+        <SqlServerWebApi ViewModel="@Model"></SqlServerWebApi>
+    } else if (Type == nameof(SqlServerMigBuilder)){
+        <SqlServerMigBuilder ViewModel="@Model"></SqlServerMigBuilder>
+    } else if (Type == nameof(SqlServerInputFormsApi)){
+        <SqlServerInputFormsApi ViewModel="@Model"></SqlServerInputFormsApi>
+    } else if (Type == nameof(SqlServerExecutor)){
+        <SqlServerExecutor ViewModel="@Model"></SqlServerExecutor>
+    } else if (Type == nameof(SqlServerDbModel)){
+        <SqlServerDbModel ViewModel="@Model"></SqlServerDbModel>
+    } else if (Type == nameof(SqlServerDbMetadata)){
+        <SqlServerDbMetadata ViewModel="@Model"></SqlServerDbMetadata>
+    } else if (Type == nameof(SqlServerDbConnector)){
+        <SqlServerDbConnector ViewModel="@Model"></SqlServerDbConnector>
+    } else if (Type == nameof(SqlServerConnectionString)){
+        <SqlServerConnectionString ViewModel="@Model"></SqlServerConnectionString>
+    } else if (Type == nameof(SqlServerAuthApi)){
+        <SqlServerAuthApi ViewModel="@Model"></SqlServerAuthApi>
+    } else if (Type == nameof(SqlServerADOServiceConnectionString)){
+        <SqlServerADOServiceConnectionString ViewModel="@Model"></SqlServerADOServiceConnectionString>
+    } else if (Type == nameof(SqlServerADOService)){
+        <SqlServerADOService ViewModel="@Model"></SqlServerADOService>
+    } else if (Type == nameof(SqlServerADODataSource)){
+        <SqlServerADODataSource ViewModel="@Model"></SqlServerADODataSource>
+    } else if (Type == nameof(SplitView)){
+        <SplitControl ViewModel="@Model"></SplitControl>
+    } else if (Type == nameof(SignalRVideoView)){
+        <SignalRVideoControl ViewModel="@Model"></SignalRVideoControl>
+    } else if (Type == nameof(SearchView) && Model is SearchView searchView){
+        <SearchControl Model="@searchView"></SearchControl>
+    } else if (Type == nameof(SearchProductView)){
+        <SearchProductControl ViewModel="@Model"></SearchProductControl>
+    } else if (Type == nameof(SearchDatabase)){
+        <SearchDatabase ViewModel="@Model"></SearchDatabase>
+    } else if (Type == nameof(SearchByCtrl)){
+        <SearchByCtrl ViewModel="@Model"></SearchByCtrl>
+    } else if (Type == nameof(ScrollView)  && Model is ScrollView scrollView){
+        <ScrollControl Model="@scrollView"></ScrollControl>
+    } else if (Type == nameof(ScrollableView)){
+        <ScrollableControl ViewModel="@Model"></ScrollableControl>
+    } else if (Type == nameof(ReturnOrderView)){
+        <ReturnOrderControl ViewModel="@Model"></ReturnOrderControl>
+    } else if (Type == nameof(RepositoryGridView)){
+        <RepositoryGridControl ViewModel="@Model"></RepositoryGridControl>
+    } else if (Type == nameof(ReportView)){
+        <ReportControl ViewModel="@Model"></ReportControl>
+    } else if (Type == nameof(RepetableView)){
+        <RepetableControl ViewModel="@Model"></RepetableControl>
+    } else if (Type == nameof(RecaptchaView)){
+        <RecaptchaControl ViewModel="@Model"></RecaptchaControl>
+    } else if (Type == nameof(RadioView)){
+        <RadioControl ViewModel="@Model"></RadioControl>
+    } else if (Type == nameof(ProductCardView)){
+        <ProductCardControl ViewModel="@Model"></ProductCardControl>
+    } else if (Type == nameof(ProcedureExecuteView)){
+        <ProcedureExecuteControl ViewModel="@Model"></ProcedureExecuteControl>
+    } else if (Type == nameof(PrimitiveCollectionView)){
+        <PrimitiveCollectionControl ViewModel="@Model"></PrimitiveCollectionControl>
+    } else if (Type == nameof(PostgresWebApi)){
+        <PostgresWebApi ViewModel="@Model"></PostgresWebApi>
+    } else if (Type == nameof(PostgresMigBuilder)){
+        <PostgresMigBuilder ViewModel="@Model"></PostgresMigBuilder>
+    } else if (Type == nameof(PostgresExecutor)){
+        <PostgresExecutor ViewModel="@Model"></PostgresExecutor>
+    } else if (Type == nameof(PostgresDbModel)){
+        <PostgresDbModel ViewModel="@Model"></PostgresDbModel>
+    } else if (Type == nameof(PostgresDbMetadata)){
+        <PostgresDbMetadata ViewModel="@Model"></PostgresDbMetadata>
+    } else if (Type == nameof(PostgresDbConnector)){
+        <PostgresDbConnector ViewModel="@Model"></PostgresDbConnector>
+    } else if (Type == nameof(PostgresConnectionString)){
+        <PostgresConnectionString ViewModel="@Model"></PostgresConnectionString>
+    } else if (Type == nameof(PostgresADOService)){
+        <PostgresADOService ViewModel="@Model"></PostgresADOService>
+    } else if (Type == nameof(PaginationView)){
+        <PaginationControl ViewModel="@Model"></PaginationControl>
+    } else if (Type == nameof(NavView) && Model is NavView navView){
+        <NavControl Model="@navView">
+            @if (ChildContent is not null)
+            {
+                @ChildContent
+            }
+        </NavControl>
+    } else if (Type == nameof(NavListView)){
+        <NavListControl ViewModel="@Model"></NavListControl>
+    } else if (Type == nameof(NavigationView)){
+        <NavigationControl ViewModel="@Model"></NavigationControl>
+    } else if (Type == nameof(MySqlWebApi)){
+        <MySqlWebApi ViewModel="@Model"></MySqlWebApi>
+    } else if (Type == nameof(MySqlMigBuilder)){
+        <MySqlMigBuilder ViewModel="@Model"></MySqlMigBuilder>
+    } else if (Type == nameof(MySqlExecutor)){
+        <MySqlExecutor ViewModel="@Model"></MySqlExecutor>
+    } else if (Type == nameof(MySqlDbModel)){
+        <MySqlDbModel ViewModel="@Model"></MySqlDbModel>
+    } else if (Type == nameof(MySqlDbMetadata)){
+        <MySqlDbMetadata ViewModel="@Model"></MySqlDbMetadata>
+    } else if (Type == nameof(MySqlDbConnector)){
+        <MySqlDbConnector ViewModel="@Model"></MySqlDbConnector>
+    } else if (Type == nameof(MySqlConnectionString)){
+        <MySqlConnectionString ViewModel="@Model"></MySqlConnectionString>
+    } else if (Type == nameof(MySqlADOService)){
+        <MySqlADOService ViewModel="@Model"></MySqlADOService>
+    } else if (Type == nameof(MultiLineTextView)){
+        <MultiLineTextControl ViewModel="@Model"></MultiLineTextControl>
+    } else if (Type == nameof(MessageWebApi)){
+        <MessageWebApi ViewModel="@Model"></MessageWebApi>
+    } else if (Type == nameof(MessageView)){
+        <MessageControl ViewModel="@Model"></MessageControl>
+    } else if (Type == nameof(MessageProtocolCard)){
+        <MessageProtocolCard ViewModel="@Model"></MessageProtocolCard>
+    } else if (Type == nameof(MenuViewModel)&& (Model is MenuViewModel menuViewModel)){
+        <MenuControl ViewModel="@menuViewModel"></MenuControl>
+    } else if (Type == nameof(MenuView) && (Model is MenuView menuView)){
+        <MenuControl Item="@menuView"></MenuControl>
+    } else if (Type == nameof(MatrixView)){
+        <MatrixControl ViewModel="@Model"></MatrixControl>
+    } else if (Type == nameof(MainMenuCustomizer)){
+        <MainMenuCustomizer ViewModel="@Model"></MainMenuCustomizer>
+    } else if (Type == nameof(ListView) && Model is ListView listView){
+        <ListControl Model="@listView"></ListControl>
+    } else if (Type == nameof(ListSelectionView)){
+        <ListSelectionControl ViewModel="@Model"></ListSelectionControl>
+    } else if (Type == nameof(ListObjectsView)){
+        <ListObjectsControl ViewModel="@Model"></ListObjectsControl>
+    } else if (Type == nameof(LinkViewModel)){
+        <LinkControlModel ViewModel="@Model"></LinkControlModel>
+    } else if (Type == nameof(LineView)){
+        <LineControl ViewModel="@Model"></LineControl>
+    } else if (Type == nameof(LineChartView)){
+        <LineChartControl ViewModel="@Model"></LineChartControl>
+    } else if (Type == nameof(LayoutView)){
+        <LayoutControl ViewModel="@Model"></LayoutControl>
+    } else if (Type == nameof(KeyboardConfigView)){
+        <KeyboardConfigControl ViewModel="@Model"></KeyboardConfigControl>
+    } else if (Type == nameof(InputView2)){
+        <InputControl2 ViewModel="@Model"></InputControl2>
+    } else if (Type == nameof(InputView)){
+        <InputControl ViewModel="@Model"></InputControl>
+    } else if (Type == nameof(InputUploadView)){
+        <InputUploadControl ViewModel="@Model"></InputUploadControl>
+    } else if (Type == nameof(InputTcpIpAddressView)){
+        <InputTcpIpAddressControl ViewModel="@Model"></InputTcpIpAddressControl>
+    } else if (Type == nameof(InputStructuredCollectionView)){
+        <InputStructuredCollectionControl ViewModel="@Model"></InputStructuredCollectionControl>
+    } else if (Type == nameof(InputSearchFilters)){
+        <InputSearchFiltersControl ViewModel="@Model"></InputSearchFiltersControl>
+    } else if (Type == nameof(InputPrimitiveCollectionView)){
+        <InputPrimitiveCollectionControl ViewModel="@Model"></InputPrimitiveCollectionControl>
+    } else if (Type == nameof(InputPercentView)){
+        <InputPercentControl ViewModel="@Model"></InputPercentControl>
+    } else if (Type == nameof(InputPasswordView) && Model is InputPasswordView inputPasswordView){
+        <InputPasswordControl Model="@inputPasswordView"></InputPasswordControl>
+    } else if (Type == nameof(InputNumberView)){
+        <InputNumberControl ViewModel="@Model"></InputNumberControl>
+    } else if (Type == nameof(InputNaturalView)){
+        <InputNaturalControl ViewModel="@Model"></InputNaturalControl>
+    } else if (Type == nameof(InputInterfaceCollectionView)){
+        <InputInterfaceCollectionControl ViewModel="@Model"></InputInterfaceCollectionControl>
+    } else if (Type == nameof(InputIconView)){
+        <InputIconControl ViewModel="@Model"></InputIconControl>
+    } else if (Type == nameof(InputFormModel) && Model is InputFormModel inputFormModel){
+        <InputFormModelControl Model="@inputFormModel"></InputFormModelControl>
+    } else if (Type == nameof(InputFilePathView)){
+        <InputFilePathControl ViewModel="@Model"></InputFilePathControl>
+    } else if (Type == nameof(InputDecimalView)){
+        <InputDecimalControl ViewModel="@Model"></InputDecimalControl>
+    } else if (Type == nameof(InputDateTimeView)){
+        <InputDateTimeControl ViewModel="@Model"></InputDateTimeControl>
+    } else if (Type == nameof(InputCreditCardView)){
+        <InputCreditCardControl ViewModel="@Model"></InputCreditCardControl>
+    } else if (Type == nameof(InputConsoleView)){
+        <InputConsoleControl ViewModel="@Model"></InputConsoleControl>
+    } else if (Type == nameof(InputColorView)){
+        <InputColorControl ViewModel="@Model"></InputColorControl>
+    } else if (Type == nameof(ImageView)){
+        <ImageControl ViewModel="@Model"></ImageControl>
+    } else if (Type == nameof(ImageSliderView)){
+        <ImageSliderControl ViewModel="@Model"></ImageSliderControl>
+
+    } else if (Type == nameof(GridView)){
+        <GridControl ViewModel="@Model"></GridControl>
+    } else if (Type == nameof(FormViewModel)){
+        <FormControlModel ViewModel="@Model"></FormControlModel>
+    } else if (Type == nameof(FormInputField)){
+        <FormInputField ViewModel="@Model"></FormInputField>
+    } else if (Type == nameof(FormBuilderView)){
+        <FormBuilderControl ViewModel="@Model"></FormBuilderControl>
+    } else if (Type == nameof(FocusModel)){
+        <FocusModel ViewModel="@Model"></FocusModel>
+    } else if (Type == nameof(FlexView) && Model is FlexView flexView){
+        <FlexControl Model="@flexView">
+            @if (ChildContent is not null)
+            {
+                @ChildContent
+            }
+        </FlexControl>
+    } else if (Type == nameof(ExpansionView)){
+        <ExpansionControl ViewModel="@Model"></ExpansionControl>
+    } else if (Type == nameof(EventsBindingsEditorView)){
+        <EventsBindingsEditorControl ViewModel="@Model"></EventsBindingsEditorControl>
+    } else if (Type == nameof(EntityTable)){
+        <EntityTable ViewModel="@Model"></EntityTable>
+    } else if (Type == nameof(EntitySelectList)){
+        <EntitySelectList ViewModel="@Model"></EntitySelectList>
+    } else if (Type == nameof(EntityFormCard)){
+        <EntityFormCard ViewModel="@Model"></EntityFormCard>
+    } else if (Type == nameof(ElementsCustomizerView)){
+        <ElementsCustomizerControl ViewModel="@Model"></ElementsCustomizerControl>
+    } else if (Type == nameof(EditView) && Model is EditView editView){
+        <EditControl Model="@editView" >
+            @if(ChildContent is not null)
+            {
+                @ChildContent
+            }
+        </EditControl>
+    } else if (Type == nameof(DropDownMenu)){
+        <DropDownMenu ViewModel="@Model"></DropDownMenu>
+    } else if (Type == nameof(DropDown)){
+        <DropDown ViewModel="@Model"></DropDown>
+    } else if (Type == nameof(DllDbContextView)){
+        <DllDbContextControl ViewModel="@Model"></DllDbContextControl>
+    } else if (Type == nameof(DialogView)){
+        <DialogControl ViewModel="@Model"></DialogControl>
+    } else if (Type == nameof(DbContextView)){
+        <DbContextControl ViewModel="@Model"></DbContextControl>
+    } else if (Type == nameof(DataTableView)){
+        <DataTableControl ViewModel="@Model"></DataTableControl>
+    } else if (Type == nameof(DataStreamView)){
+        <DataStreamControl ViewModel="@Model"></DataStreamControl>
+    } else if (Type == nameof(DatasourceView)){
+        <DatasourceControl ViewModel="@Model"></DatasourceControl>
+    } else if (Type == nameof(DatasourceLayoutView)){
+        <DatasourceLayoutControl ViewModel="@Model"></DatasourceLayoutControl>
+    } else if (Type == nameof(DataModelView)){
+        <DataModelControl ViewModel="@Model"></DataModelControl>
+    } else if (Type == nameof(DatabaseConnectionView)){
+        <DatabaseConnectionControl ViewModel="@Model"></DatabaseConnectionControl>
+    } else if (Type == nameof(CustomizationView)){
+        <CustomizationControl ViewModel="@Model"></CustomizationControl>
+    } else if (Type == nameof(CoreChartView)){
+        <CoreChartControl ViewModel="@Model"></CoreChartControl>
+    } else if (Type == nameof(ControlView)){
+        <ControlControl ViewModel="@Model"></ControlControl>
+    } else if (Type == nameof(ContainerView)){
+        <ContainerControl ViewModel="@Model"></ContainerControl>
+    } else if (Type == nameof(ComboboxView) && (Model is ComboboxView comboboxView)){
+        <ComboboxControl Model="@comboboxView"></ComboboxControl>
+    } else if (Type == nameof(ColumnsView)){
+        <ColumnsControl ViewModel="@Model"></ColumnsControl>
+    } else if (Type == nameof(ColumnChartView)){
+        <ColumnChartControl ViewModel="@Model"></ColumnChartControl>
+    } else if (Type == nameof(CollectionsView)){
+        <CollectionsControl ViewModel="@Model"></CollectionsControl>
+    } else if (Type == nameof(ClassModelView)){
+        <ClassModelControl ViewModel="@Model"></ClassModelControl>
+    } else if (Type == nameof(CheckedListView)){
+        <CheckedListControl ViewModel="@Model"></CheckedListControl>
+    } else if (Type == nameof(CheckboxView) && Model is CheckboxView checkboxView){
+        <CheckboxControl Model="@checkboxView"></CheckboxControl>
+    } else if (Type == nameof(ChartView)){
+        <ChartControl ViewModel="@Model"></ChartControl>
+    } else if (Type == nameof(CardView) && Model is CardView cardView){
+        <CardControl Model="@cardView">
+            @if(ChildContent is not null)
+            {
+                @ChildContent
+            }
+        </CardControl>
+    } else if (Type == nameof(CameraView)){
+        <CameraControl ViewModel="@Model"></CameraControl>
+    } else if (Type == nameof(CameraStreamView)){
+        <CameraStreamControl ViewModel="@Model"></CameraStreamControl>
+    } else if (Type == nameof(ButtonView)){
+        <ButtonControl ViewModel="@Model"></ButtonControl>
+    } else if (Type == nameof(BusinessModelView)){
+        <BusinessModelControl ViewModel="@Model"></BusinessModelControl>
+    } else if (Type == nameof(BreadcrumbView)){
+        <BreadcrumbControl ViewModel="@Model"></BreadcrumbControl>
+    } else if (Type == nameof(BreadcrumbItemView)){
+        <BreadcrumbItemControl ViewModel="@Model"></BreadcrumbItemControl>
+    } else if (Type == nameof(BookView)){
+        <BookControl ViewModel="@Model"></BookControl>
+    } else if (Type == nameof(Body)){
+        <BodyControl ViewModel="@Model"></BodyControl>
+    } else if (Type == nameof(BarChartView)){
+        <BarChartControl ViewModel="@Model"></BarChartControl>
+    } else if (Type == nameof(AudioView)){
+        <AudioControl ViewModel="@Model"></AudioControl>
+    } else if (Type == nameof(AudioRecorderView)){
+        <AudioRecorderControl ViewModel="@Model"></AudioRecorderControl>
+    } else if (Type == nameof(AppView)){
+        <AppControl ViewModel="@Model"></AppControl>
+    } else if (Type == nameof(AppViewRoot) && Model is AppViewRoot appViewRoot){
+        <AppViewRootControl RootViewModel="@appViewRoot">
+            @if (ChildContent is not null)
+            {
+                @ChildContent
+            }
+        </AppViewRootControl>
+    }
+    else
+    {
+        <AppControlBase>                    
+            @if(ChildContent is not null)
+            {
+                @ChildContent
+            }
+        </AppControlBase>
+
+        @* <div class="alert alert-warning">Тип компонента @Type не зарегистрирован в SharedComponent</div> *@
+    }
+            
+
+}

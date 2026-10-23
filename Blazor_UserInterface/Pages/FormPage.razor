@@ -1,0 +1,22 @@
+﻿@page "/form-page/{name}"
+@inject IBusinessPageService pages
+<h3>FormPage</h3>
+
+@if (pages.HasPageForLocation(name) == false)
+{
+    <div class="alert alert-warning">Форма не зарегистрирована, вы можете её  
+        <b><a href="/admin/input-forms-editor/@name">создать</a></b>
+    </div>
+}
+else
+{
+    <ValidationForm Model="@pages.GetFormForLocation(name)">
+
+    </ValidationForm>
+}
+
+@code {
+    [Parameter]
+    public string name { get; set; }
+
+}

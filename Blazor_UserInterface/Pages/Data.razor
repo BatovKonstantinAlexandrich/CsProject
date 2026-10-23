@@ -1,0 +1,66 @@
+@page "/data"
+@inject ILogger<Data> logger
+@inject IDatabaseController ctrl
+@inject IInputModalService input
+@inject IModalService modal
+@code{
+    public void OnCreatedEvent(object item)
+    {
+        logger.LogInformation(item.ToJson());
+    }
+    public void OnCanceledEvent(object item)
+    {
+        logger.LogInformation(item.ToJson());
+    }
+}
+<TransclusionPanel>
+    <Left>
+        <SelectList ListItems="@ListItems"
+                    OnSelected="@OnEntitySelected"
+                    TItem="System.String"></SelectList>
+    </Left>
+    <ChildContent>
+        @if (!string.IsNullOrEmpty(Selected))
+        {            
+            <ValidationForm Model="@SelectedInputFormModel"></ValidationForm>
+            
+        }
+        else
+        {
+            <div class="text-muted">Выберите сущность слева</div>
+        }
+    </ChildContent>
+</TransclusionPanel>
+
+@code {
+    public string Selected { get; set; }
+    public string SelectedLabel { get; set; }
+    public string[] Entities { get; set; }
+    public SelectableListItem<string>[] ListItems { get; set; }
+    public IDictionary<string, object> Dataset { get; set; }
+    public object[] res { get; set; }
+    public InputFormModel SelectedInputFormModel { get; set; }
+
+    public Task OnEntitySelected(string Entity)
+    {
+        logger.LogInformation("selected " + Entity);
+        Selected = Entity;
+        var type = Entity.ToType();
+        SelectedInputFormModel = new InputFormModel(type.New());
+        SelectedLabel = type.Label();
+        return InvokeAsync(StateHasChanged);
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        Entities = typeof(ApplicationDbContext).GetEntityTypeNames().ToArray();
+        ListItems = Entities.Select(e =>
+        {
+            var type = e.ToType(); return new SelectableListItem<string>()
+            {
+                Label = type.Label(),
+                Item = e
+            };
+        }).ToArray();
+    }
+}

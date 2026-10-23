@@ -1,0 +1,84 @@
+@implements IDisposable
+@inject NavigationManager navigator
+@inject global::PagesServices pages
+@code {
+    private bool collapseNavMenu = true;
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private void ToggleNavMenu() => collapseNavMenu = !collapseNavMenu;
+    private IEnumerable<ActionLink> actionLinks { get; set; }
+
+    private static string NormalizeRelativePath(string relative)
+    {
+        if (string.IsNullOrWhiteSpace(relative)) return "/";
+        var seg = relative.Split('?', '#')[0].Trim().Trim('/').Replace('\\', '/');
+        return string.IsNullOrEmpty(seg) ? "/" : "/" + seg;
+    }
+
+    private bool IsActiveLink(ActionLink link)
+    {
+        if (string.IsNullOrEmpty(link?.Href)) return false;
+        var current = NormalizeRelativePath(navigator.ToBaseRelativePath(navigator.Uri));
+        var h = link.Href.Trim().TrimEnd('/');
+        if (!h.StartsWith("/")) h = "/" + h;
+        if (h == "/")
+            return current == "/";
+        return current.StartsWith(h, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void NavigateToLink(ActionLink link)
+    {
+        if (string.IsNullOrEmpty(link?.Href)) return;
+        var target = link.Href.Trim();
+        if (!target.StartsWith("/")) target = "/" + target;
+        navigator.NavigateTo(target);
+    }
+
+    private void OnLocationChanged(object sender, LocationChangedEventArgs changes)
+    {
+        string uri = pages.ParseUri(changes.Location);
+        actionLinks = pages.GetNavigationLinks(uri);
+        InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        navigator.LocationChanged += OnLocationChanged;
+        actionLinks = pages.GetNavigationLinks("/");
+    }
+
+    public void Dispose()
+    {
+        navigator.LocationChanged -= OnLocationChanged;
+    }
+}
+<div class="top-row pl-4 navbar navbar-dark">
+    <a class="navbar-brand" href="">RootForms</a>
+    <button type="button" class="navbar-toggler" @onclick="ToggleNavMenu" aria-expanded="@(!collapseNavMenu)">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+</div>
+
+<div class="@NavMenuCssClass">
+    <ul class="nav flex-column">
+        <ForEach TItem="ActionLink" Items="@actionLinks" Context="link">
+            <li class="nav-item px-3">
+                @if (string.IsNullOrEmpty(link.Href))
+                {
+                    <span class="nav-link text-muted" title="@link.Tooltip">@link.Label</span>
+                }
+                else
+                {
+                    <a class="nav-link @(IsActiveLink(link) ? "active" : null)"
+                       href="@link.Href"
+                       title="@link.Tooltip"
+                       @onclick="@(() => NavigateToLink(link))"
+                       @onclick:preventDefault="true">
+                        <span class="oi oi-@(string.IsNullOrWhiteSpace(link.Icon) ? "home" : link.Icon)" aria-hidden="true"></span>
+                        @link.Label
+                    </a>
+                }
+            </li>
+        </ForEach>
+    </ul>
+</div>

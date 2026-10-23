@@ -1,0 +1,31 @@
+﻿@using Blazor_CommonModel.Shared.Collections
+@inherits BaseComponent
+@code
+{
+    public TreeControlView TreeModel { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        Info("OnInitializedAsync");
+        await base.OnInitializedAsync();
+        var factory = new TreeFactory();
+        this.TreeModel = factory.CreateClassTreeView<AppViewBase>(this.OnViewSelected);
+    }
+
+    public AppViewBase CurrentView { get; set; }
+
+    public void OnViewSelected(Type viewType){
+        CurrentView = viewType.New<AppViewBase>();
+    }
+}
+
+TreeModel
+@if(TreeModel is not null)
+{
+    <TreeControl ViewModel="@TreeModel"></TreeControl>
+}
+
+CurrentView
+@if (CurrentView is not null)
+{
+    <ContainerControl ViewModel="@CurrentView"></ContainerControl>
+}

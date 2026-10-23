@@ -1,0 +1,189 @@
+@inherits BaseComponent
+@using Console_CommonModel.CommonLib.LibViews.AppViews
+@using Console_CommonModel.CommonLib.LibViews.AppViews.BaseComponent
+
+@* ============================================================
+   Компонент отображения изображения на основе модели ImageView
+   Поддерживает позиционирование (cover/repeat/corner),
+   сохранение пропорций и загрузку данных из byte[] или URL.
+   ============================================================ *@
+
+<div class="image-view @PositionClass"
+     style="@StyleString">
+
+    @if (Model?.Data is { Length: > 0 })
+    {
+        @* Байтовый массив — конвертируем в data URI *@
+        <img src="@ToDataUri(Model.Data)"
+        alt="@Model.Text"
+        class="image-view__img @AspectClass"
+        style="width:100%;height:100%;" />
+    }
+    else if (!string.IsNullOrWhiteSpace(SourceUrl))
+    {
+        @* Внешний URL *@
+        <img src="@SourceUrl"
+        alt="@Model.Text"
+        class="image-view__img @AspectClass"
+        style="width:100%;height:100%;" />
+    }
+    else
+    {
+        @* Плейсхолдер, если изображение не задано *@
+        <div class="image-view__placeholder">
+            <span>@(Model?.Text ?? "Изображение")</span>
+        </div>
+    }
+
+    @if (ChildContent is not null)
+    {
+        @ChildContent
+    }
+</div>
+
+@code {
+    // ------------------------------------------------------------
+    // Параметры
+    // ------------------------------------------------------------
+
+    /// <summary>
+    /// Модель представления изображения.
+    /// </summary>
+    [Parameter]
+    public ImageView Model
+    {
+        get;
+        set;
+    }
+
+    /// <summary>
+    /// Внешний URL изображения (используется, если Model.Data пуст).
+    /// </summary>
+    [Parameter]
+    public string SourceUrl { get; set; }
+
+    /// <summary>
+    /// Дочерний контент (например, оверлеи поверх картинки).
+    /// </summary>
+    [Parameter]
+    public override RenderFragment ChildContent { get; set; }
+
+    // ------------------------------------------------------------
+    // Производные CSS-классы / inline-стили
+    // ------------------------------------------------------------
+
+    private string PositionClass => Model?.Position switch
+    {
+        "cover"  => "image-view--cover",
+        "repeat" => "image-view--repeat",
+        "corner" => "image-view--corner",
+        _        => "image-view--cover"
+    };
+
+    private string AspectClass => Model?.KeepAspectRatio == true
+        ? "image-view__img--contain"
+        : "image-view__img--stretch";
+
+    private string StyleString
+    {
+        get
+        {
+            if (Model is null) return null;
+
+            var sb = new System.Text.StringBuilder();
+
+            if (Model.MinWidth > 0)  sb.Append($"min-width:{Model.MinWidth}px;");
+            if (Model.MinHeight > 0) sb.Append($"min-height:{Model.MinHeight}px;");
+            if (Model.Width > 0)     sb.Append($"width:{Model.Width}px;");
+            if (Model.Height > 0)    sb.Append($"height:{Model.Height}px;");
+
+            return sb.ToString();
+        }
+    }
+
+    // ------------------------------------------------------------
+    // Жизненный цикл
+    // ------------------------------------------------------------
+
+    protected override async Task OnInitializedAsync()
+    {
+        Model ??= new ImageView { Text = "Изображение" };
+        await base.OnInitializedAsync();
+
+        
+
+        this.Info($"ImageView initialized: Position={Model.Position}, KeepAspectRatio={Model.KeepAspectRatio}");
+    }
+
+    // ------------------------------------------------------------
+    // Хелперы
+    // ------------------------------------------------------------
+
+    /// <summary>
+    /// Конвертирует byte[] в data URI. Определяем MIME по сигнатуре файла.
+    /// </summary>
+    private static string ToDataUri(byte[] data)
+    {
+        var mime = DetectMime(data);
+        return $"data:{mime};base64,{Convert.ToBase64String(data)}";
+    }
+
+    /// <summary>
+    /// Простое определение MIME-типа по magic bytes.
+    /// </summary>
+    private static string DetectMime(byte[] data)
+    {
+        if (data is null || data.Length < 4) return "application/octet-stream";
+
+        // PNG: 89 50 4E 47
+        if (data[0] == 0x89 && data[1] == 0x50 && data[2] == 0x4E && data[3] == 0x47)
+            return "image/png";
+
+        // JPEG: FF D8 FF
+        if (data[0] == 0xFF && data[1] == 0xD8 && data[2] == 0xFF)
+            return "image/jpeg";
+
+        // GIF: 47 49 46 38
+        if (data[0] == 0x47 && data[1] == 0x49 && data[2] == 0x46 && data[3] == 0x38)
+            return "image/gif";
+
+        // WEBP: RIFF....WEBP
+        if (data.Length >= 12 &&
+            data[0] == 0x52 && data[1] == 0x49 && data[2] == 0x46 && data[3] == 0x46 &&
+            data[8] == 0x57 && data[9] == 0x45 && data[10] == 0x42 && data[11] == 0x50)
+            return "image/webp";
+
+        // SVG (текстовый): <svg
+        if (data[0] == 0x3C && data[1] == 0x73 && data[2] == 0x76 && data[3] == 0x67)
+            return "image/svg+xml";
+
+        // BMP: 42 4D
+        if (data[0] == 0x42 && data[1] == 0x4D)
+            return "image/bmp";
+
+        return "image/png";
+    }
+}
+
+@code{
+    [Parameter]
+    public override AppViewBase ViewModel { get; set; }
+
+}
+<MudCard>
+    @if(!Initiallized)
+    {
+        <MudProgressCircular>Выполняется инициализация</MudProgressCircular>
+    }
+    else
+    {
+        if(ErrorMessage != "" )
+        {
+            <MudAlert>@ErrorMessage</MudAlert>
+        }
+        else
+        {
+            <MudBlazor.Charts.Line></MudBlazor.Charts.Line>
+        }
+    }
+</MudCard>

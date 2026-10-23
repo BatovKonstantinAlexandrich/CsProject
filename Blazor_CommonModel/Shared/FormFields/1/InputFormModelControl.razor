@@ -1,0 +1,149 @@
+@inherits WebControlBase<InputFormModel,InputFormModelControl>
+InputFormModel
+
+@code{
+    [Parameter]
+    public InputFormModel Model { get; set; }
+
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+
+        try
+        {
+            this.BindComponent();            
+        }
+        catch(Exception ex)
+        {
+            this.ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            this.Initiallized = true;
+        }
+    }
+}
+<MudCard>
+    @if(!Initiallized && Model is not null)
+    {
+        <MudProgressCircular>Выполняется инициализация</MudProgressCircular>
+    }
+    else
+    {
+        if(ErrorMessage != "" )
+        {
+            <MudAlert>@ErrorMessage</MudAlert>
+        }
+        else
+        {
+
+
+            <MudContainer MaxWidth="MaxWidth.Small" Class="mt-4">
+                <MudText Typo="Typo.h5" Class="mb-4">Форма регистрации</MudText>
+
+                <MudForm @ref="_form" @bind-IsValid="@_isValid" Model="@_model">
+                    <MudStack Spacing="3">
+                        @if (Model?.FormFields is null || Model?.FormFields.Count()==0)
+                        {
+                            <MudAlert>Не заданы ссылки на модель, поля ввода не добавлены</MudAlert>
+                        }
+                        else
+                        @foreach(InputFormField inputFormField in Model?.FormFields)
+                        {
+                            <InputFormFieldControl Model="@inputFormField"></InputFormFieldControl>
+                        }
+                        
+                        @* 1. Текстовое поле *@
+                        <MudTextField @bind-Value="_model.Name"
+                                          Label="Имя"
+                                          Variant="Variant.Outlined"
+                                          Required="true"
+                                          RequiredError="Пожалуйста, введите имя" />
+
+                        @* 2. Поле для ввода Email *@
+                    <MudTextField @bind-Value="_model.Email"
+                                      Label="Email"
+                                      Variant="Variant.Outlined"
+                                      InputType="InputType.Email"
+                                      Required="true"
+                                      Validation="@(new EmailAddressAttribute() { ErrorMessage = "Введите корректный email" })" />
+
+                        @* 3. Числовое поле *@
+                    <MudNumericField @bind-Value="_model.Age"
+                                         Label="Возраст"
+                                         Variant="Variant.Outlined"
+                                         Min="18"
+                                         Max="100"
+                                         Required="true"
+                                         RequiredError="Введите возраст" />
+
+                        @* 4. Выпадающий список *@
+                        <MudSelect T="string" @bind-Value="_model.Country" Label="Страна" Variant="Variant.Outlined" Required="true">
+                            <MudSelectItem T="string" Value="@("Россия")">Россия</MudSelectItem>
+                            <MudSelectItem T="string" Value="@("Казахстан")">Казахстан</MudSelectItem>
+                            <MudSelectItem T="string" Value="@("Беларусь")">Беларусь</MudSelectItem>
+                        </MudSelect>
+
+                        @* 5. Выбор даты *@
+                    <MudDatePicker @bind-Date="_model.BirthDate"
+                                       Label="Дата рождения"
+                                       Variant="Variant.Outlined"
+                                       Required="true"
+                                       RequiredError="Выберите дату" />
+
+                        @* 6. Флажок (согласие) *@
+                    <MudCheckBox T="bool" @bind-Value="_model.Agreed" Label="Я согласен с условиями" Color="MudBlazor.Color.Primary" />
+
+                        @* 7. Многострочное текстовое поле *@
+                    <MudTextField @bind-Value="_model.Comments"
+                                      Label="Комментарии"
+                                      Variant="Variant.Outlined"
+                                      Lines="3" />
+
+                        <MudButton Variant="Variant.Filled"
+                                   Color="MudBlazor.Color.Primary"
+                                   OnClick="SubmitAsync"
+                                   Disabled="!_isValid"
+                                   Class="mt-4">
+                            Отправить
+                        </MudButton>
+                    </MudStack>
+                </MudForm>
+
+                @if (_isValid)
+                {
+                    <MudAlert Severity="Severity.Success" Class="mt-4">Форма заполнена корректно!</MudAlert>
+                }
+            </MudContainer>
+
+
+        }
+    }
+</MudCard>
+
+@code {
+    private MudForm _form;
+    private bool _isValid;
+    private SampleModel _model = new();
+
+    private async Task SubmitAsync()
+    {
+        await _form.Validate();
+
+        if (_isValid)
+        {
+            // Здесь можно обработать отправку данных
+            Console.WriteLine($"Отправлено: {_model.Name}, {_model.Email}");
+        }
+    }
+
+    public class SampleModel
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public int Age { get; set; }
+        public string Country { get; set; } = string.Empty;
+        public DateTime? BirthDate { get; set; }
+        public bool Agreed { get; set; }
+        public string Comments { get; set; } = string.Empty;
+    }
+}

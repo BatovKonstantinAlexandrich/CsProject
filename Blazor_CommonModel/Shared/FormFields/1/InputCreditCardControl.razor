@@ -1,0 +1,20 @@
+@using Console_CommonModel.CommonLib.LibViews.AppViews.InputModule
+@inherits WebControlBase<InputCreditCardView,InputCreditCardControl>
+@code
+{
+    [Parameter]
+    public CardView Model { get; set; }
+    
+    [Parameter]
+    public override RenderFragment? ChildContent { get; set; }
+
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+    } 
+}
+<MudCard Style="@(Model.GetCssText())">
+    @if (ChildContent is not null)
+    {
+        @ChildContent
+    }     
+</MudCard>

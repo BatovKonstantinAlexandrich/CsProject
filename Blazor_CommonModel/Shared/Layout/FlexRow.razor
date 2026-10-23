@@ -1,0 +1,23 @@
+﻿<div style="display: flex; flex-direction: row; flex-wrap: @(Wrap?"wrap":"nowrap"); @((MaxWidth? "width: 100%;":"")) @((MaxHeight? "height: 100%;":""))">
+    @ChildContent
+</div>
+
+@code {
+
+    [Parameter]
+    public bool MaxWidth { get; set; } = false;
+
+    [Parameter]
+    public bool MaxHeight { get; set; } = false;
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    [Parameter]
+    public bool Wrap { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync( );        
+    }
+}

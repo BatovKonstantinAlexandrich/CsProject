@@ -1,0 +1,62 @@
+﻿@using Blazor_CommonModel.Services.DataModel
+
+@inherits BaseComponent
+@implements IMonitoring
+
+@inject MonitoringDbContext monitoringDb
+@inject MonitoringDbInitiallizer monitoringInitiallizer
+@inject MonitoringChartsService monitoringChart
+
+
+MonitoringControl
+@code
+{
+    [Parameter]
+    public DateTime BeginDate { get => Model.BeginDate; set => Model.BeginDate = value; }
+
+    [Parameter]
+    public int BusinessResourceId { get => Model.BusinessResourceId; set => Model.BusinessResourceId = value; }
+
+    [Parameter]
+    public int Granularity { get => Model.Granularity; set => Model.Granularity = value; }
+
+    [Parameter]        
+    public int Length { get => Model.Length; set => Model.Length = value; }
+
+    [Parameter]
+    public AppViewBase ViewModel { get; set; } = new ();
+    public MonitoringView Model { get; set; } = new ();
+
+
+    public Dictionary<string, int> InitMonitoringData() 
+    {
+        return this.Cast<AppViewBase>().Get<MonitoringDbInitiallizer>().ReInit(monitoringDb);
+    }
+
+
+    public Action InitMonitoringDesign(){
+        return () => { }; ;
+    }
+    public void UpdateMonitoringView() { }
+    public void TestMonitoringModule() { }
+    public void TestSlideLeft( object sender ,EventArgs evt) {
+        this.ViewModel.Left = new LineChartView();
+    }
+}
+<Blazor_CommonModel.Shared.Components.ButtonControl Text="@("Открыть")" OnClick="@TestSlideLeft"></Blazor_CommonModel.Shared.Components.ButtonControl>
+<Blazor_CommonModel.Shared.Layout.TransclusionPanel ShowLeft="@true">
+    <Left>        
+        <EditControl ViewModel="@Model"></EditControl>
+    </Left>
+    <Center>
+        <LineChartControl></LineChartControl>
+    </Center>    
+</Blazor_CommonModel.Shared.Layout.TransclusionPanel>
+
+@if (Model is not null)
+{
+    <Blazor_CommonModel.Shared.Collections.FormControl Target="Model">
+    </Blazor_CommonModel.Shared.Collections.FormControl>
+}
+
+<LineChartControl></LineChartControl>

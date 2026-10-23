@@ -1,0 +1,64 @@
+@using Console_CommonModel.CommonLib.LibViews.SharedViewCollections.FormView
+@inherits WebControlBase<InputFormField,InputFormFieldControl>
+ 
+@code{
+    [Parameter]
+    public InputFormField Model { get; set; }
+
+    private InputFormFieldService Service { get; set; } = new();
+
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+        try
+        {
+            this.BindComponent();            
+        }
+        catch(Exception ex)
+        {
+            this.ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            this.Initiallized = true;
+        }
+    }
+}
+@if(!Initiallized)
+{
+    <MudProgressCircular>Выполняется инициализация</MudProgressCircular>
+}
+else
+{
+    if(ErrorMessage != "" )
+    {
+        <MudAlert>@ErrorMessage</MudAlert>
+    }
+    else
+    {
+        if(Model is not null)
+        {
+           
+            @if (Model.Control is null)
+            {
+                <ContainerControl ViewModel="@(Model.Control=Service.CreateControl(Model))" FullWidth="@true"></ContainerControl>
+            }
+            else
+            {
+                <ContainerControl ViewModel="@Model.Control" FullWidth="@true">
+
+                </ContainerControl>
+            }
+        }
+        else
+        {
+
+            <MudAlert>@(GetType().GetTypeName()) Не установлен обязательный параметр @nameof(Model)</MudAlert>
+        }
+        foreach (var error in Model.Errors)
+        {
+            <div><MudText Color="@MudBlazor.Color.Error">@error</MudText></div>
+        }
+         
+            
+    }
+}

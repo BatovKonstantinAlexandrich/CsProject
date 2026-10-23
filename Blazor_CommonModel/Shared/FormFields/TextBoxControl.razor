@@ -1,0 +1,83 @@
+﻿@inherits WebControlBase<TextBoxView,ITextBoxControl>
+@implements ITextBoxControl
+@code 
+{
+
+    [Parameter]
+    public string Text { get => Get<string>(nameof(Text)); set => Set<string>(nameof(Text), value); }
+
+    public TextBoxControl(){
+        this.Text = "";      
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        if(Model is not null)
+        {
+            if(Text != Model.Text)
+            {
+                Text = Model.Text;
+            }
+        }
+    }
+
+    [Parameter]
+    public TextBoxView Model { get; set; }
+
+    [Parameter]
+    public string Label { get; set; }
+
+    [Parameter]
+    public Action<string> OnTextChanged { get; set; } = text => { };
+
+
+    public void OnValueChanged(string? text){
+        OnTextChanged(Text = text);
+        if (this.Model is not null)
+        {
+            this.Model.OnTextChanged(text);
+        }
+    }
+}
+
+@if (Model is null)
+{
+    <MudAlert>Не задана ссылка в параметре "()"</MudAlert>
+}
+else
+{    
+    <CustomTextBox Label="@Label"     
+                   Value="@Text"
+                   ValueChanged="@OnValueChanged"
+                   InputType="@((Model.InputType is null? InputType.Text: Model.InputType.CreateEnumValue<InputType>(InputType.Text)))"
+                   HelperText="@Model.Help" />
+}
+
+
+
+@code {
+    private string? name;
+    private string? password;
+    private string? description;
+    private string? email;
+    private string? emailError;
+    private bool _showPassword;
+
+    private void TogglePassword()
+    {
+        _showPassword = !_showPassword;
+    }
+
+    private void Submit()
+    {
+        if (string.IsNullOrEmpty(email) || !email.Contains("@"))
+        {
+            emailError = "Введите корректный email";
+        }
+        else
+        {
+            emailError = null;
+        }
+    }
+}

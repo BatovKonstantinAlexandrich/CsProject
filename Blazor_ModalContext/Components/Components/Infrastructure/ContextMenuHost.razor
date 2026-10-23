@@ -1,0 +1,68 @@
+@implements IDisposable
+@inject IContextMenuService ContextMenuService
+
+@if (_request is not null)
+{
+    <div class="context-menu-overlay"
+         @onclick="Hide"
+         @oncontextmenu="Hide"
+         @oncontextmenu:preventDefault="true">
+        <MudPaper Elevation="8"
+                  Class="context-menu-panel pa-1"
+                  Style="@_panelStyle"
+                  @onclick:stopPropagation="true">
+            <MudList T="string" Dense="true">
+                @foreach (var item in _request.Items)
+                {
+                    <MudListItem T="string"
+                                 Text="@item.Text"
+                                 Icon="@item.Icon"
+                                 Disabled="@item.Disabled"
+                                 OnClick="@(() => SelectItemAsync(item))" />
+                }
+            </MudList>
+        </MudPaper>
+    </div>
+}
+
+@code {
+    private ContextMenuRequest? _request;
+    private string _panelStyle = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        ContextMenuService.Changed += OnMenuChanged;
+        SyncFromService();
+    }
+
+    private void OnMenuChanged()
+    {
+        SyncFromService();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void SyncFromService()
+    {
+        _request = ContextMenuService.Current;
+        _panelStyle = _request is null
+            ? string.Empty
+            : $"position:fixed;left:{_request.ClientX}px;top:{_request.ClientY}px;z-index:2000;min-width:180px;";
+    }
+
+    private async Task SelectItemAsync(ContextMenuEntry item)
+    {
+        if (item.Disabled || _request?.OnItemSelected is null)
+        {
+            Hide();
+            return;
+        }
+
+        var handler = _request.OnItemSelected;
+        Hide();
+        await handler(item);
+    }
+
+    private void Hide() => ContextMenuService.Hide();
+
+    public void Dispose() => ContextMenuService.Changed -= OnMenuChanged;
+}

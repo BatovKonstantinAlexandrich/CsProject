@@ -1,0 +1,33 @@
+﻿@page "/person/local-storage-explorer"
+@inherits BaseComponent
+@inject ILocalStorage localStorage
+@code { public string[] Keys { get; set; }
+            protected override async Task OnInitializedAsync()
+            {
+                await base.OnInitializedAsync();
+                Keys = await Eval<string[]>("return Object.keys(localStorage);");
+            } }
+<div class="card" style="width: 18rem;">
+    <div class="card-body">
+        <h5 class="card-title">LocalStorageExplorer</h5>
+        <p class="card-text">
+            Обозревать локального хранилища, предоставляет интерфейс для
+            просмотра и редактирования локального хранилища браузера.
+        </p>
+
+        <div>
+            @if (Keys != null)
+            {
+                <NavListGroup TItem="System.String" Context="item" Items="Keys">
+                    <span>@item</span>
+                </NavListGroup>
+                @foreach (string key in Keys)
+                {
+                    <li>@key</li>
+                }
+                            
+            }
+        </div>
+        <a class="btn btn-primary">Назад</a>
+    </div>
+</div>

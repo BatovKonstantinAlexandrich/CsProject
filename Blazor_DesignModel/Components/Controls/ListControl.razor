@@ -1,0 +1,196 @@
+@inherits ComponentBase
+@using Console_CommonModel.CommonLib.LibViews.AppViewModules.MenuModule
+@using Console_CommonModel.CommonLib.LibViews.AppViews.BaseComponent
+@using MudBlazor 
+@code
+{
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();        
+
+    }
+}
+<div class="list-selection-view" style="min-width:@(View.MinWidth)px; min-height:@(View.MinHeight)px;">
+
+    @* ---------- Заголовок ---------- *@
+    @if (!string.IsNullOrWhiteSpace(View.Text))
+    {
+        <MudText Typo="Typo.h6" Class="d-flex align-center gap-2 mb-2">
+            @if (!string.IsNullOrWhiteSpace(View.Icon))
+            {
+                <MudIcon Icon="@View.Icon" Size="MudBlazor.Size.Medium" />
+            }
+            @View.Text
+        </MudText>
+    }
+
+    @* ---------- Поиск ---------- *@
+ 
+    @if (View.Searchable)
+    {
+        <MudTextField T="string"
+        @bind-Value="_searchText" 
+            Placeholder="Поиск..."
+            Adornment="Adornment.Start"
+            AdornmentIcon="@Icons.Material.Filled.Search"
+            Immediate="true"
+            Clearable="true"
+            Class="mb-2" />
+    }
+
+    @* ---------- Список ---------- *@
+    @if (View.Options is null || View.Options.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+            Список пуст
+        </MudAlert>
+    }
+    else if (FilteredItems.Count == 0)
+    {
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+            Ничего не найдено по запросу «@_searchText»
+        </MudAlert>
+    }
+    else
+    {
+        <MudList T="Option"
+        @bind-SelectedValue="_selectedItem"
+        @bind-SelectedValue:after="OnSelectionChanged"
+        Selectable="@View.Selectable"
+        Dense="true"
+        Class="pa-0">
+
+            @foreach (Option item in FilteredItems)
+            {
+                <MudListItem T="Option"
+                Value="@item"                
+                Icon="@GetItemIcon(item)"
+                Class="@GetItemCss(item)">
+                    <div class="d-flex flex-column">
+                        <MudText Typo="Typo.body1">@item.Value</MudText>
+                        @if (!string.IsNullOrWhiteSpace(item.Item?.GetDescription()))
+                        {
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                @item.GetDescription()
+                            </MudText>
+                        }
+                    </div>
+                </MudListItem>
+            }
+        </MudList>
+    }
+
+    @* ---------- Действия ---------- *@
+    @if (ActionButtons?.Any() == true)
+    {
+        <MudDivider Class="my-2" />
+        <div class="d-flex gap-2 flex-wrap">
+            @foreach (MenuView action in ActionButtons)
+            {
+                <MudButton Variant="Variant.Text"
+                Color="MudBlazor.Color.Primary"
+                StartIcon="@action.Icon"
+                OnClick="@(evt => action.OnClick(this, evt))">
+                    @action.Text
+                </MudButton>
+            }
+        </div>
+    }
+</div>
+
+@code {
+
+
+    public List<MenuView> ActionButtons { get; set; }
+
+    /// <summary>
+    /// Ссылка на ViewModel, которую передаёт родитель.
+    /// Меняется через <see cref="ViewChanged"/>.
+    /// </summary>
+    [Parameter]
+    public ListView View { get; set; } = default!;
+
+    /// <summary>
+    /// Уведомление родителя об изменении View (если нужно менять ссылку целиком).
+    /// </summary>
+    [Parameter]
+    public EventCallback<ListView> ViewChanged { get; set; }
+
+    /// <summary>
+    /// Уведомление о выборе конкретного элемента.
+    /// </summary>
+    [Parameter]
+    public EventCallback<Option> SelectedItemChanged { get; set; }
+
+    private string _searchText = string.Empty;
+    private Option? _selectedItem;
+    private List<Option> _filtered = new();
+
+    private List<Option> FilteredItems => _filtered;
+
+    protected override void OnInitialized()
+    {
+        this.Info(this.GetType().GetTypeName());
+        RebuildFilter();
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Если View заменили целиком — пересобрать фильтр
+        RebuildFilter();
+
+        // Синхронизируем выбранный элемент с ViewModel
+        if (View?.Options is not null)
+        {
+            var current = View.Options.FirstOrDefault(x => x == View.SelectedOption);
+            if (!ReferenceEquals(current, _selectedItem))
+                _selectedItem = current;
+        }
+    }
+
+    private void OnSearchChanged()
+    {
+        RebuildFilter();
+    }
+
+    private void RebuildFilter()
+    {
+        if (View is null)
+            View = new();
+        if (View?.Options is null)
+        {
+            _filtered = new();
+            return;
+        }
+
+        var q = _searchText?.Trim() ?? string.Empty;
+
+        _filtered = string.IsNullOrEmpty(q)
+            ? View.Options.ToList()
+            : View.Options
+                .Where(x => true)
+                .ToList();
+    }
+
+    private async Task OnSelectionChanged()
+    {       
+        if (_selectedItem is not null)
+            await SelectedItemChanged.InvokeAsync(View.SelectedOption);
+        await ViewChanged.InvokeAsync(View);
+        if (_selectedItem is not null)
+        {
+            View.OnSelected(_selectedItem);
+        }
+    }
+
+    private static string? GetItemIcon(Option item)
+    {
+        // Если у ViewItem есть свойство Icon — верните его, иначе null
+        var prop = item.GetType().GetProperty("Icon");
+        return prop?.GetValue(item) as string;
+    }
+
+    private string GetItemCss(Option item)
+        => item==View.SelectedOption ? "mud-primary-text" : string.Empty;
+}
+  

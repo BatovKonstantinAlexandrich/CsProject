@@ -1,0 +1,29 @@
+﻿@page "/news"
+@inject NewsPage news
+@code {
+    public ValidationForm Ref { get; set; }
+    public void OnCreateButtonClicked(){
+
+    }
+    public void OnCancelButtonClicked()
+    {
+
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+}
+
+@if (news is null || news.Model is null)
+{
+    <p>news.Model is null</p>
+}
+else
+{
+    <ValidationForm Model="@news.Model" @ref="@Ref">
+        <button class="btn btn-primary @(Ref.Model.IsValid?"":"disabled")" @onclick="@OnCreateButtonClicked">Создать</button>
+        <button class="btn btn-secondary" @onclick="@OnCancelButtonClicked">Отмена</button>
+    </ValidationForm>
+}

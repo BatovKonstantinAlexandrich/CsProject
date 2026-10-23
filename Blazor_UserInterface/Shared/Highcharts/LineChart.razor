@@ -1,0 +1,72 @@
+﻿@inject IJSRuntime js
+@inherits BaseComponent
+
+@code
+{
+    public  LineChart Model = new LineChart();
+
+    public string Description { get; set; } = @"Highcharts has extensive support for time series, and will adapt
+        intelligently to the input data. Click and drag in the chart to zoom in
+        and inspect the data.";
+
+
+    public override void AfterInit()
+    {
+        base.AfterInit();
+        SetTimeout(() => { Update(); }, 2000);
+    }
+
+
+    public void Update()
+    {
+
+        js.InvokeVoidAsync("eval", @"(function () {
+            let json = null;
+            try {
+                json = JSON.parse(Model.innerHTML);
+            } catch (e) {
+                alert('Ошибка при разборе JSON: ' + e);
+            }
+            try {
+                Highcharts.chart(document.getElementById('highchart-diagram-" + Model.GetHashCode() + @"'), " + Model.ToJson() + @");
+            } catch (e) {
+                alert('Ошибка при формировании диаграммы: ' + e);
+            }
+        })()");
+    }
+
+    public void SetTimeout(Action action, long ms)
+    {
+        System.Timers.Timer aTimer = new System.Timers.Timer(2000);
+
+        aTimer.Elapsed += (Object source, System.Timers.ElapsedEventArgs e) =>
+        {
+            action();
+            aTimer.Enabled = false;
+        };
+        aTimer.AutoReset = false;
+        aTimer.Enabled = true;
+    }
+}
+<button @onclick="@Update">Update</button>
+<p id="Model" style="display: none;">@Model.ToJson()</p>
+<div>
+    <figure class="highcharts-figure">
+        <div id="container-@GetHashCode()"></div>
+        <p class="highcharts-description">
+            @Description
+        </p>
+        <div class="highcharts-container btn front-pane"
+             style="width: 100%; height: 100%;"
+             id="highchart-diagram-@Model.GetHashCode()">
+        </div>
+    </figure>
+
+</div>
+
+
+
+
+
+
+

@@ -1,0 +1,82 @@
+@inherits WebControlBase<ComboboxView,ComboboxControl>
+@implements WinFormsApp.AppComponents.AppControls.IComboboxControl
+@code{
+    [Parameter]
+    public Action<string> OnSelected { get; set; } = p => { };
+
+    [Parameter]
+    public ChangingList<string> Options { get; set; } = new();
+
+    [Parameter]
+    public string Value { get; set; } = null;
+
+    [Parameter]
+    public string Text { get; set; } = "";
+
+    [Parameter]
+    public ComboboxView Model { get; set; }
+
+
+    public void SetSelectedIndex(int selectedIndex)
+    {
+        try
+        {
+            this.Value = Options[selectedIndex];
+        }
+        catch(Exception ex)
+        {
+            this.ErrorMessage = ex.Message;
+        }
+    }
+
+
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+
+        try
+        {
+            
+            this.BindComponent();            
+        }
+        catch(Exception ex)
+        {
+            this.ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            this.Initiallized = true;
+        }
+    }
+}
+
+@if (!Initiallized )
+{
+    <MudProgressCircular>Выполняется инициализация</MudProgressCircular>
+}
+else
+{
+    if(ErrorMessage != "" )
+    {
+        <MudAlert>@ErrorMessage</MudAlert>
+    }
+    else
+    {
+        @if(Model is null)
+        {
+            <MudAlert> @(this.GetTypeName()) Не установлена ссылка на параметр @(nameof(Model))</MudAlert>
+        }
+        else
+        {
+            <MudSelect T="string" 
+                Label="@Model.Text"
+                
+                @bind-Value="@Model.Value">
+                @foreach (var option in Model.Options)
+                {
+                    <MudSelectItem T="string" Value="@option">@option</MudSelectItem>
+                }
+            </MudSelect>
+        }
+
+    }
+}

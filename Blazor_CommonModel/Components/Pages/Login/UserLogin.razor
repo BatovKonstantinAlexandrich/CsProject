@@ -1,0 +1,23 @@
+﻿@page "/login/user"
+@inherits BaseComponent
+
+
+    <ContainerControl ViewModel="@View" FullSize="@true"></ContainerControl>
+
+@code 
+{
+    public UserAccount Model { get; set; } = new UserAccount();
+    public EditView View { get; set; }
+
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+        this.View = EditView.CreateEditViewBase(Model, OnLoginSubmited);                
+    }
+
+    public void OnLoginSubmited(bool success, object userAccount)
+    {
+        if (userAccount is UserAccount account){
+
+        }
+    }
+}

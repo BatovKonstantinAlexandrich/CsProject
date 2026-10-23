@@ -1,0 +1,15 @@
+﻿@inherits BaseComponent
+@typeparam TPar
+@code 
+{
+    protected override async Task OnInitializedAsync()
+    {
+        Info("OnInitializedAsync");
+        await base.OnInitializedAsync();
+        var args = new Type[] { typeof(TPar) };
+        ViewModel = typeof(ViewTesting<>).MakeGenericType(args).New<AppViewBase>();
+    }
+}
+<Blazor_CommonModel.Shared.Layout.TransclusionPanel>
+    <ContainerControl ViewModel="@(ViewModel)"></ContainerControl>
+</Blazor_CommonModel.Shared.Layout.TransclusionPanel>
