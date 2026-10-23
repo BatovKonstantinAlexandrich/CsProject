@@ -84,11 +84,15 @@ public class MessageService(ApplicationDbContext db, IMessageNotifier messageNot
     public Task<int> GetUnreadCountAsync(string userId) =>
         db.Messages.CountAsync(m => m.RecipientId == userId && !m.IsRead && m.ParentMessageId == null);
 
-    public Task<List<ApplicationUser>> GetUsersForMessagingAsync(string currentUserId) =>
-        db.UserContext
-            .Where(u => u.Id != currentUserId)
-            .OrderBy(u => u.FullName)
-            .ToListAsync();
+    public Task<List<ApplicationUser>> GetUsersForMessagingAsync(string currentUserId)
+    {
+        throw new Exception("Код закомментирован");
+
+        //return db.UserContext
+        //    .Where(u => u.Id != currentUserId)
+        //    .OrderBy(u => u.FullName)
+        //    .ToListAsync();
+    }
 
     public async Task<bool> DeleteMessageAsync(int messageId, string userId)
     {

@@ -173,10 +173,10 @@ public class OrderService(
             order.Delivery.PickedUpAt = DateTime.UtcNow;
         }
 
-        var transportCompany = await db.UserContext.FindAsync(transportUserId);
-
-        await db.SaveChangesAsync();
-        await orderNotifier.NotifyOrderTakenForDeliveryAsync(order, transportCompany);
+        //var transportCompany = await db.UserContext.FindAsync(transportUserId);
+        throw new Exception("Код закомментирован");
+        //await db.SaveChangesAsync();
+        //await orderNotifier.NotifyOrderTakenForDeliveryAsync(order, transportCompany);
         return true;
     }
 

@@ -125,7 +125,8 @@ public class StoBookingApiService
             throw new InvalidOperationException("BookingApi не настроен в appsettings.json (BookingApi:ApiToken или Username/Password).");
 
         using var request = new HttpRequestMessage(method, path);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await GetTokenAsync(ct));
+        var token = await GetTokenAsync(ct);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         if (body != null)
             request.Content = JsonContent.Create(body, options: JsonOptions);
