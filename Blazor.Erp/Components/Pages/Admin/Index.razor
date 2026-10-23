@@ -1,0 +1,43 @@
+@page "/admin"
+@attribute [Authorize(Roles = $"{RoleNames.Admin},{RoleNames.Developer}")]
+@inject IOptions<ExternalAppsOptions> ExternalAppsOptions
+
+<PageTitle>Администрирование</PageTitle>
+
+<MudText Typo="Typo.h3" Class="page-title">Администрирование</MudText>
+<MudText Typo="Typo.body2" Class="text-muted mb-4">
+    Встроенные приложения: NgAppPayGwManager, NgAppVendorsSetup и marketer-web.
+</MudText>
+
+<MudTabs @bind-ActivePanelIndex="_tab" Class="mb-2">
+    <MudTabPanel Text="Платёжные системы" Icon="@Icons.Material.Filled.Payments" />
+    <MudTabPanel Text="Поставщики" Icon="@Icons.Material.Filled.Store" />
+    <MudTabPanel Text="Marketer Web" Icon="@Icons.Material.Filled.Campaign" />
+</MudTabs>
+
+@if (_tab == 0)
+{
+    <EmbeddedAppFrame Title="@_opts.PayGwManager.Title"
+                      Description="@_opts.PayGwManager.Description"
+                      Url="@(_opts.PayGwManager.Enabled ? _opts.PayGwManager.Url : string.Empty)" />
+}
+else if (_tab == 1)
+{
+    <EmbeddedAppFrame Title="@_opts.VendorsSetup.Title"
+                      Description="@_opts.VendorsSetup.Description"
+                      Url="@(_opts.VendorsSetup.Enabled ? _opts.VendorsSetup.Url : string.Empty)" />
+}
+else
+{
+    <EmbeddedAppFrame Title="@_opts.MarketerWeb.Title"
+                      Description="@_opts.MarketerWeb.Description"
+                      Url="@(_opts.MarketerWeb.Enabled ? _opts.MarketerWeb.Url : string.Empty)" />
+}
+
+@code {
+    private int _tab;
+    private ExternalAppsOptions _opts = new();
+
+    protected override void OnInitialized() =>
+        _opts = ExternalAppsOptions.Value;
+}

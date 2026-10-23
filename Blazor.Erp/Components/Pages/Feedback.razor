@@ -1,0 +1,109 @@
+@page "/feedback"
+@inject FeedbackService FeedbackService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<ApplicationUser> UserManager
+
+<PageTitle>Обратная связь — BlazorErp</PageTitle>
+
+<MudText Typo="Typo.h4" Class="page-title">Обратная связь</MudText>
+<p class="text-muted mb-4">Опишите проблему или предложение. Мы постараемся ответить как можно скорее.</p>
+
+@if (_submitted)
+{
+    <MudAlert Severity="Severity.Success" Class="mb-4">
+        Спасибо! Ваше сообщение отправлено.
+    </MudAlert>
+    <MudButton Href="/" Color="Color.Primary" Variant="Variant.Filled">На главную</MudButton>
+}
+else
+{
+    <MudPaper Elevation="2" Class="pa-4 mb-4" Style="max-width: 640px;">
+        <EditForm Model="_form" OnValidSubmit="Submit">
+            <DataAnnotationsValidator />
+            <div class="stack">
+                <MudTextField @bind-Value="_form.Name" Label="Имя" Placeholder="Как к вам обращаться" Variant="Variant.Outlined" />
+                <ValidationMessage For="() => _form.Name" />
+                <MudTextField @bind-Value="_form.Email" Label="Email" Placeholder="email@example.com" Variant="Variant.Outlined" />
+                <ValidationMessage For="() => _form.Email" />
+                <MudTextField @bind-Value="_form.Subject" Label="Тема" Placeholder="Кратко о сути" Variant="Variant.Outlined" />
+                <ValidationMessage For="() => _form.Subject" />
+                <MudTextField @bind-Value="_form.Body" Label="Сообщение" Lines="5" Placeholder="Подробное описание" Variant="Variant.Outlined" />
+                <ValidationMessage For="() => _form.Body" />
+                @if (!string.IsNullOrEmpty(_error))
+                {
+                    <MudAlert Severity="Severity.Error">@_error</MudAlert>
+                }
+                <div class="stack-row">
+                    <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled" Disabled="_busy">
+                        Отправить
+                    </MudButton>
+                    <MudButton Href="/help" Color="Color.Primary" Variant="Variant.Outlined">Помощь</MudButton>
+                </div>
+            </div>
+        </EditForm>
+    </MudPaper>
+}
+
+@code {
+    private readonly FeedbackForm _form = new();
+    private bool _submitted;
+    private bool _busy;
+    private string? _error;
+    private string? _userId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        _userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        if (_userId != null)
+        {
+            var user = await UserManager.FindByIdAsync(_userId);
+            if (user != null)
+            {
+                _form.Name = user.FullName;
+                _form.Email = user.Email ?? "";
+            }
+        }
+    }
+
+    private async Task Submit()
+    {
+        _busy = true;
+        _error = null;
+
+        try
+        {
+            await FeedbackService.SubmitAsync(_form.Name, _form.Email, _form.Subject, _form.Body, _userId);
+            _submitted = true;
+        }
+        catch
+        {
+            _error = "Не удалось отправить сообщение. Попробуйте позже.";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private sealed class FeedbackForm
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Введите имя")]
+        [System.ComponentModel.DataAnnotations.StringLength(100)]
+        public string Name { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Введите email")]
+        [System.ComponentModel.DataAnnotations.EmailAddress(ErrorMessage = "Некорректный email")]
+        [System.ComponentModel.DataAnnotations.StringLength(200)]
+        public string Email { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Введите тему")]
+        [System.ComponentModel.DataAnnotations.StringLength(200)]
+        public string Subject { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Введите сообщение")]
+        [System.ComponentModel.DataAnnotations.StringLength(4000)]
+        public string Body { get; set; } = "";
+    }
+}

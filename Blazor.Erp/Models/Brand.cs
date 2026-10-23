@@ -1,0 +1,9 @@
+namespace BlazorErp.Models;
+
+public class Brand
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public List<Product> Products { get; set; } = [];
+    public List<SupplierBrand> SupplierBrands { get; set; } = [];
+}

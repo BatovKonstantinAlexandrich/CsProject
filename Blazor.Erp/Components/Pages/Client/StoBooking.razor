@@ -1,0 +1,370 @@
+@page "/client/sto-booking"
+@attribute [Authorize(Roles = RoleNames.Client)]
+@inject StoBookingApiService BookingApi
+@inject UserManager<ApplicationUser> UserManager
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ISnackbar Snackbar
+@inject IOptions<BookingApiOptions> BookingOptions
+
+<PageTitle>Запись на СТО</PageTitle>
+
+<MudText Typo="Typo.h3" Class="page-title">Запись на СТО</MudText>
+<MudText Typo="Typo.body2" Class="text-muted mb-4">
+    Онлайн-запись через WebApiBooking (@BookingOptions.Value.BaseUrl).
+</MudText>
+
+@if (!BookingApi.IsConfigured)
+{
+    <MudAlert Severity="Severity.Warning" Class="mb-4">
+        API записи не настроен. Укажите <code>BookingApi:ApiToken</code> или пару Username/Password в appsettings.json.
+    </MudAlert>
+}
+
+<MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-3" @bind-ActivePanelIndex="_tabIndex">
+    <MudTabPanel Text="Новая запись" Icon="@Icons.Material.Filled.EventAvailable">
+        @if (_loadingInit)
+        {
+            <MudProgressLinear Indeterminate="true" Class="mb-3" />
+        }
+        else
+        {
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_phone" Label="Телефон" Required="true"
+                                  HelperText="Формат: 79001234567 или +7 (900) 123-45-67" Class="mb-3" />
+
+                    <MudSelect T="string" Value="_selectedStationId" ValueChanged="OnStationChangedAsync" Label="Автосервис" Required="true"
+                               Disabled="_stations.Count == 0" Class="mb-3">
+                        @foreach (var station in _stations)
+                        {
+                            <MudSelectItem Value="@station.ServiceStationId">
+                                @station.Name — @station.Address
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+
+                    <MudSelect T="string" @bind-Value="_selectedJobId" Label="Вид работ" Required="true"
+                               Disabled="string.IsNullOrEmpty(_selectedStationId) || _jobs.Count == 0" Class="mb-3">
+                        @foreach (var job in _jobs)
+                        {
+                            <MudSelectItem Value="@job.JobId">@job.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+
+                    @if (_selectedJobId == "1")
+                    {
+                        <MudPaper Class="pa-3 mb-3" Outlined="true">
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">Параметры шиномонтажа</MudText>
+                            <MudNumericField @bind-Value="_tireDiameter" Label="Диаметр (R)" Min="13" Max="22" Class="mb-2" />
+                            <MudSelect T="string" @bind-Value="_carBodyType" Label="Тип кузова" Class="mb-2">
+                                <MudSelectItem Value="@("passenger_or_crossover")">Легковой / кроссовер</MudSelectItem>
+                                <MudSelectItem Value="@("suv_or_minibus")">Внедорожник / минивэн</MudSelectItem>
+                            </MudSelect>
+                            <MudCheckBox @bind-Value="_keepInStorage" Label="Оставить текущие колёса на хранении" />
+                        </MudPaper>
+                    }
+
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="mb-3"
+                               Disabled="string.IsNullOrEmpty(_selectedStationId) || string.IsNullOrEmpty(_selectedJobId) || _loadingSlots"
+                               OnClick="LoadSlotsAsync" StartIcon="@Icons.Material.Filled.Schedule">
+                        @(_loadingSlots ? "Загрузка слотов..." : "Показать свободные слоты")
+                    </MudButton>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    @if (_slots.Count > 0)
+                    {
+                        <MudSelect T="string" @bind-Value="_selectedSlotKey" Label="Дата и время" Required="true" Class="mb-3">
+                            @foreach (var day in _slots)
+                            {
+                                @foreach (var hour in day.Time)
+                                {
+                                    var key = $"{day.Date}|{hour}";
+                                    <MudSelectItem Value="@key">@FormatSlotLabel(day.Date, hour)</MudSelectItem>
+                                }
+                            }
+                        </MudSelect>
+                    }
+                    else if (_slotsLoaded)
+                    {
+                        <MudAlert Severity="Severity.Info" Class="mb-3">Свободных слотов не найдено. Попробуйте другой сервис или работу.</MudAlert>
+                    }
+
+                    <MudTextField @bind-Value="_plateNumber" Label="Госномер" Placeholder="А123БВ777" Class="mb-3" />
+                    <MudTextField @bind-Value="_requestSummary" Label="Комментарий" Lines="3" Required="true"
+                                  Counter="512" MaxLength="512" Class="mb-3" />
+
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_submitting || !CanSubmit()"
+                               OnClick="SubmitBookingAsync" StartIcon="@Icons.Material.Filled.Check">
+                        @(_submitting ? "Создание записи..." : "Записаться")
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        }
+    </MudTabPanel>
+
+    <MudTabPanel Text="Мои записи" Icon="@Icons.Material.Filled.ListAlt">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
+            <MudTextField @bind-Value="_phone" Label="Телефон для поиска" Style="max-width: 280px;" />
+            <MudButton Variant="Variant.Outlined" OnClick="LoadMyBookingsAsync" Disabled="_loadingBookings">
+                Обновить
+            </MudButton>
+        </MudStack>
+
+        @if (_loadingBookings)
+        {
+            <MudProgressLinear Indeterminate="true" />
+        }
+        else if (_myBookings.Count == 0)
+        {
+            <MudAlert Severity="Severity.Info">Записей не найдено.</MudAlert>
+        }
+        else
+        {
+            <MudTable Items="_myBookings" Dense="true" Hover="true">
+                <HeaderContent>
+                    <MudTh>Дата</MudTh>
+                    <MudTh>Время</MudTh>
+                    <MudTh>СТО</MudTh>
+                    <MudTh>Работы</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.Date</MudTd>
+                    <MudTd>@context.Time</MudTd>
+                    <MudTd>@GetStationName(context.ServiceStationId)</MudTd>
+                    <MudTd>@string.Join(", ", context.Jobs.Select(j => j.Name ?? j.JobId))</MudTd>
+                    <MudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.Cancel" Color="Color.Error" Size="Size.Small"
+                                       Title="Отменить запись"
+                                       OnClick="@(_ => CancelBookingAsync(context.BookingId))" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+    </MudTabPanel>
+</MudTabs>
+
+@code {
+    private int _tabIndex;
+    private bool _loadingInit = true;
+    private bool _loadingSlots;
+    private bool _loadingBookings;
+    private bool _submitting;
+    private bool _slotsLoaded;
+
+    private string _phone = string.Empty;
+    private string _selectedStationId = string.Empty;
+    private string _selectedJobId = string.Empty;
+    private string _selectedSlotKey = string.Empty;
+    private string _plateNumber = string.Empty;
+    private string _requestSummary = string.Empty;
+
+    private int _tireDiameter = 16;
+    private string _carBodyType = "passenger_or_crossover";
+    private bool _keepInStorage;
+
+    private List<BookingServiceStation> _stations = [];
+    private List<BookingJob> _jobs = [];
+    private List<BookingFreeSlotDay> _slots = [];
+    private List<ClientBooking> _myBookings = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (userId != null)
+        {
+            var user = await UserManager.FindByIdAsync(userId);
+            if (!string.IsNullOrWhiteSpace(user?.PhoneNumber))
+                _phone = user.PhoneNumber;
+        }
+
+        if (BookingApi.IsConfigured)
+        {
+            try
+            {
+                _stations = await BookingApi.GetServiceStationsAsync();
+                _stations = _stations.OrderBy(s => s.City?.Name).ThenBy(s => s.Name).ToList();
+            }
+            catch (BookingApiException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+        }
+
+        _loadingInit = false;
+    }
+
+    private async Task OnStationChangedAsync(string? stationId)
+    {
+        _selectedStationId = stationId ?? string.Empty;
+        await LoadJobsForStationAsync();
+    }
+
+    private async Task LoadJobsForStationAsync()
+    {
+        _jobs = [];
+        _selectedJobId = string.Empty;
+        _slots = [];
+        _slotsLoaded = false;
+
+        if (string.IsNullOrEmpty(_selectedStationId))
+            return;
+
+        try
+        {
+            _jobs = await BookingApi.GetStationJobsAsync(_selectedStationId);
+            if (_jobs.Count == 0)
+                _jobs = await BookingApi.GetAllJobsAsync();
+        }
+        catch (BookingApiException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task LoadSlotsAsync()
+    {
+        if (string.IsNullOrEmpty(_selectedStationId) || string.IsNullOrEmpty(_selectedJobId))
+            return;
+
+        _loadingSlots = true;
+        _slots = [];
+        _selectedSlotKey = string.Empty;
+        _slotsLoaded = false;
+        StateHasChanged();
+
+        try
+        {
+            var specific = BuildSpecificParameters();
+            _slots = await BookingApi.GetFreeSlotsAsync(_selectedStationId, [_selectedJobId], specific);
+            _slotsLoaded = true;
+        }
+        catch (BookingApiException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+            _slotsLoaded = true;
+        }
+        finally
+        {
+            _loadingSlots = false;
+        }
+    }
+
+    private List<object> BuildSpecificParameters()
+    {
+        if (_selectedJobId != "1")
+            return [];
+
+        return
+        [
+            new TireFittingParametersPayload
+            {
+                Specific = new TireFittingSpecificPayload
+                {
+                    Diameter = _tireDiameter,
+                    CarBodyType = _carBodyType,
+                    KeepCurrentInStorage = _keepInStorage
+                }
+            }
+        ];
+    }
+
+    private bool CanSubmit() =>
+        !string.IsNullOrWhiteSpace(_phone) &&
+        !string.IsNullOrWhiteSpace(_selectedStationId) &&
+        !string.IsNullOrWhiteSpace(_selectedJobId) &&
+        !string.IsNullOrWhiteSpace(_selectedSlotKey) &&
+        !string.IsNullOrWhiteSpace(_requestSummary) &&
+        BookingApi.IsConfigured;
+
+    private async Task SubmitBookingAsync()
+    {
+        if (!CanSubmit())
+            return;
+
+        var parts = _selectedSlotKey.Split('|', 2);
+        if (parts.Length != 2)
+            return;
+
+        _submitting = true;
+        try
+        {
+            var request = new CreateBookingRequest
+            {
+                ServiceStationId = _selectedStationId,
+                Date = parts[0],
+                Time = StoBookingApiService.FormatApiTime(parts[1]),
+                JobIds = [_selectedJobId],
+                SpecificJobParameters = BuildSpecificParameters(),
+                PlateNumber = string.IsNullOrWhiteSpace(_plateNumber) ? null : _plateNumber.Trim(),
+                UserRequestSummary = _requestSummary.Trim()
+            };
+
+            var result = await BookingApi.CreateBookingAsync(_phone, request);
+            Snackbar.Add($"Запись создана{(result?.BookingId != null ? $" (№ {result.BookingId})" : "")}.", Severity.Success);
+
+            _selectedSlotKey = string.Empty;
+            _requestSummary = string.Empty;
+            _plateNumber = string.Empty;
+            _slots = [];
+            _slotsLoaded = false;
+            _tabIndex = 1;
+            await LoadMyBookingsAsync();
+        }
+        catch (BookingApiException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _submitting = false;
+        }
+    }
+
+    private async Task LoadMyBookingsAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_phone) || !BookingApi.IsConfigured)
+            return;
+
+        _loadingBookings = true;
+        try
+        {
+            _myBookings = await BookingApi.GetClientBookingsAsync(_phone);
+        }
+        catch (BookingApiException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+            _myBookings = [];
+        }
+        finally
+        {
+            _loadingBookings = false;
+        }
+    }
+
+    private async Task CancelBookingAsync(string bookingId)
+    {
+        try
+        {
+            await BookingApi.CancelBookingAsync(_phone, bookingId);
+            Snackbar.Add("Запись отменена.", Severity.Success);
+            await LoadMyBookingsAsync();
+        }
+        catch (BookingApiException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private string GetStationName(string stationId) =>
+        _stations.FirstOrDefault(s => s.ServiceStationId == stationId)?.Name ?? stationId;
+
+    private static string FormatSlotLabel(string date, string hour)
+    {
+        if (DateTime.TryParseExact(date, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out var dt))
+            return $"{dt:dd.MM.yyyy} в {hour}:00";
+        return $"{date} {hour}:00";
+    }
+}

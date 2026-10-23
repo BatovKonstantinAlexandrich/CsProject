@@ -1,0 +1,119 @@
+@page "/Account/Register"
+@model BlazorErp.Pages.Account.RegisterModel
+@{
+    ViewData["Title"] = "Регистрация";
+    Layout = "_AccountLayout";
+}
+
+<div class="account-card">
+    <h2>Регистрация</h2>
+    <p class="account-card-subtitle">Создайте учётную запись для работы в системе</p>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    <form method="post">
+        <div class="mb-3">
+            <label class="form-label">Полное имя</label>
+            <input asp-for="Input.FullName" class="form-control" />
+            <span asp-validation-for="Input.FullName" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input asp-for="Input.Email" class="form-control" autocomplete="username" />
+            <span asp-validation-for="Input.Email" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Пароль</label>
+            <input asp-for="Input.Password" class="form-control" autocomplete="new-password" />
+            <span asp-validation-for="Input.Password" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Подтверждение пароля</label>
+            <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" />
+            <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Роль</label>
+            <select asp-for="Input.Role" class="form-select" id="roleSelect">
+                <option value="Client">Клиент</option>
+                <option value="TransportCompany">Транспортная компания</option>
+                <option value="StoreOwner">Владелец магазина</option>
+                <option value="Seller">Продавец</option>
+                <option value="Cashier">Кассир</option>
+                <option value="Supplier">Поставщик</option>
+                <option value="AutoServiceOwner">Владелец автосервиса</option>
+                <option value="AutoMechanic">Авто-механик</option>
+                <option value="AutoElectrician">Авто-электрик</option>
+                <option value="TireServiceWorker">Шиномонтаж</option>
+                <option value="CarWashWorker">Мойка</option>
+                <option value="TechnicalSupport">Тех. поддержка</option>
+                <option value="CallCenter">Кол-центр</option>
+                <option value="Marketing">Отдел маркетинга</option>
+                <option value="Analyst">Аналитик</option>
+            </select>
+        </div>
+        <div class="mb-3" id="storeSelectGroup" style="display:none">
+            <label class="form-label">Магазин</label>
+            <select asp-for="Input.StoreId" class="form-select">
+                <option value="">Выберите магазин...</option>
+                @foreach (var store in Model.Stores)
+                {
+                    <option value="@store.Id">
+                        @store.Name@(!string.IsNullOrWhiteSpace(store.Address) ? $" ({store.Address})" : "")
+                    </option>
+                }
+            </select>
+            <span asp-validation-for="Input.StoreId" class="text-danger"></span>
+            <div class="form-text">Владельцу магазина будет отправлена заявка на подтверждение.</div>
+        </div>
+        <div class="mb-3" id="autoServiceSelectGroup" style="display:none">
+            <label class="form-label">Автосервис</label>
+            <select asp-for="Input.AutoServiceId" class="form-select">
+                <option value="">Выберите автосервис...</option>
+                @foreach (var service in Model.AutoServices)
+                {
+                    <option value="@service.Id">
+                        @service.Name@(!string.IsNullOrWhiteSpace(service.Address) ? $" ({service.Address})" : "")
+                    </option>
+                }
+            </select>
+            <span asp-validation-for="Input.AutoServiceId" class="text-danger"></span>
+            <div class="form-text">Владельцу автосервиса будет отправлена заявка на подтверждение.</div>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Зарегистрироваться</button>
+    </form>
+
+    @if (Model.ShowExternalLogin)
+    {
+        <hr />
+        <form method="post" asp-page-handler="ExternalLogin">
+            <button type="submit" class="btn btn-dark w-100">Регистрация через GitHub</button>
+        </form>
+    }
+
+    <p class="mt-3 text-center">
+        Уже есть аккаунт? <a href="/Account/Login">Войти</a>
+    </p>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const roleSelect = document.getElementById('roleSelect');
+            const storeGroup = document.getElementById('storeSelectGroup');
+            const autoServiceGroup = document.getElementById('autoServiceSelectGroup');
+            const autoServiceRoles = ['AutoMechanic', 'AutoElectrician', 'TireServiceWorker', 'CarWashWorker'];
+            function toggleSelectors() {
+                const role = roleSelect.value;
+                storeGroup.style.display = role === 'Seller' || role === 'Cashier' ? 'block' : 'none';
+                autoServiceGroup.style.display = autoServiceRoles.includes(role) ? 'block' : 'none';
+            }
+            roleSelect?.addEventListener('change', toggleSelectors);
+            toggleSelectors();
+        })();
+    </script>
+}

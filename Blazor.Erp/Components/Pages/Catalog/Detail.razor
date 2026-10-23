@@ -1,0 +1,162 @@
+@page "/catalog/{ProductId:int}"
+@attribute [Authorize(Roles = RoleNames.Client)]
+@inject CatalogService CatalogService
+@inject CartService CartService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ISnackbar Snackbar
+
+<PageTitle>@(_product?.Name ?? "Товар")</PageTitle>
+
+@if (_product == null && !_notFound)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (_notFound)
+{
+    <MudAlert Severity="Severity.Warning">Товар не найден.</MudAlert>
+    <MudButton Href="/catalog" Color="Color.Primary" Variant="Variant.Filled" Class="mt-4">К каталогу</MudButton>
+}
+else
+{
+    <MudButton Href="/catalog" Variant="Variant.Text" Class="mb-4">← К каталогу</MudButton>
+
+    <div class="product-detail-grid">
+        <MudPaper Elevation="2" Class="fluent-card">
+            <img src="@GetImage(_product!)" alt="@_product!.Name" class="product-detail-image" />
+        </MudPaper>
+        <div>
+            <MudText Typo="Typo.h4" Class="page-title">@_product!.Name</MudText>
+            <MudChip T="string" Size="Size.Small" Class="mb-3">@_product.CategoryName</MudChip>
+
+            @if (_product.ReviewCount > 0)
+            {
+                <div class="stack-row mb-3">
+                    <MudRating ReadOnly="true" MaxValue="5" SelectedValue="@((int)Math.Round(_product.AverageRating))" />
+                    <span>@_product.AverageRating.ToString("0.0") из 5</span>
+                    <span class="text-muted">(@_product.ReviewCount отзывов)</span>
+                </div>
+            }
+
+            <p class="price mb-3" style="font-size: 1.5rem">@_product.Price.ToString("N0") ₽</p>
+            <p class="mb-4">@_product.Description</p>
+
+            <AuthorizeView>
+                <Authorized>
+                    <MudButton Color="Color.Primary" Variant="Variant.Filled"
+                               OnClick="AddToCart"
+                               Disabled="_adding">
+                        @(_adding ? "Добавление..." : "В корзину")
+                    </MudButton>
+                </Authorized>
+                <NotAuthorized>
+                    <MudButton Href="/Account/Login" Color="Color.Primary" Variant="Variant.Filled">Войти для покупки</MudButton>
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
+    </div>
+
+    <MudText Typo="Typo.h5" Class="section-title mt-4">Наличие на складах и в магазинах</MudText>
+
+    <MudPaper Class="pa-4 mb-4">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Тип</th>
+                    <th>Название</th>
+                    <th>Адрес</th>
+                    <th>Количество</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var location in _product.StockLocations)
+                {
+                    <tr>
+                        <td>@location.LocationType</td>
+                        <td><strong>@location.Name</strong></td>
+                        <td>@(string.IsNullOrWhiteSpace(location.Address) ? "—" : location.Address)</td>
+                        <td>
+                            @if (location.Quantity > 0)
+                            {
+                                <strong>@location.Quantity шт.</strong>
+                            }
+                            else
+                            {
+                                <span class="text-muted">нет в наличии</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" class="text-end"><strong>Всего доступно</strong></td>
+                    <td><strong>@GetTotalStock(_product) шт.</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+    </MudPaper>
+
+    <MudText Typo="Typo.h5" Class="section-title">Отзывы покупателей</MudText>
+
+    @if (_product.Reviews.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info">Отзывов пока нет.</MudAlert>
+    }
+    else
+    {
+        <div class="stack">
+            @foreach (var review in _product.Reviews)
+            {
+                <MudPaper Elevation="2" Class="pa-4 mb-4">
+                    <div class="stack-row-between mb-2">
+                        <strong>@review.AuthorName</strong>
+                        <span class="text-muted">@review.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")</span>
+                    </div>
+                    <MudRating ReadOnly="true" MaxValue="5" SelectedValue="@review.Rating" Class="mb-2" />
+                    <p>@review.Comment</p>
+                </MudPaper>
+            }
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public int ProductId { get; set; }
+
+    private ProductDetail? _product;
+    private bool _notFound;
+    private string? _userId;
+    private bool _adding;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        _userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        await LoadProduct();
+    }
+
+    protected override async Task OnParametersSetAsync() => await LoadProduct();
+
+    private async Task LoadProduct()
+    {
+        _product = await CatalogService.GetProductDetailAsync(ProductId);
+        _notFound = _product == null;
+    }
+
+    private async Task AddToCart()
+    {
+        if (_userId == null || _product == null) return;
+        _adding = true;
+        await CartService.AddToCartAsync(_userId, _product.Id);
+        Snackbar.Add($"«{_product.Name}» добавлен в корзину", Severity.Success);
+        _adding = false;
+    }
+
+    private static string GetImage(ProductDetail product) =>
+        !string.IsNullOrWhiteSpace(product.ImageUrl)
+            ? product.ImageUrl
+            : ProductImageHelper.GetPlaceholderUrl(product.Id, product.Name);
+
+    private static int GetTotalStock(ProductDetail product) =>
+        product.StockLocations.Sum(l => l.Quantity);
+}

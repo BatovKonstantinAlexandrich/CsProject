@@ -1,0 +1,163 @@
+@page "/transport"
+@attribute [Authorize(Roles = RoleNames.TransportCompany)]
+@inject OrderService OrderService
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Доставка</PageTitle>
+
+<MudText Typo="Typo.h3" Class="page-title">Панель транспортной компании</MudText>
+
+<MudText Typo="Typo.h5" Class="section-title">Доступные заказы</MudText>
+@if (_available == null)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (_available.Count == 0)
+{
+    <MudAlert Severity="Severity.Info" Class="mb-4">Нет заказов, готовых к доставке. Ожидайте сборки на складе или в магазине.</MudAlert>
+}
+else
+{
+    <MudPaper Class="mb-4 pa-4">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Номер</th>
+                    <th>Клиент</th>
+                    <th>Откуда</th>
+                    <th>Куда</th>
+                    <th>Сумма</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in _available)
+                {
+                    <tr>
+                        <td>@order.OrderNumber</td>
+                        <td>@order.Client.FullName</td>
+                        <td>@FormatPickupLocations(order.Id)</td>
+                        <td>@order.DeliveryAddress</td>
+                        <td>@order.TotalAmount.ToString("N0") ₽</td>
+                        <td>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                       OnClick="@(() => TakeOrder(order.Id))">Взять в работу</MudButton>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </MudPaper>
+}
+
+<MudText Typo="Typo.h5" Class="section-title">Мои доставки</MudText>
+@if (_myOrders == null)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (_myOrders.Count == 0)
+{
+    <MudAlert Severity="Severity.Info">Нет активных доставок.</MudAlert>
+}
+else
+{
+    <MudPaper Class="pa-4">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Номер</th>
+                    <th>Клиент</th>
+                    <th>Откуда</th>
+                    <th>Куда</th>
+                    <th>Статус</th>
+                    <th>Трек</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in _myOrders)
+                {
+                    <tr>
+                        <td>@order.OrderNumber</td>
+                        <td>@order.Client.FullName</td>
+                        <td>@FormatPickupLocations(order.Id)</td>
+                        <td>@order.DeliveryAddress</td>
+                        <td>@GetStatusName(order.Status)</td>
+                        <td>@order.Delivery?.TrackingNumber</td>
+                        <td>
+                            @if (order.Status == OrderStatus.InDelivery)
+                            {
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                           OnClick="@(() => MarkDelivered(order.Id))">Доставлено</MudButton>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </MudPaper>
+}
+
+@if (!string.IsNullOrEmpty(_message))
+{
+    <MudAlert Severity="Severity.Success" Class="mt-4">@_message</MudAlert>
+}
+
+@code {
+    private List<Order>? _available;
+    private List<Order>? _myOrders;
+    private IReadOnlyDictionary<int, IReadOnlyList<OrderPickupLocation>> _pickupLocations = new Dictionary<int, IReadOnlyList<OrderPickupLocation>>();
+    private string? _userId;
+    private string? _message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        _userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value!;
+        await Reload();
+    }
+
+    private async Task Reload()
+    {
+        _available = await OrderService.GetAvailableForTransportAsync();
+        _myOrders = await OrderService.GetTransportOrdersAsync(_userId!);
+
+        var orderIds = (_available ?? []).Select(o => o.Id)
+            .Concat((_myOrders ?? []).Select(o => o.Id));
+        _pickupLocations = await OrderService.GetPickupLocationsByOrderIdsAsync(orderIds);
+    }
+
+    private async Task TakeOrder(int orderId)
+    {
+        var ok = await OrderService.TakeOrderForDeliveryAsync(orderId, _userId!);
+        _message = ok ? "Заказ взят в работу." : "Не удалось взять заказ.";
+        await Reload();
+    }
+
+    private async Task MarkDelivered(int orderId)
+    {
+        var ok = await OrderService.MarkDeliveredAsync(orderId, _userId!);
+        _message = ok ? "Заказ отмечен как доставленный." : "Ошибка.";
+        await Reload();
+    }
+
+    private static string GetStatusName(OrderStatus status) => status switch
+    {
+        OrderStatus.InDelivery => "В доставке",
+        OrderStatus.Delivered => "Доставлен",
+        _ => status.ToString()
+    };
+
+    private string FormatPickupLocations(int orderId)
+    {
+        if (!_pickupLocations.TryGetValue(orderId, out var locations) || locations.Count == 0)
+            return "—";
+
+        return string.Join("; ", locations.Select(FormatPickupLocation));
+    }
+
+    private static string FormatPickupLocation(OrderPickupLocation location) =>
+        string.IsNullOrWhiteSpace(location.Address)
+            ? location.Name
+            : $"{location.Name}: {location.Address}";
+}

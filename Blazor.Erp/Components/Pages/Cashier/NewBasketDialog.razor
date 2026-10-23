@@ -1,0 +1,35 @@
+@using MudBlazor
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="_clientName" Label="Имя клиента" Required="true" Class="mb-3" />
+        <MudTextField @bind-Value="_phone" Label="Телефон" Class="mb-3" />
+        <MudTextField @bind-Value="_email" Label="E-mail" Class="mb-3" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Отмена</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit" Disabled="@string.IsNullOrWhiteSpace(_clientName)">Создать</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter] public string DefaultPhone { get; set; } = string.Empty;
+    [Parameter] public string DefaultEmail { get; set; } = string.Empty;
+
+    private string _clientName = "Клиент";
+    private string _phone = string.Empty;
+    private string _email = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        _phone = DefaultPhone;
+        _email = DefaultEmail;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Submit() =>
+        MudDialog.Close(DialogResult.Ok(new NewBasketDialogResult(_clientName.Trim(), _phone, _email)));
+}

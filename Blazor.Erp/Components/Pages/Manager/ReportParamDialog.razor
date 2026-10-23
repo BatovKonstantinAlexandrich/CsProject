@@ -1,0 +1,121 @@
+@using BlazorErp.Models.Enums
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">@Report?.Title</MudText>
+        @if (!string.IsNullOrWhiteSpace(Report?.Description))
+        {
+            <MudText Typo="Typo.caption" Class="text-muted">@Report.Description</MudText>
+        }
+    </TitleContent>
+    <DialogContent>
+        @if (Report?.Parameters.Count > 0)
+        {
+            <MudStack Spacing="3">
+                @foreach (var param in Report.Parameters.OrderBy(p => p.SortOrder))
+                {
+                    @switch (param.Type)
+                    {
+                        case ReportParameterType.Integer:
+                            <MudNumericField T="int" Label="@param.Title" @bind-Value="_intValues[param.Name]" Min="1" Max="100" />
+                            break;
+                        case ReportParameterType.Float:
+                            <MudNumericField T="double" Label="@param.Title" @bind-Value="_floatValues[param.Name]" />
+                            break;
+                        case ReportParameterType.Date:
+                            <MudDatePicker Label="@param.Title" @bind-Date="_dateValues[param.Name]" />
+                            break;
+                        case ReportParameterType.Choice:
+                        case ReportParameterType.List:
+                            <MudSelect T="string" Label="@param.Title" @bind-Value="_stringValues[param.Name]">
+                                @foreach (var option in GetLookupOptions(param))
+                                {
+                                    <MudSelectItem Value="@option">@option</MudSelectItem>
+                                }
+                            </MudSelect>
+                            break;
+                        default:
+                            <MudTextField T="string" Label="@param.Title" @bind-Value="_stringValues[param.Name]" />
+                            break;
+                    }
+                }
+            </MudStack>
+        }
+        else
+        {
+            <MudText Typo="Typo.body2">Отчёт не требует параметров. Нажмите «Выполнить».</MudText>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Отмена</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Выполнить</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public ReportProcedure? Report { get; set; }
+
+    private readonly Dictionary<string, string> _stringValues = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, int> _intValues = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, double> _floatValues = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, DateTime?> _dateValues = new(StringComparer.OrdinalIgnoreCase);
+
+    protected override void OnParametersSet()
+    {
+        if (Report == null)
+            return;
+
+        foreach (var param in Report.Parameters)
+        {
+            switch (param.Type)
+            {
+                case ReportParameterType.Integer:
+                    _intValues[param.Name] = int.TryParse(param.DefaultValue, out var i) ? i : 10;
+                    break;
+                case ReportParameterType.Float:
+                    _floatValues[param.Name] = double.TryParse(param.DefaultValue, out var d) ? d : 0;
+                    break;
+                case ReportParameterType.Date:
+                    _dateValues[param.Name] = DateTime.TryParse(param.DefaultValue, out var dt)
+                        ? dt
+                        : DateTime.UtcNow.Date;
+                    break;
+                default:
+                    _stringValues[param.Name] = param.DefaultValue ?? string.Empty;
+                    break;
+            }
+        }
+    }
+
+    private static IEnumerable<string> GetLookupOptions(ReportParameter param) =>
+        string.IsNullOrWhiteSpace(param.LookupValues)
+            ? ["—"]
+            : param.LookupValues.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Submit()
+    {
+        var result = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+
+        if (Report != null)
+        {
+            foreach (var param in Report.Parameters)
+            {
+                result[param.Name] = param.Type switch
+                {
+                    ReportParameterType.Integer => _intValues.GetValueOrDefault(param.Name).ToString(),
+                    ReportParameterType.Float => _floatValues.GetValueOrDefault(param.Name).ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    ReportParameterType.Date => _dateValues.GetValueOrDefault(param.Name)?.ToString("yyyy-MM-dd"),
+                    _ => _stringValues.GetValueOrDefault(param.Name)
+                };
+            }
+        }
+
+        MudDialog.Close(DialogResult.Ok(result));
+    }
+}

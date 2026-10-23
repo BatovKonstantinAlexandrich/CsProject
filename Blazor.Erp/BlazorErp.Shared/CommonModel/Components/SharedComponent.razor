@@ -1,0 +1,36 @@
+@inject IComponentsFactory ComponentsFactory
+@inherits BaseComponent
+
+@if (_renderInfo == null)
+{
+    <MudAlert Severity="Severity.Warning">Не удалось создать компонент для @DisplayType.</MudAlert>
+}
+else
+{
+    <DynamicComponent Type="_renderInfo.ComponentType" Parameters="_renderInfo.Parameters" @key="_renderKey" />
+}
+
+@code {
+    [Parameter] public string Type { get; set; } = string.Empty;
+    [Parameter] public ViewItem? Model { get; set; }
+
+    private ComponentRenderInfo? _renderInfo;
+    private string _renderKey = Guid.NewGuid().ToString("N");
+    private string DisplayType => Model?.ViewTypeName ?? Type;
+
+    protected override void OnParametersSet()
+    {
+        if (Model == null)
+        {
+            _renderInfo = null;
+            return;
+        }
+
+        ComponentsFactory.Bind(this, Model);
+        ComponentsFactory.BindEvents(this, Model);
+
+        _renderInfo = string.IsNullOrWhiteSpace(Type)
+            ? ComponentsFactory.CreateControl(Model)
+            : ComponentsFactory.CreateControl(Type, Model);
+    }
+}

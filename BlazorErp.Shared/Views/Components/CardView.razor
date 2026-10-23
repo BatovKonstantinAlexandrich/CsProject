@@ -1,0 +1,40 @@
+@inherits ViewInteractionComponentBase
+
+<MudCard Class="view-card" Elevation="2" @onclick="@SelectCardAsync">
+    <div draggable="@EnableDragDrop"
+         @ondragstart="HandleDragStart"
+         @ondragover:preventDefault="@EnableDragDrop"
+         @ondrop="HandleDrop">
+    @if (!string.IsNullOrWhiteSpace(Data.ImageUrl))
+    {
+        <MudCardMedia Image="@Data.ImageUrl" Height="200" />
+    }
+    <MudCardContent>
+        <MudText Typo="Typo.h6">@Data.Title</MudText>
+        @if (!string.IsNullOrWhiteSpace(Data.Subtitle))
+        {
+            <MudText Typo="Typo.body2" Class="text-muted mb-2">@Data.Subtitle</MudText>
+        }
+        @foreach (var field in Data.Fields)
+        {
+            <MudText Typo="Typo.body2"><b>@field.Key:</b> @(field.Value?.ToString() ?? "—")</MudText>
+        }
+    </MudCardContent>
+    </div>
+</MudCard>
+
+@code {
+    [Parameter, EditorRequired] public ViewCardData Data { get; set; } = new();
+    [Parameter] public string? ItemId { get; set; }
+
+    protected override void OnInitialized() => ViewKind = ViewKind.Card;
+
+    private Task SelectCardAsync() =>
+        NotifySelectionAsync(ItemId ?? Data.Title, Data);
+
+    private Task HandleDragStart() =>
+        NotifyDragDropAsync(ViewDragDropPhase.DragStart, ItemId ?? Data.Title, null, Data);
+
+    private Task HandleDrop() =>
+        NotifyDragDropAsync(ViewDragDropPhase.Drop, null, ItemId ?? Data.Title, null, Data);
+}

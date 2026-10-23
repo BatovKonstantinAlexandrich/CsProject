@@ -1,0 +1,591 @@
+@page "/account"
+@attribute [Authorize]
+@inject UserManager<ApplicationUser> UserManager
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NewsService NewsService
+@inject OrderService OrderService
+@inject SellerRegistrationService SellerRegistrationService
+@inject CashierRegistrationService CashierRegistrationService
+@inject AutoServiceEmployeeRegistrationService AutoServiceEmployeeRegistrationService
+@inject DeveloperRolePreviewService DeveloperRolePreviewService
+
+<PageTitle>Личный кабинет</PageTitle>
+
+<MudText Typo="Typo.h3" Class="page-title">Личный кабинет</MudText>
+
+@if (!string.IsNullOrEmpty(_loadError))
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4">@_loadError</MudAlert>
+}
+
+@if (_pendingStaffStoreName != null && _pendingStaffRoleLabel != null)
+{
+    <MudAlert Severity="Severity.Warning" Class="mb-4">
+        Заявка на роль @_pendingStaffRoleLabel в магазине «@_pendingStaffStoreName» ожидает подтверждения.
+        Раздел <MudLink Href="/store">Мой магазин</MudLink> будет доступен после одобрения владельцем.
+    </MudAlert>
+}
+
+@if (_pendingAutoServiceStaffName != null && _pendingAutoServiceStaffRoleLabel != null)
+{
+    <MudAlert Severity="Severity.Warning" Class="mb-4">
+        Заявка на роль @_pendingAutoServiceStaffRoleLabel в автосервисе «@_pendingAutoServiceStaffName» ожидает подтверждения.
+        Раздел <MudLink Href="/autoservice">Автосервис</MudLink> будет доступен после одобрения владельцем.
+    </MudAlert>
+}
+
+@if (_user == null)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else
+{
+    @if (_isDeveloper)
+    {
+        <MudPaper Class="fluent-card-padded pa-4 mb-4">
+            <MudText Typo="Typo.h5" Class="mb-3">Режим разработчика</MudText>
+            <p class="text-muted mb-3">
+                Переключите интерфейс, чтобы просмотреть систему от имени другой роли. Ваш аккаунт остаётся разработчиком.
+            </p>
+            @if (!string.IsNullOrEmpty(_activePreviewRole))
+            {
+                <MudAlert Severity="Severity.Info" Class="mb-3">
+                    Активный интерфейс: <strong>@RoleDisplayNames.GetDisplayName(_activePreviewRole)</strong>
+                </MudAlert>
+            }
+            <div class="stack" style="max-width: 420px;">
+                <MudSelect T="string" @bind-Value="_selectedPreviewRole" Label="Роль интерфейса" Variant="Variant.Outlined">
+                    <MudSelectItem T="string" Value="@("")">Без подмены (разработчик)</MudSelectItem>
+                    @foreach (var role in RoleNames.PreviewableRoles)
+                    {
+                        <MudSelectItem T="string" Value="@role">@RoleDisplayNames.GetDisplayName(role)</MudSelectItem>
+                    }
+                </MudSelect>
+                @if (!string.IsNullOrEmpty(_previewMessage))
+                {
+                    <MudAlert Severity="Severity.Success">@_previewMessage</MudAlert>
+                }
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_previewBusy" OnClick="ApplyPreviewRole">
+                    @(_previewBusy ? "Применение..." : "Применить")
+                </MudButton>
+            </div>
+        </MudPaper>
+    }
+
+    <div class="form-grid mb-4">
+        <MudPaper Class="fluent-card-padded pa-4">
+            <MudText Typo="Typo.h5" Class="mb-3">Профиль</MudText>
+            <div class="stack">
+                <p><strong>Имя:</strong> @_user.FullName</p>
+                <p><strong>Email:</strong> @_user.Email</p>
+                <div class="stack-row">
+                    <strong>Роли:</strong>
+                    @foreach (var role in _roles)
+                    {
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@role</MudChip>
+                    }
+                </div>
+            </div>
+        </MudPaper>
+        <MudPaper Class="fluent-card-padded pa-4">
+            <MudText Typo="Typo.h5" Class="mb-3">Двухфакторная аутентификация</MudText>
+            @if (_user.TwoFactorEnabled)
+            {
+                <MudAlert Severity="Severity.Success" Class="mb-3">2FA включена</MudAlert>
+                @if (!string.IsNullOrEmpty(_message))
+                {
+                    <MudAlert Severity="Severity.Info" Class="mb-3">@_message</MudAlert>
+                }
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Disable2Fa" Disabled="_busy">Отключить 2FA</MudButton>
+            }
+            else if (_showSetup)
+            {
+                <p class="mb-3">
+                    Отсканируйте QR-код в приложении (Google Authenticator, Microsoft Authenticator):
+                </p>
+                @if (!string.IsNullOrEmpty(_qrCodeDataUri))
+                {
+                    <div class="text-center mb-3">
+                        <img src="@_qrCodeDataUri" alt="QR-код для 2FA" width="220" height="220" />
+                    </div>
+                }
+                <p class="mb-1">Или введите ключ вручную:</p>
+                <p class="mb-3"><code>@_authenticatorKey</code></p>
+                <MudTextField @bind-Value="_verifyCode" Label="Код подтверждения" Placeholder="000000" Class="mb-3" Variant="Variant.Outlined" />
+                @if (!string.IsNullOrEmpty(_error))
+                {
+                    <MudAlert Severity="Severity.Error" Class="mb-3">@_error</MudAlert>
+                }
+                <div class="stack-row">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Enable2Fa" Disabled="_busy">Подтвердить</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="CancelSetup">Отмена</MudButton>
+                </div>
+            }
+            else
+            {
+                <p class="text-muted mb-3">2FA не включена</p>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="StartSetup" Disabled="_busy">Включить 2FA</MudButton>
+            }
+        </MudPaper>
+    </div>
+
+    @if (_roles.Contains(RoleNames.Admin))
+    {
+        <MudPaper Class="fluent-card-padded pa-4 mb-4">
+            <MudText Typo="Typo.h5" Class="mb-3">Сборка на центральном складе</MudText>
+            @if (_warehousePreparationOrders == null)
+            {
+                <MudProgressCircular Indeterminate="true" />
+            }
+            else if (_warehousePreparationOrders.Count == 0)
+            {
+                <MudAlert Severity="Severity.Info">Нет заказов, ожидающих сборки на складе.</MudAlert>
+            }
+            else
+            {
+                <div class="stack">
+                    @foreach (var order in _warehousePreparationOrders)
+                    {
+                        <MudPaper Class="pa-4 mb-4">
+                            <div class="stack-row-between mb-2">
+                                <strong>@order.OrderNumber</strong>
+                                <span class="text-muted">@order.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                            </div>
+                            <p class="text-muted mb-2">Клиент: @order.Client.FullName</p>
+                            <p class="mb-2">Доставка: @order.DeliveryAddress</p>
+                            <ul class="mb-3">
+                                @foreach (var item in order.Items)
+                                {
+                                    <li>@item.Product.Name × @item.Quantity</li>
+                                }
+                            </ul>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                       Disabled="_preparingOrderId == order.Id"
+                                       OnClick="@(() => MarkWarehousePrepared(order.Id))">
+                                Собран, готов к доставке
+                            </MudButton>
+                        </MudPaper>
+                    }
+                </div>
+            }
+        </MudPaper>
+    }
+
+    <MudPaper Class="fluent-card-padded pa-4 mb-4">
+        <MudText Typo="Typo.h5" Class="mb-3">Публикации</MudText>
+        <p class="text-muted mb-3">Опубликованные новости отображаются на главной странице.</p>
+
+        <EditForm Model="_publication" OnValidSubmit="PublishNews" Class="mb-4">
+            <DataAnnotationsValidator />
+            <div class="stack" style="max-width: 640px;">
+                <MudTextField @bind-Value="_publication.Title" Label="Заголовок" Placeholder="Заголовок новости" Variant="Variant.Outlined" />
+                <ValidationMessage For="() => _publication.Title" />
+                <MudTextField @bind-Value="_publication.Content" Label="Текст" Lines="5" Placeholder="Текст новости" Variant="Variant.Outlined" />
+                <ValidationMessage For="() => _publication.Content" />
+                <div>
+                    <MudText Typo="Typo.body2" Class="mb-1">Вложения</MudText>
+                    <InputFile OnChange="OnPublicationFilesSelected" multiple
+                               accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.txt,.csv" />
+                    <div class="form-text mb-2">
+                        Изображения, видео и файлы до 10 МБ. Не более @NewsMediaStorageService.MaxFilesPerNews файлов.
+                    </div>
+                    @if (_pendingAttachments.Count > 0)
+                    {
+                        <ul class="mb-0">
+                            @foreach (var file in _pendingAttachments)
+                            {
+                                <li class="stack-row mb-1">
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">
+                                        @($"{GetAttachmentTypeLabel(file.MediaType)}: {file.FileName} ({FormatFileSize(file.FileSize)})")
+                                    </MudChip>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                                   title="Убрать"
+                                                   OnClick="@(() => RemovePendingAttachment(file.Id))" />
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+                @if (!string.IsNullOrEmpty(_publicationSuccess))
+                {
+                    <MudAlert Severity="Severity.Success">@_publicationSuccess</MudAlert>
+                }
+                @if (!string.IsNullOrEmpty(_publicationError))
+                {
+                    <MudAlert Severity="Severity.Error">@_publicationError</MudAlert>
+                }
+                <div>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="_publicationBusy">
+                        Опубликовать на главной
+                    </MudButton>
+                </div>
+            </div>
+        </EditForm>
+
+        <MudText Typo="Typo.body1" Class="mb-3"><b>Мои публикации</b></MudText>
+        @if (_userNews == null)
+        {
+            <MudProgressCircular Indeterminate="true" />
+        }
+        else if (_userNews.Count == 0)
+        {
+            <MudAlert Severity="Severity.Info">Вы ещё не публиковали новости.</MudAlert>
+        }
+        else
+        {
+            <div class="stack">
+                @foreach (var item in _userNews)
+                {
+                    <MudPaper Class="fluent-card-padded pa-4">
+                        <div class="stack-row-between mb-2">
+                            <MudText Typo="Typo.body1"><b>@item.Title</b></MudText>
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                           title="Удалить"
+                                           Disabled="_deletingNewsId == item.Id"
+                                           OnClick="@(() => DeleteNews(item.Id))" />
+                        </div>
+                        <p class="mb-2">@item.Content</p>
+                        <NewsAttachmentsDisplay Attachments="item.Attachments" />
+                        <div class="stack-row text-muted">
+                            <MudIcon Icon="@Icons.Material.Filled.AccessTime" Size="Size.Small" />
+                            <span>@item.PublishedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                            @if (item.IsPublished)
+                            {
+                                <MudChip T="string" Color="Color.Primary" Size="Size.Small">На главной</MudChip>
+                            }
+                        </div>
+                    </MudPaper>
+                }
+            </div>
+        }
+    </MudPaper>
+
+    <MudButton Href="/Account/Logout" Variant="Variant.Outlined" Color="Color.Primary">Выйти</MudButton>
+}
+
+@code {
+    private ApplicationUser? _user;
+    private string? _userId;
+    private IList<string> _roles = [];
+    private bool _showSetup;
+    private string? _authenticatorKey;
+    private string? _qrCodeDataUri;
+    private string _verifyCode = "";
+    private string? _message;
+    private string? _error;
+    private bool _busy;
+    private List<NewsItem>? _userNews;
+    private readonly PublicationForm _publication = new();
+    private readonly List<PendingAttachment> _pendingAttachments = [];
+    private string? _publicationSuccess;
+    private string? _publicationError;
+    private bool _publicationBusy;
+    private string? _loadError;
+    private int? _deletingNewsId;
+    private List<Order>? _warehousePreparationOrders;
+    private int? _preparingOrderId;
+    private string? _pendingStaffStoreName;
+    private string? _pendingStaffRoleLabel;
+    private string? _pendingAutoServiceStaffName;
+    private string? _pendingAutoServiceStaffRoleLabel;
+    private bool _isDeveloper;
+    private string? _activePreviewRole;
+    private string _selectedPreviewRole = "";
+    private string? _previewMessage;
+    private bool _previewBusy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+            _userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (_userId != null)
+            {
+                _user = await UserManager.FindByIdAsync(_userId);
+                if (_user != null)
+                {
+                    _roles = await UserManager.GetRolesAsync(_user);
+                    _isDeveloper = _roles.Contains(RoleNames.Developer);
+                    if (_isDeveloper)
+                    {
+                        _activePreviewRole = DeveloperRolePreviewService.GetPreviewRole();
+                        _selectedPreviewRole = _activePreviewRole ?? "";
+                    }
+                    if (!_roles.Contains(RoleNames.Seller))
+                    {
+                        var pendingSeller = await SellerRegistrationService.GetPendingRequestForUserAsync(_userId);
+                        if (pendingSeller != null)
+                        {
+                            _pendingStaffStoreName = pendingSeller.Store?.Name;
+                            _pendingStaffRoleLabel = "продавца";
+                        }
+                    }
+                    if (_pendingStaffStoreName == null && !_roles.Contains(RoleNames.Cashier))
+                    {
+                        var pendingCashier = await CashierRegistrationService.GetPendingRequestForUserAsync(_userId);
+                        if (pendingCashier != null)
+                        {
+                            _pendingStaffStoreName = pendingCashier.Store?.Name;
+                            _pendingStaffRoleLabel = "кассира";
+                        }
+                    }
+                    if (!AutoServiceStaffRoles.All.Any(r => _roles.Contains(r)))
+                    {
+                        var pendingAuto = await AutoServiceEmployeeRegistrationService.GetPendingRequestForUserAsync(_userId);
+                        if (pendingAuto != null)
+                        {
+                            _pendingAutoServiceStaffName = pendingAuto.AutoService?.Name;
+                            _pendingAutoServiceStaffRoleLabel = AutoServiceStaffRoles.GetDisplayNameAccusative(pendingAuto.StaffRole);
+                        }
+                    }
+                    _userNews = await NewsService.GetUserNewsAsync(_userId);
+                    if (_roles.Contains(RoleNames.Admin))
+                        _warehousePreparationOrders = await OrderService.GetOrdersAwaitingPreparationAtWarehouseAsync();
+                }
+            }
+        }
+        catch
+        {
+            _loadError = "Не удалось загрузить данные кабинета. Обновите страницу.";
+            _userNews ??= [];
+        }
+    }
+
+    private async Task ApplyPreviewRole()
+    {
+        _previewMessage = null;
+        _previewBusy = true;
+        try
+        {
+            var role = string.IsNullOrEmpty(_selectedPreviewRole) ? null : _selectedPreviewRole;
+            await DeveloperRolePreviewService.SetPreviewRoleAsync(role);
+            _activePreviewRole = role;
+            _previewMessage = role == null
+                ? "Подмена роли отключена."
+                : $"Интерфейс переключён на «{RoleDisplayNames.GetDisplayName(role)}».";
+        }
+        finally
+        {
+            _previewBusy = false;
+        }
+    }
+
+    private async Task StartSetup()
+    {
+        if (_user == null) return;
+        _busy = true;
+        _error = null;
+
+        await UserManager.ResetAuthenticatorKeyAsync(_user);
+        var key = await UserManager.GetAuthenticatorKeyAsync(_user);
+        if (string.IsNullOrEmpty(key))
+        {
+            await UserManager.ResetAuthenticatorKeyAsync(_user);
+            key = await UserManager.GetAuthenticatorKeyAsync(_user);
+        }
+
+        if (string.IsNullOrEmpty(key))
+        {
+            _error = "Не удалось сгенерировать ключ аутентификатора. Попробуйте снова.";
+            _busy = false;
+            return;
+        }
+
+        _authenticatorKey = AuthenticatorQrHelper.FormatSecretKey(key);
+        var uri = AuthenticatorQrHelper.GenerateOtpAuthUri(_user.Email!, key);
+        _qrCodeDataUri = AuthenticatorQrHelper.GenerateQrCodeDataUri(uri);
+        _showSetup = true;
+        _busy = false;
+    }
+
+    private void CancelSetup()
+    {
+        _showSetup = false;
+        _verifyCode = "";
+        _error = null;
+        _qrCodeDataUri = null;
+        _authenticatorKey = null;
+    }
+
+    private async Task Enable2Fa()
+    {
+        if (_user == null) return;
+        _busy = true;
+        _error = null;
+        var code = _verifyCode.Replace(" ", "").Replace("-", "");
+        var valid = await UserManager.VerifyTwoFactorTokenAsync(_user, UserManager.Options.Tokens.AuthenticatorTokenProvider, code);
+        if (!valid)
+        {
+            _error = "Неверный код.";
+            _busy = false;
+            return;
+        }
+
+        await UserManager.SetTwoFactorEnabledAsync(_user, true);
+        _user = await UserManager.FindByIdAsync(_user.Id);
+        _showSetup = false;
+        _message = "2FA успешно включена.";
+        _busy = false;
+    }
+
+    private async Task Disable2Fa()
+    {
+        if (_user == null) return;
+        _busy = true;
+        await UserManager.SetTwoFactorEnabledAsync(_user, false);
+        _user = await UserManager.FindByIdAsync(_user.Id);
+        _message = "2FA отключена.";
+        _busy = false;
+    }
+
+    private async Task PublishNews()
+    {
+        if (_userId == null)
+            return;
+
+        _publicationBusy = true;
+        _publicationSuccess = null;
+        _publicationError = null;
+
+        try
+        {
+            var uploads = _pendingAttachments.Select(p => new NewsUploadInput
+            {
+                FileName = p.FileName,
+                ContentType = p.ContentType,
+                Content = p.Content
+            }).ToList();
+
+            await NewsService.CreateNewsAsync(_userId, _publication.Title.Trim(), _publication.Content.Trim(), uploads);
+            _publication.Title = "";
+            _publication.Content = "";
+            _pendingAttachments.Clear();
+            _publicationSuccess = "Новость опубликована на главной странице.";
+            _userNews = await NewsService.GetUserNewsAsync(_userId);
+        }
+        catch (Exception ex)
+        {
+            _publicationError = ex is InvalidOperationException ? ex.Message : "Не удалось опубликовать новость. Попробуйте снова.";
+        }
+        finally
+        {
+            _publicationBusy = false;
+        }
+    }
+
+    private async Task DeleteNews(int newsId)
+    {
+        if (_userId == null)
+            return;
+
+        var isAdmin = _roles.Contains(RoleNames.Admin);
+        _deletingNewsId = newsId;
+        try
+        {
+            if (await NewsService.DeleteNewsAsync(newsId, _userId, isAdmin))
+                _userNews = await NewsService.GetUserNewsAsync(_userId);
+        }
+        finally
+        {
+            _deletingNewsId = null;
+        }
+    }
+
+    private async Task MarkWarehousePrepared(int orderId)
+    {
+        if (_userId == null)
+            return;
+
+        _preparingOrderId = orderId;
+        try
+        {
+            if (await OrderService.MarkOrderPreparedAsync(orderId, _userId, isAdmin: true))
+                _warehousePreparationOrders = await OrderService.GetOrdersAwaitingPreparationAtWarehouseAsync();
+        }
+        finally
+        {
+            _preparingOrderId = null;
+        }
+    }
+
+    private sealed class PublicationForm
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Введите заголовок")]
+        [System.ComponentModel.DataAnnotations.StringLength(200, ErrorMessage = "Заголовок не должен превышать 200 символов")]
+        public string Title { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Введите текст новости")]
+        [System.ComponentModel.DataAnnotations.StringLength(4000, ErrorMessage = "Текст не должен превышать 4000 символов")]
+        public string Content { get; set; } = "";
+    }
+
+    private sealed class PendingAttachment
+    {
+        public string Id { get; init; } = Guid.NewGuid().ToString("N");
+        public string FileName { get; set; } = "";
+        public string ContentType { get; set; } = "";
+        public NewsAttachmentType MediaType { get; set; }
+        public long FileSize { get; set; }
+        public byte[] Content { get; set; } = [];
+    }
+
+    private async Task OnPublicationFilesSelected(InputFileChangeEventArgs e)
+    {
+        _publicationError = null;
+
+        foreach (var file in e.GetMultipleFiles(NewsMediaStorageService.MaxFilesPerNews))
+        {
+            if (_pendingAttachments.Count >= NewsMediaStorageService.MaxFilesPerNews)
+            {
+                _publicationError = $"Можно прикрепить не более {NewsMediaStorageService.MaxFilesPerNews} файлов.";
+                break;
+            }
+
+            if (!NewsMediaStorageService.IsAllowedFile(file.ContentType, file.Name))
+            {
+                _publicationError = $"Файл «{file.Name}» имеет неподдерживаемый тип.";
+                continue;
+            }
+
+            try
+            {
+                await using var stream = file.OpenReadStream(NewsMediaStorageService.MaxFileSizeBytes);
+                using var memory = new MemoryStream();
+                await stream.CopyToAsync(memory);
+
+                _pendingAttachments.Add(new PendingAttachment
+                {
+                    FileName = file.Name,
+                    ContentType = file.ContentType,
+                    MediaType = NewsMediaStorageService.ClassifyMediaType(file.ContentType, file.Name),
+                    FileSize = memory.Length,
+                    Content = memory.ToArray()
+                });
+            }
+            catch (IOException)
+            {
+                _publicationError = $"Файл «{file.Name}» превышает 10 МБ.";
+            }
+        }
+    }
+
+    private void RemovePendingAttachment(string id) =>
+        _pendingAttachments.RemoveAll(f => f.Id == id);
+
+    private static string GetAttachmentTypeLabel(NewsAttachmentType type) => type switch
+    {
+        NewsAttachmentType.Image => "Изображение",
+        NewsAttachmentType.Video => "Видео",
+        _ => "Файл"
+    };
+
+    private static string FormatFileSize(long bytes)
+    {
+        if (bytes < 1024)
+            return $"{bytes} Б";
+        if (bytes < 1024 * 1024)
+            return $"{bytes / 1024.0:0.#} КБ";
+        return $"{bytes / (1024.0 * 1024.0):0.#} МБ";
+    }
+}

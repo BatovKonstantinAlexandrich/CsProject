@@ -1,0 +1,143 @@
+@page "/checkout"
+@attribute [Authorize(Roles = RoleNames.Client)]
+@inject CartService CartService
+@inject OrderService OrderService
+@inject PayGwApiService PayGwApiService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+
+<PageTitle>Оформление заказа</PageTitle>
+
+<MudText Typo="Typo.h4" Class="page-title">Оформление заказа</MudText>
+
+@if (_items == null || _paymentOptions == null)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (_items.Count == 0)
+{
+    <MudAlert Severity="Severity.Warning">Корзина пуста.</MudAlert>
+}
+else
+{
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudPaper Elevation="2" Class="pa-4 mb-4">
+                <MudText Typo="Typo.h6" Class="mb-3">Товары</MudText>
+                <ul class="stack mb-3">
+                    @foreach (var item in _items)
+                    {
+                        <li>@item.Product.Name × @item.Quantity — @((item.Product.Price * item.Quantity).ToString("N0")) ₽</li>
+                    }
+                </ul>
+                <MudDivider Class="mb-3" />
+                <MudText Typo="Typo.h6" Class="price">
+                    Итого: @_items.Sum(i => i.Product.Price * i.Quantity).ToString("N0") ₽
+                </MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudPaper Elevation="2" Class="pa-4 mb-4">
+                @if (!string.IsNullOrEmpty(_error))
+                {
+                    <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
+                }
+                @if (PayGwApiService.IsConfigured && _paymentOptions.Any(o => o.SourceId.HasValue))
+                {
+                    <MudAlert Severity="Severity.Info" Class="mb-4" Dense="true">
+                        Способы оплаты загружены из NgAppPayGwManager.
+                    </MudAlert>
+                }
+                <EditForm Model="_model" OnValidSubmit="SubmitOrder">
+                    <DataAnnotationsValidator />
+                    <div class="stack">
+                        <MudTextField @bind-Value="_model.Address" Label="Адрес доставки" Required="true" Variant="Variant.Outlined" />
+                        <ValidationMessage For="() => _model.Address" />
+                        <MudSelect T="string" @bind-Value="_deliveryMethodKey" Label="Способ доставки" Variant="Variant.Outlined">
+                            <MudSelectItem Value="@("Courier")">Курьер</MudSelectItem>
+                            <MudSelectItem Value="@("Pickup")">Самовывоз</MudSelectItem>
+                            <MudSelectItem Value="@("TransportCompany")">Транспортная компания</MudSelectItem>
+                        </MudSelect>
+                        <MudSelect T="string" @bind-Value="_paymentMethodKey" Label="Способ оплаты" Variant="Variant.Outlined">
+                            @foreach (var option in _paymentOptions)
+                            {
+                                <MudSelectItem Value="@option.Key">@option.Name</MudSelectItem>
+                            }
+                        </MudSelect>
+                        @if (SelectedPaymentOption?.Description is { Length: > 0 } description)
+                        {
+                            <MudText Typo="Typo.caption" Class="text-muted">@description</MudText>
+                        }
+                        <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled" Disabled="_submitting">
+                            @(_submitting ? "Оформление..." : "Создать заказ")
+                        </MudButton>
+                    </div>
+                </EditForm>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private List<CartItem>? _items;
+    private List<CheckoutPaymentOption>? _paymentOptions;
+    private string? _userId;
+    private string? _error;
+    private bool _submitting;
+    private string _deliveryMethodKey = "TransportCompany";
+    private string _paymentMethodKey = "SBP";
+    private CheckoutModel _model = new();
+
+    private CheckoutPaymentOption? SelectedPaymentOption =>
+        _paymentOptions?.FirstOrDefault(o => o.Key == _paymentMethodKey);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        _userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value!;
+        _items = await CartService.GetCartAsync(_userId);
+        _paymentOptions = await PayGwApiService.GetCheckoutPaymentOptionsAsync();
+        _paymentMethodKey = _paymentOptions.FirstOrDefault()?.Key ?? "SBP";
+    }
+
+    private async Task SubmitOrder()
+    {
+        _submitting = true;
+        _error = null;
+        try
+        {
+            var paymentOption = SelectedPaymentOption
+                ?? throw new InvalidOperationException("Выберите способ оплаты.");
+
+            var order = await OrderService.CreateOrderFromCartAsync(
+                _userId!,
+                Enum.Parse<DeliveryMethod>(_deliveryMethodKey),
+                _model.Address,
+                paymentOption.Method,
+                paymentOption.SourceId,
+                paymentOption.Name);
+
+            if (order == null)
+            {
+                _error = "Не удалось создать заказ.";
+                return;
+            }
+
+            Navigation.NavigateTo($"/orders/{order.Id}/pay");
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _submitting = false;
+        }
+    }
+
+    private class CheckoutModel
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Укажите адрес")]
+        public string Address { get; set; } = "";
+    }
+}

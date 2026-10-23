@@ -1,0 +1,127 @@
+@inject IViewLinkResolver LinkResolver
+@inject IViewDataProviderResolver DataProviderResolver
+@inject IComponentsFactory ComponentsFactory
+@inherits BaseComponent
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" Class="my-4" />
+}
+else if (!string.IsNullOrWhiteSpace(_error))
+{
+    <MudAlert Severity="Severity.Error">@_error</MudAlert>
+}
+else if (_rootView == null)
+{
+    <MudAlert Severity="Severity.Warning">Модель представления не инициализирована.</MudAlert>
+}
+else
+{
+    <SharedComponents RootView="_rootView" OnInit="OnChildInitialized" OnEvent="OnEventSubmitted" />
+}
+
+@code {
+    [Parameter] public AppViewBase? View { get; set; }
+    [Parameter] public ViewDynamicLink? Link { get; set; }
+
+    private AppViewBase? _rootView;
+    private bool _loading;
+    private string? _error;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            _rootView = await BuildViewAsync();
+            if (_rootView != null)
+                _rootView.EnsureFactory(ComponentsFactory);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            Error(ex);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task<AppViewBase?> BuildViewAsync()
+    {
+        if (View != null)
+        {
+            if (View.DynamicLink != null || View.Payload == null)
+                await LoadPayloadAsync(View);
+            return View;
+        }
+
+        if (Link == null || string.IsNullOrWhiteSpace(Link.Key))
+            return null;
+
+        if (!LinkResolver.TryResolve(Link, out var descriptor))
+            throw new InvalidOperationException($"Ссылка «{Link.Key}» не зарегистрирована.");
+
+        var appView = AppViewBase.FromDescriptor(descriptor, Link);
+        await LoadPayloadAsync(appView);
+        return ToTypedView(appView);
+    }
+
+    private async Task LoadPayloadAsync(AppViewBase appView)
+    {
+        var link = appView.DynamicLink;
+        if (link == null || string.IsNullOrWhiteSpace(link.Key))
+            return;
+
+        if (!LinkResolver.TryResolve(link, out var descriptor))
+            return;
+
+        var provider = DataProviderResolver.Resolve(descriptor);
+        if (provider == null)
+            throw new InvalidOperationException($"Провайдер данных для «{descriptor.Key}» не найден.");
+
+        var request = new ViewDataRequest { Descriptor = descriptor, Link = link };
+        appView.Payload = await provider.LoadAsync(request);
+    }
+
+    private static AppViewBase ToTypedView(AppViewBase source)
+    {
+        AppViewBase typed = source.ViewKind switch
+        {
+            ViewKind.Table => new TableAppView(),
+            ViewKind.List => new ListAppView(),
+            ViewKind.Hierarchy => new HierarchyAppView(),
+            ViewKind.Chart => new ChartAppView(),
+            ViewKind.Card => new CardAppView(),
+            ViewKind.Dialog => new DialogAppView(),
+            ViewKind.NavigationDrawer => new NavigationDrawerAppView(),
+            _ => source
+        };
+
+        if (ReferenceEquals(typed, source))
+            return source;
+
+        typed.Title = source.Title;
+        typed.Description = source.Description;
+        typed.ViewKind = source.ViewKind;
+        typed.DynamicLink = source.DynamicLink;
+        typed.DataProviderKey = source.DataProviderKey;
+        typed.Payload = source.Payload;
+        typed.Status = source.Status;
+        typed.StatusMessage = source.StatusMessage;
+
+        switch (typed)
+        {
+            case TableAppView t when source.Payload is ViewTableData td: t.TableData = td; break;
+            case ListAppView l when source.Payload is ViewListData ld: l.ListData = ld; break;
+            case HierarchyAppView h when source.Payload is ViewHierarchyData hd: h.HierarchyData = hd; break;
+            case ChartAppView c when source.Payload is ViewChartData cd: c.ChartData = cd; break;
+            case CardAppView c when source.Payload is ViewCardData cd: c.CardData = cd; break;
+        }
+
+        return typed;
+    }
+}

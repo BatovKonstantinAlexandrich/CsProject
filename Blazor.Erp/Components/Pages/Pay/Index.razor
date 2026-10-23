@@ -1,0 +1,118 @@
+@page "/pay/{OrderUid}"
+@using BlazorErp.Data
+@using BlazorErp.Models
+@using BlazorErp.Models.Enums
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationDbContext Db
+@inject OrderService OrderService
+
+<PageTitle>Оплата заказа</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-8">
+    @if (!_loaded)
+    {
+        <MudProgressCircular Indeterminate="true" />
+    }
+    else if (_basket != null)
+    {
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.h5" Class="mb-2">Оплата корзины @_basket.BasketNumber</MudText>
+            <MudText Class="mb-3">Сумма: <strong>@_amount.ToString("N2") ₽</strong></MudText>
+            @if (_basket.Status == SaleBasketStatus.Paid)
+            {
+                <MudAlert Severity="Severity.Success">Заказ уже оплачен</MudAlert>
+            }
+            else
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Class="mb-2"
+                           OnClick="@(() => SimulatePayAsync(isBasket: true))">Оплатить (демо СБП)</MudButton>
+            }
+        </MudPaper>
+    }
+    else if (_order != null && _order.Payment != null)
+    {
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.h5" Class="mb-2">Оплата заказа @_order.OrderNumber</MudText>
+            <MudText Class="mb-3">Сумма: <strong>@_order.TotalAmount.ToString("N2") ₽</strong></MudText>
+            @if (_order.Payment.Status == PaymentStatus.Completed)
+            {
+                <MudAlert Severity="Severity.Success">Заказ уже оплачен</MudAlert>
+            }
+            else
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                           OnClick="@(() => SimulatePayAsync(isBasket: false))">Оплатить (демо СБП)</MudButton>
+            }
+        </MudPaper>
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Error">Ссылка на оплату недействительна или заказ не найден.</MudAlert>
+    }
+</MudContainer>
+
+@code {
+    [Parameter] public string OrderUid { get; set; } = string.Empty;
+
+    private bool _loaded;
+    private SaleBasket? _basket;
+    private Order? _order;
+    private decimal _amount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Guid.TryParse(OrderUid, out var uid))
+        {
+            _loaded = true;
+            return;
+        }
+
+        _basket = await Db.SaleBaskets
+            .Include(b => b.CashPayments)
+            .FirstOrDefaultAsync(b => b.OrderUid == uid);
+
+        if (_basket != null)
+        {
+            _amount = _basket.TotalAmount - _basket.PaidAmount;
+        }
+        else
+        {
+            _order = await Db.Orders
+                .Include(o => o.Payment)
+                .FirstOrDefaultAsync(o => o.Payment != null && o.Payment.OrderUid == uid);
+        }
+
+        _loaded = true;
+    }
+
+    private async Task SimulatePayAsync(bool isBasket)
+    {
+        if (isBasket && _basket != null)
+        {
+            var payment = _basket.CashPayments
+                .Where(p => p.Status is PaymentStatus.WaitConfirm or PaymentStatus.Pending)
+                .OrderByDescending(p => p.CreatedAt)
+                .FirstOrDefault();
+
+            if (payment != null)
+            {
+                payment.Status = PaymentStatus.Completed;
+                payment.CompletedAt = DateTime.UtcNow;
+            }
+
+            _basket.PaidAmount = _basket.TotalAmount;
+            _basket.Status = SaleBasketStatus.Paid;
+            _basket.PaidAt = DateTime.UtcNow;
+            await Db.SaveChangesAsync();
+            StateHasChanged();
+            return;
+        }
+
+        if (!isBasket && _order?.Payment != null && _order.ClientId != null)
+        {
+            await OrderService.ProcessPaymentAsync(_order.Id, _order.ClientId);
+            _order = await Db.Orders.Include(o => o.Payment).FirstAsync(o => o.Id == _order.Id);
+            StateHasChanged();
+        }
+    }
+}

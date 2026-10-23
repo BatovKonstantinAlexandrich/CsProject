@@ -1,0 +1,73 @@
+@page "/analyst"
+@attribute [Authorize(Roles = RoleNames.Analyst)]
+@inject MailingConfigurationService MailingService
+
+<PageTitle>Аналитика рассылок</PageTitle>
+
+<MudText Typo="Typo.h3" Class="page-title">Аналитика маркетинга</MudText>
+<MudText Typo="Typo.body2" Class="text-muted mb-4">Обзор показателей рассылок (роль «Аналитик», интерфейс marketer-web).</MudText>
+
+<MudGrid Class="mb-4">
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.subtitle2" Class="text-muted">Всего рассылок</MudText>
+            <MudText Typo="Typo.h4">@_total</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.subtitle2" Class="text-muted">Активных</MudText>
+            <MudText Typo="Typo.h4">@_active</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.subtitle2" Class="text-muted">Аудитория</MudText>
+            <MudText Typo="Typo.h4">@_audienceTotal.ToString("N0")</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.subtitle2" Class="text-muted">Отправлено</MudText>
+            <MudText Typo="Typo.h4">@_audienceSent.ToString("N0")</MudText>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+<MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/marketing/mailings" Class="mb-4"
+           StartIcon="@Icons.Material.Filled.Settings">Настройки рассылок</MudButton>
+
+<MudTable Items="_items" Dense="true" Hover="true">
+    <HeaderContent>
+        <MudTh>Название</MudTh>
+        <MudTh>Статус</MudTh>
+        <MudTh>Конверсия</MudTh>
+        <MudTh>Дата начала</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.SettingsName</MudTd>
+        <MudTd>@MailingConfigurationService.GetStatusLabel(context.Status)</MudTd>
+        <MudTd>@FormatRate(context)</MudTd>
+        <MudTd>@(context.MailingStartDate?.ToString("dd.MM.yyyy") ?? "—")</MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<MailingConfiguration> _items = [];
+    private int _total;
+    private int _active;
+    private int _audienceTotal;
+    private int _audienceSent;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _items = await MailingService.GetAllAsync();
+        _total = _items.Count;
+        _active = _items.Count(i => i.Status == MailingConfigurationStatus.Active);
+        _audienceTotal = _items.Sum(i => i.AudienceTotal);
+        _audienceSent = _items.Sum(i => i.AudienceSent);
+    }
+
+    private static string FormatRate(MailingConfiguration m) =>
+        m.AudienceTotal <= 0 ? "—" : $"{100.0 * m.AudienceSent / m.AudienceTotal:F1}%";
+}

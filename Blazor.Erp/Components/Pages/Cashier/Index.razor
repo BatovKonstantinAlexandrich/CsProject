@@ -1,0 +1,470 @@
+@page "/cashier"
+@attribute [Authorize(Roles = RoleNames.Cashier)]
+@inject CashierService CashierService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>Касса</PageTitle>
+
+<MudText Typo="Typo.h3" Class="page-title">Касса — @(_store?.Name ?? "…")</MudText>
+
+@if (!_loaded)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (_store == null)
+{
+    <MudAlert Severity="Severity.Warning">
+        Магазин не найден. Дождитесь одобрения заявки кассира владельцем магазина.
+    </MudAlert>
+}
+else
+{
+    <MudTabs @bind-ActivePanelIndex="_tabIndex" Class="mb-4">
+        <MudTabPanel Text="Корзины" Icon="@Icons.Material.Filled.ShoppingBasket" />
+        <MudTabPanel Text="Онлайн-активные" Icon="@Icons.Material.Filled.Payments" />
+        <MudTabPanel Text="Заказы сайта" Icon="@Icons.Material.Filled.Receipt" />
+    </MudTabs>
+
+    @if (_tabIndex == 0)
+    {
+        <div class="stack-row mb-4" style="gap:12px; flex-wrap:wrap">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="CreateBasketAsync">Новая корзина</MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadAsync">Обновить</MudButton>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="5">
+                <MudPaper Class="pa-3">
+                    <MudText Typo="Typo.h6" Class="mb-2">Корзины</MudText>
+                    <MudTable Items="_baskets" Dense="true" Hover="true" SelectedItem="_selectedBasket"
+                              SelectedItemChanged="@(async (SaleBasket? b) => await OnBasketSelectionChanged(b))">
+                        <HeaderContent>
+                            <MudTh>№</MudTh>
+                            <MudTh>Клиент</MudTh>
+                            <MudTh>Сумма</MudTh>
+                            <MudTh>Статус</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.BasketNumber</MudTd>
+                            <MudTd>@context.ClientName</MudTd>
+                            <MudTd>@context.TotalAmount.ToString("N2") ₽</MudTd>
+                            <MudTd>@FormatBasketStatus(context.Status)</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="7">
+                @if (_selectedBasketDetail != null)
+                {
+                    <MudPaper Class="pa-3">
+                        <MudText Typo="Typo.h6">@_selectedBasketDetail.BasketNumber — @_selectedBasketDetail.ClientName</MudText>
+                        <MudText Typo="Typo.body2" Class="text-muted mb-2">
+                            Тел.: @(_selectedBasketDetail.ClientPhone ?? "—") · Email: @(_selectedBasketDetail.ClientEmail ?? "—")
+                        </MudText>
+
+                        <MudTable Items="_selectedBasketDetail.Items" Dense="true" Class="mb-3">
+                            <HeaderContent>
+                                <MudTh>Товар</MudTh>
+                                <MudTh>Кол-во</MudTh>
+                                <MudTh>Цена</MudTh>
+                                <MudTh>Сумма</MudTh>
+                                <MudTh></MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@context.ProductName</MudTd>
+                                <MudTd>@context.Quantity</MudTd>
+                                <MudTd>@context.UnitPrice.ToString("N2")</MudTd>
+                                <MudTd>@context.LineTotal.ToString("N2")</MudTd>
+                                <MudTd>
+                                    @if (_selectedBasketDetail.Status is SaleBasketStatus.Open or SaleBasketStatus.WaitPayment)
+                                    {
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                                       OnClick="@(() => RemoveItemAsync(context.Id))" />
+                                    }
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+
+                        @if (_selectedBasketDetail.Status is SaleBasketStatus.Open or SaleBasketStatus.WaitPayment)
+                        {
+                            <div class="stack-row mb-3" style="gap:8px; flex-wrap:wrap; align-items:flex-end">
+                                <MudSelect T="int?" @bind-Value="_addProductId" Label="Добавить товар" Style="min-width:240px">
+                                    @foreach (var sp in _storeProducts)
+                                    {
+                                        <MudSelectItem T="int?" Value="@sp.ProductId">@sp.Product.Name (@sp.Quantity шт.)</MudSelectItem>
+                                    }
+                                </MudSelect>
+                                <MudNumericField @bind-Value="_addQty" Label="Кол-во" Min="1" Style="width:100px" />
+                                <MudButton Variant="Variant.Outlined" OnClick="AddProductAsync">Добавить</MudButton>
+                            </div>
+                        }
+
+                        <MudText Typo="Typo.subtitle1" Class="mb-2">
+                            К оплате: <strong>@((_selectedBasketDetail.TotalAmount - _selectedBasketDetail.PaidAmount).ToString("N2")) ₽</strong>
+                        </MudText>
+
+                        <div class="stack-row" style="gap:8px; flex-wrap:wrap">
+                            <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Payments"
+                                       Disabled="@(!CanPayBasket())" OnClick="@(() => PayBasketAsync(PaymentMethod.Cash))">Наличные</MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.CreditCard"
+                                       Disabled="@(!CanPayBasket())" OnClick="@(() => PayBasketAsync(PaymentMethod.Card))">Карта</MudButton>
+                            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Link"
+                                       Disabled="@(_selectedBasketDetail.TotalAmount <= 0)" OnClick="OpenPaymentLinkDialogForBasket">Ссылка на оплату</MudButton>
+                            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Receipt"
+                                       Disabled="@(_selectedBasketDetail.Status != SaleBasketStatus.Paid)" OnClick="PrintReceiptAsync">Печать чека</MudButton>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(_lastReceiptNumber))
+                        {
+                            <MudAlert Severity="Severity.Success" Class="mt-3" Dense="true">Чек № @_lastReceiptNumber</MudAlert>
+                        }
+                    </MudPaper>
+                }
+                else
+                {
+                    <MudAlert Severity="Severity.Info">Выберите корзину слева</MudAlert>
+                }
+            </MudItem>
+        </MudGrid>
+    }
+    else if (_tabIndex == 1)
+    {
+        <MudPaper Class="pa-3">
+            <MudText Typo="Typo.h6" Class="mb-2">Онлайн-активные платежи</MudText>
+            <MudTable Items="_onlinePayments" Dense="true" Hover="true">
+                <HeaderContent>
+                    <MudTh>ID</MudTh>
+                    <MudTh>Заказ / корзина</MudTh>
+                    <MudTh>Система</MudTh>
+                    <MudTh>Сумма</MudTh>
+                    <MudTh>Возврат</MudTh>
+                    <MudTh>Статус</MudTh>
+                    <MudTh>Телефон</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.ExternalPaymentId</MudTd>
+                    <MudTd>@(context.SaleBasket?.BasketNumber ?? context.Order?.OrderNumber ?? "—")</MudTd>
+                    <MudTd>@(context.PaymentSystemName ?? "—")</MudTd>
+                    <MudTd>@context.Amount.ToString("N2")</MudTd>
+                    <MudTd>@context.RefundSum.ToString("N2")</MudTd>
+                    <MudTd>@FormatPaymentStatus(context.Status)</MudTd>
+                    <MudTd>@(context.PhoneNumber ?? "—")</MudTd>
+                    <MudTd>
+                        @if (context.Amount - context.RefundSum > 0 && context.Status is PaymentStatus.Completed or PaymentStatus.PartiallyRefunded)
+                        {
+                            <MudIconButton Icon="@Icons.Material.Filled.Undo" Size="Size.Small" Title="Возврат"
+                                           OnClick="@(() => RefundAsync(context))" />
+                        }
+                        @if (!string.IsNullOrEmpty(context.PaymentUrl))
+                        {
+                            <MudIconButton Icon="@Icons.Material.Filled.Link" Size="Size.Small" Title="Ссылка"
+                                           Href="@context.PaymentUrl" Target="_blank" />
+                        }
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    }
+    else
+    {
+        <MudPaper Class="pa-3">
+            <MudText Typo="Typo.h6" Class="mb-2">Заказы интернет-магазина (ожидают оплаты)</MudText>
+            <MudTable Items="_pendingOrders" Dense="true" Hover="true">
+                <HeaderContent>
+                    <MudTh>№ заказа</MudTh>
+                    <MudTh>Клиент</MudTh>
+                    <MudTh>Сумма</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.OrderNumber</MudTd>
+                    <MudTd>@context.Client.FullName</MudTd>
+                    <MudTd>@context.TotalAmount.ToString("N2") ₽</MudTd>
+                    <MudTd>
+                        <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => OpenPaymentLinkDialogForOrder(context.Id))">
+                            Ссылка на оплату
+                        </MudButton>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    }
+}
+
+@code {
+    private bool _loaded;
+    private int _tabIndex;
+    private Store? _store;
+    private string? _userId;
+    private List<SaleBasket> _baskets = [];
+    private SaleBasket? _selectedBasket;
+    private SaleBasket? _selectedBasketDetail;
+    private List<StoreProduct> _storeProducts = [];
+    private List<CashPayment> _onlinePayments = [];
+    private List<Order> _pendingOrders = [];
+    private int? _addProductId = null;
+    private int _addQty = 1;
+    private string? _lastReceiptNumber;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        _userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        await LoadAsync();
+        _loaded = true;
+    }
+
+    private async Task LoadAsync()
+    {
+        if (_userId == null) return;
+        _store = await CashierService.GetCashierStoreAsync(_userId);
+        if (_store == null) return;
+
+        _baskets = await CashierService.GetBasketsAsync(_store.Id, includeClosed: false);
+        _storeProducts = await CashierService.GetStoreProductsAsync(_store.Id);
+        _onlinePayments = await CashierService.GetOnlinePaymentsAsync(_store.Id);
+        _pendingOrders = await CashierService.GetPendingWebOrdersAsync(_store.Id);
+
+        if (_selectedBasket != null)
+        {
+            _selectedBasketDetail = await CashierService.GetBasketAsync(_selectedBasket.Id, _store.Id);
+            _selectedBasket = _baskets.FirstOrDefault(b => b.Id == _selectedBasket!.Id);
+        }
+    }
+
+    private async Task CreateBasketAsync()
+    {
+        if (_store == null || _userId == null) return;
+
+        var parameters = new DialogParameters<NewBasketDialog>
+        {
+            { x => x.DefaultPhone, string.Empty },
+            { x => x.DefaultEmail, string.Empty }
+        };
+        var dialog = await DialogService.ShowAsync<NewBasketDialog>("Новая корзина", parameters);
+        var result = await dialog.Result;
+        if (result == null || result.Canceled || result.Data is not NewBasketDialogResult data)
+            return;
+
+        var basket = await CashierService.CreateBasketAsync(
+            _store.Id, _userId, data.ClientName, data.Phone, data.Email);
+        if (basket == null)
+        {
+            Snackbar.Add("Не удалось создать корзину", Severity.Error);
+            return;
+        }
+
+        Snackbar.Add($"Создана корзина {basket.BasketNumber}", Severity.Success);
+        await LoadAsync();
+        _selectedBasket = basket;
+        _selectedBasketDetail = await CashierService.GetBasketAsync(basket.Id, _store.Id);
+    }
+
+    private async Task OnBasketSelectionChanged(SaleBasket? basket)
+    {
+        _selectedBasket = basket;
+        if (_store == null || basket == null)
+        {
+            _selectedBasketDetail = null;
+            return;
+        }
+        _selectedBasketDetail = await CashierService.GetBasketAsync(basket.Id, _store.Id);
+    }
+
+    private async Task AddProductAsync()
+    {
+        if (_store == null || _userId == null || _selectedBasketDetail == null || _addProductId == null)
+            return;
+
+        try
+        {
+            await CashierService.AddProductAsync(_selectedBasketDetail.Id, _store.Id, _addProductId.Value, _addQty, _userId);
+            Snackbar.Add("Товар добавлен", Severity.Success);
+            await RefreshBasketAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task RemoveItemAsync(int itemId)
+    {
+        if (_store == null || _userId == null) return;
+        await CashierService.RemoveItemAsync(itemId, _store.Id, _userId);
+        await RefreshBasketAsync();
+    }
+
+    private async Task PayBasketAsync(PaymentMethod method)
+    {
+        if (_store == null || _userId == null || _selectedBasketDetail == null) return;
+
+        try
+        {
+            var entry = await CashierService.ProcessPaymentAsync(
+                _selectedBasketDetail.Id, _store.Id, _userId, method);
+            if (entry == null)
+            {
+                Snackbar.Add("Оплата не выполнена", Severity.Error);
+                return;
+            }
+            Snackbar.Add($"Оплата проведена. Чек {entry.ReceiptNumber}", Severity.Success);
+            _lastReceiptNumber = entry.ReceiptNumber;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task PrintReceiptAsync()
+    {
+        if (_store == null || _userId == null || _selectedBasketDetail == null) return;
+        var entry = await CashierService.PrintReceiptAsync(_selectedBasketDetail.Id, _store.Id, _userId);
+        if (entry == null)
+        {
+            Snackbar.Add("Не удалось напечатать чек", Severity.Warning);
+            return;
+        }
+        _lastReceiptNumber = entry.ReceiptNumber;
+        Snackbar.Add($"Чек № {entry.ReceiptNumber}", Severity.Success);
+    }
+
+    private async Task OpenPaymentLinkDialogForBasket()
+    {
+        if (_store == null || _userId == null || _selectedBasketDetail == null) return;
+        await OpenPaymentLinkDialogAsync(
+            _selectedBasketDetail.Id,
+            null,
+            _selectedBasketDetail.ClientPhone,
+            _selectedBasketDetail.ClientEmail,
+            _selectedBasketDetail.TotalAmount - _selectedBasketDetail.PaidAmount);
+    }
+
+    private async Task OpenPaymentLinkDialogForOrder(int orderId)
+    {
+        if (_store == null || _userId == null) return;
+        var order = _pendingOrders.FirstOrDefault(o => o.Id == orderId);
+        await OpenPaymentLinkDialogAsync(null, orderId, order?.Client.PhoneNumber, order?.Client.Email, order?.TotalAmount ?? 0);
+    }
+
+    private async Task OpenPaymentLinkDialogAsync(int? basketId, int? orderId, string? phone, string? email, decimal amount)
+    {
+        if (_store == null || _userId == null) return;
+
+        var parameters = new DialogParameters<PaymentLinkDialog>
+        {
+            { x => x.DefaultPhone, phone ?? string.Empty },
+            { x => x.DefaultEmail, email ?? string.Empty },
+            { x => x.Amount, amount }
+        };
+        var dialog = await DialogService.ShowAsync<PaymentLinkDialog>("Ссылка на оплату", parameters);
+        var result = await dialog.Result;
+        if (result == null || result.Canceled || result.Data is not PaymentLinkDialogResult data)
+            return;
+
+        (bool success, string? error) sendResult;
+        if (basketId != null)
+        {
+            if (data.SendSms && !string.IsNullOrWhiteSpace(data.Phone))
+            {
+                sendResult = await CashierService.SendPaymentLinkAsync(
+                    basketId.Value, _store.Id, _userId, PaymentLinkChannel.Sms, data.Phone);
+                Snackbar.Add(sendResult.success ? "SMS отправлено (симуляция/шлюз)" : sendResult.error ?? "Ошибка SMS",
+                    sendResult.success ? Severity.Success : Severity.Error);
+            }
+            if (data.SendEmail && !string.IsNullOrWhiteSpace(data.Email))
+            {
+                sendResult = await CashierService.SendPaymentLinkAsync(
+                    basketId.Value, _store.Id, _userId, PaymentLinkChannel.Email, data.Email);
+                Snackbar.Add(sendResult.success ? "Письмо отправлено" : sendResult.error ?? "Ошибка e-mail",
+                    sendResult.success ? Severity.Success : Severity.Error);
+            }
+        }
+        else if (orderId != null)
+        {
+            if (data.SendSms && !string.IsNullOrWhiteSpace(data.Phone))
+            {
+                sendResult = await CashierService.SendOrderPaymentLinkAsync(
+                    orderId.Value, _store.Id, _userId, PaymentLinkChannel.Sms, data.Phone);
+                Snackbar.Add(sendResult.success ? "SMS отправлено" : sendResult.error ?? "Ошибка",
+                    sendResult.success ? Severity.Success : Severity.Error);
+            }
+            if (data.SendEmail && !string.IsNullOrWhiteSpace(data.Email))
+            {
+                sendResult = await CashierService.SendOrderPaymentLinkAsync(
+                    orderId.Value, _store.Id, _userId, PaymentLinkChannel.Email, data.Email);
+                Snackbar.Add(sendResult.success ? "Письмо отправлено" : sendResult.error ?? "Ошибка",
+                    sendResult.success ? Severity.Success : Severity.Error);
+            }
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task RefundAsync(CashPayment payment)
+    {
+        if (_store == null || _userId == null) return;
+
+        var max = payment.Amount - payment.RefundSum;
+        var parameters = new DialogParameters<RefundDialog>
+        {
+            { x => x.MaxAmount, max }
+        };
+        var dialog = await DialogService.ShowAsync<RefundDialog>("Возврат средств", parameters);
+        var result = await dialog.Result;
+        if (result == null || result.Canceled || result.Data is not decimal amount)
+            return;
+
+        try
+        {
+            var entry = await CashierService.ProcessRefundAsync(payment.Id, _store.Id, _userId, amount);
+            Snackbar.Add(entry != null ? $"Возврат проведён. Чек {entry.ReceiptNumber}" : "Ошибка возврата",
+                entry != null ? Severity.Success : Severity.Error);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task RefreshBasketAsync()
+    {
+        if (_store == null || _selectedBasketDetail == null) return;
+        _selectedBasketDetail = await CashierService.GetBasketAsync(_selectedBasketDetail.Id, _store.Id);
+        _baskets = await CashierService.GetBasketsAsync(_store.Id);
+    }
+
+    private bool CanPayBasket() =>
+        _selectedBasketDetail != null
+        && _selectedBasketDetail.Items.Count > 0
+        && _selectedBasketDetail.TotalAmount > _selectedBasketDetail.PaidAmount
+        && _selectedBasketDetail.Status is SaleBasketStatus.Open or SaleBasketStatus.WaitPayment;
+
+    private static string FormatBasketStatus(SaleBasketStatus status) => status switch
+    {
+        SaleBasketStatus.Open => "Открыта",
+        SaleBasketStatus.WaitPayment => "Ожидает оплаты",
+        SaleBasketStatus.Paid => "Оплачена",
+        SaleBasketStatus.Cancelled => "Отменена",
+        _ => status.ToString()
+    };
+
+    private static string FormatPaymentStatus(PaymentStatus status) => status switch
+    {
+        PaymentStatus.Pending => "Ожидание",
+        PaymentStatus.WaitConfirm => "Ожидает подтверждения",
+        PaymentStatus.Completed => "Оплачен",
+        PaymentStatus.PartiallyRefunded => "Частичный возврат",
+        PaymentStatus.Refunded => "Возвращён",
+        PaymentStatus.Failed => "Ошибка",
+        _ => status.ToString()
+    };
+}

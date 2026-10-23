@@ -1,0 +1,47 @@
+@using MudBlazor
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-3">Сумма к оплате: <strong>@Amount.ToString("N2") ₽</strong></MudText>
+        <MudCheckBox @bind-Value="_sendSms" Label="Отправить SMS" Class="mb-2" />
+        @if (_sendSms)
+        {
+            <MudTextField @bind-Value="_phone" Label="Телефон" Class="mb-3" HelperText="Формат: 79XXXXXXXXX" />
+        }
+        <MudCheckBox @bind-Value="_sendEmail" Label="Отправить на e-mail" Class="mb-2" />
+        @if (_sendEmail)
+        {
+            <MudTextField @bind-Value="_email" Label="E-mail" Class="mb-3" />
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Отмена</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit"
+                   Disabled="@(!_sendSms && !_sendEmail)">Отправить</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter] public string DefaultPhone { get; set; } = string.Empty;
+    [Parameter] public string DefaultEmail { get; set; } = string.Empty;
+    [Parameter] public decimal Amount { get; set; }
+
+    private bool _sendSms = true;
+    private bool _sendEmail;
+    private string _phone = string.Empty;
+    private string _email = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        _phone = DefaultPhone;
+        _email = DefaultEmail;
+        _sendEmail = !string.IsNullOrWhiteSpace(DefaultEmail);
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Submit() =>
+        MudDialog.Close(DialogResult.Ok(new PaymentLinkDialogResult(_sendSms, _phone, _sendEmail, _email)));
+}

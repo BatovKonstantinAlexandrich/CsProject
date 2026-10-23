@@ -1,0 +1,53 @@
+@page "/help"
+
+<PageTitle>Помощь — BlazorErp</PageTitle>
+
+<MudText Typo="Typo.h4" Class="page-title">Помощь</MudText>
+<p class="text-muted mb-4">Краткое руководство по работе с системой BlazorErp.</p>
+
+<div class="stack">
+    <MudPaper Elevation="2" Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-2">Каталог и заказы</MudText>
+        <ul class="help-list">
+            <li>Откройте <MudLink Href="/catalog" Color="Color.Primary">каталог</MudLink>, выберите категорию и добавьте товары в корзину.</li>
+            <li>Оформление заказа доступно после входа в систему — раздел «Корзина» и «Оформление».</li>
+            <li>Статус заказа можно отслеживать в разделе <MudLink Href="/orders" Color="Color.Primary">«Мои заказы»</MudLink> (роль клиента).</li>
+        </ul>
+    </MudPaper>
+
+    <MudPaper Elevation="2" Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-2">Роли пользователей</MudText>
+        <ul class="help-list">
+            <li><strong>Клиент</strong> — покупки, корзина, заказы, отзывы.</li>
+            <li><strong>Транспортная компания</strong> — управление доставками.</li>
+            <li><strong>Владелец магазина</strong> — склад и заказы магазина.</li>
+            <li><strong>Поставщик</strong> — каталог поставок и заказы поставщика.</li>
+        </ul>
+    </MudPaper>
+
+    <MudPaper Elevation="2" Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-2">Сообщения и кабинет</MudText>
+        <ul class="help-list">
+            <li>Внутренние сообщения — раздел <MudLink Href="/messages" Color="Color.Primary">«Сообщения»</MudLink>.</li>
+            <li>В <MudLink Href="/account" Color="Color.Primary">личном кабинете</MudLink> можно включить двухфакторную аутентификацию и публиковать новости на главной.</li>
+        </ul>
+    </MudPaper>
+
+    <MudPaper Elevation="2" Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-2">Демо-учётные записи</MudText>
+        <ul class="help-list">
+            <li>Клиент: <code>client@demo.ru</code> / <code>Client123!</code></li>
+            <li>Магазин: <code>store@demo.ru</code> / <code>Store123!</code></li>
+            <li>Поставщик: <code>supplier@demo.ru</code> / <code>Supplier123!</code></li>
+            <li>Транспорт: <code>transport@demo.ru</code> / <code>Transport123!</code></li>
+        </ul>
+    </MudPaper>
+
+    <MudPaper Elevation="2" Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-2">Нужна помощь?</MudText>
+        <p class="mb-0">
+            Если не нашли ответ, отправьте сообщение через
+            <MudLink Href="/feedback" Color="Color.Primary">форму обратной связи</MudLink>.
+        </p>
+    </MudPaper>
+</div>

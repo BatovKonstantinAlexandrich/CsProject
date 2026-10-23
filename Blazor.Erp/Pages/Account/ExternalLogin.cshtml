@@ -1,0 +1,39 @@
+@page "/Account/ExternalLogin"
+@model BlazorErp.Pages.Account.ExternalLoginModel
+@{
+    ViewData["Title"] = "Внешний вход";
+    Layout = "_AccountLayout";
+}
+
+<div class="account-card">
+    <h2>Подтверждение</h2>
+    <p>Вы входите через <strong>@Model.ProviderDisplayName</strong>.</p>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    <form method="post" asp-page-handler="Confirmation">
+        <input type="hidden" asp-for="Input.Email" />
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input asp-for="Input.Email" class="form-control" readonly />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Полное имя</label>
+            <input asp-for="Input.FullName" class="form-control" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Роль</label>
+            <select asp-for="Input.Role" class="form-select">
+                <option value="Client">Клиент</option>
+                <option value="TransportCompany">Транспортная компания</option>
+                <option value="StoreOwner">Владелец магазина</option>
+                <option value="Supplier">Поставщик</option>
+                <option value="AutoServiceOwner">Владелец автосервиса</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Завершить регистрацию</button>
+    </form>
+</div>

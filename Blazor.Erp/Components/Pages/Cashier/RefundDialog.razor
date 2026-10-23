@@ -1,0 +1,31 @@
+@using MudBlazor
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-2">Доступно к возврату: @MaxAmount.ToString("N2") ₽</MudText>
+        <MudNumericField @bind-Value="_amount" Label="Сумма возврата" Min="0.01m" Max="@MaxAmount" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Отмена</MudButton>
+        <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="Submit">Вернуть</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter] public decimal MaxAmount { get; set; }
+
+    private decimal _amount;
+
+    protected override void OnInitialized() => _amount = MaxAmount;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Submit()
+    {
+        if (_amount <= 0 || _amount > MaxAmount)
+            return;
+        MudDialog.Close(DialogResult.Ok(_amount));
+    }
+}

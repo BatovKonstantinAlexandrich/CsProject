@@ -1,0 +1,169 @@
+@page "/orders/{OrderId:int}/pay"
+@attribute [Authorize(Roles = RoleNames.Client)]
+@inject OrderService OrderService
+@inject PayGwApiService PayGwApiService
+@inject AuthenticationStateProvider AuthStateProvider
+<PageTitle>Оплата заказа</PageTitle>
+
+@if (_order == null && !_notFound)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (_notFound)
+{
+    <MudAlert Severity="Severity.Error">Заказ не найден.</MudAlert>
+}
+else
+{
+    <MudText Typo="Typo.h3" Class="page-title">Оплата заказа @_order!.OrderNumber</MudText>
+    <p class="mb-1">Сумма: <strong>@_order.TotalAmount.ToString("N0") ₽</strong></p>
+    <p class="text-muted mb-4">
+        Способ оплаты: @GetPaymentLabel(_order.Payment!)
+    </p>
+
+    @if (_order.Payment!.Status == PaymentStatus.Completed)
+    {
+        <MudAlert Severity="Severity.Success" Class="mb-4">
+            Заказ оплачен. Транзакция: @_order.Payment.TransactionId
+        </MudAlert>
+        <MudButton Href="/orders" Variant="Variant.Filled" Color="Color.Primary">К заказам</MudButton>
+    }
+    else if (_order.Payment.Method == PaymentMethod.Cash)
+    {
+        <MudAlert Severity="Severity.Info" Class="mb-4">
+            Оплата наличными при получении. Заказ будет обработан после подтверждения менеджером.
+        </MudAlert>
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
+        }
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ProcessPayment" Disabled="_paying">
+            @(_paying ? "Обработка..." : "Подтвердить заказ")
+        </MudButton>
+    }
+    else if (!string.IsNullOrEmpty(_paymentUrl))
+    {
+        <MudPaper Class="fluent-card-padded pa-4 mb-4" Style="max-width:520px">
+            <MudText Typo="Typo.h5" Class="mb-3">Оплата через @_order.Payment.PaymentSystemName</MudText>
+            <p class="text-muted mb-4">
+                Перейдите по ссылке для оплаты через выбранную платёжную систему.
+            </p>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@_paymentUrl" Target="_blank" Class="mb-3" FullWidth="true">
+                Перейти к оплате
+            </MudButton>
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
+            }
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ProcessPayment" Disabled="_paying" FullWidth="true">
+                @(_paying ? "Обработка..." : "Я оплатил (демо-подтверждение)")
+            </MudButton>
+        </MudPaper>
+    }
+    else if (_order.Payment.Method == PaymentMethod.SBP)
+    {
+        <MudPaper Class="fluent-card-padded pa-4 text-center" Style="max-width:420px">
+            <MudText Typo="Typo.h5" Class="mb-3">Оплата через СБП</MudText>
+            <p class="text-muted mb-4">
+                Отсканируйте QR-код в приложении банка или подтвердите оплату
+            </p>
+            <div class="qr-placeholder">
+                <span style="font-size:3rem">📱</span>
+                <p class="text-muted">QR-код СБП (демо)</p>
+            </div>
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
+            }
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ProcessPayment" Disabled="_paying" FullWidth="true">
+                @(_paying ? "Обработка..." : "Подтвердить оплату СБП")
+            </MudButton>
+        </MudPaper>
+    }
+    else
+    {
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
+        }
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ProcessPayment" Disabled="_paying">
+            @(_paying ? "Обработка..." : "Оплатить")
+        </MudButton>
+    }
+}
+
+@code {
+    [Parameter] public int OrderId { get; set; }
+
+    private Order? _order;
+    private bool _notFound;
+    private string? _userId;
+    private string? _error;
+    private string? _paymentUrl;
+    private bool _paying;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        _userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value!;
+        _order = await OrderService.GetOrderAsync(OrderId);
+        if (_order == null || _order.ClientId != _userId)
+        {
+            _notFound = true;
+            return;
+        }
+
+        await LoadPaymentLinkAsync();
+    }
+
+    private async Task LoadPaymentLinkAsync()
+    {
+        if (_order?.Payment == null || _order.Payment.Status != PaymentStatus.Pending)
+            return;
+
+        if (_order.Payment.Method == PaymentMethod.Cash)
+            return;
+
+        _paymentUrl = _order.Payment.PaymentUrl;
+
+        if (string.IsNullOrEmpty(_paymentUrl) && _order.Payment.OrderUid.HasValue)
+        {
+            var link = await PayGwApiService.GetPaymentLinkAsync(
+                _order.Payment.OrderUid.Value,
+                _order.Payment.PaymentSourceId);
+
+            if (!string.IsNullOrWhiteSpace(link?.PaymentUrl))
+            {
+                _paymentUrl = link.PaymentUrl;
+                await OrderService.SavePaymentUrlAsync(OrderId, _userId!, _paymentUrl);
+                _order.Payment.PaymentUrl = _paymentUrl;
+            }
+        }
+    }
+
+    private async Task ProcessPayment()
+    {
+        _paying = true;
+        _error = null;
+        var ok = await OrderService.ProcessPaymentAsync(OrderId, _userId!);
+        if (ok)
+            _order = await OrderService.GetOrderAsync(OrderId);
+        else
+            _error = "Не удалось провести оплату.";
+        _paying = false;
+    }
+
+    private static string GetPaymentLabel(Payment payment)
+    {
+        if (!string.IsNullOrWhiteSpace(payment.PaymentSystemName))
+            return payment.PaymentSystemName;
+
+        return payment.Method switch
+        {
+            PaymentMethod.SBP => "СБП",
+            PaymentMethod.Card => "Карта",
+            PaymentMethod.Cash => "Наличные",
+            _ => payment.Method.ToString()
+        };
+    }
+}

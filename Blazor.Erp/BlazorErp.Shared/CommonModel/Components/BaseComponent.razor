@@ -1,0 +1,64 @@
+@inject IJSRuntime JSR
+
+@code {
+    [Parameter] public EventCallback<object> OnEvent { get; set; }
+    [Parameter] public EventCallback<BaseComponent> OnInit { get; set; }
+
+    public BaseComponent? Parent { get; set; }
+    public List<BaseComponent> Children { get; } = [];
+
+    public ViewItem? ViewItem { get; set; }
+
+    public int Status { get; set; } = 200;
+    public string StatusMessage { get; set; } = string.Empty;
+
+    public virtual void AfterInit() { }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Info("OnInitializedAsync");
+        await OnInit.InvokeAsync(this);
+        AfterInit();
+    }
+
+    public async Task OnChildInitialized(BaseComponent child)
+    {
+        Info($"OnChildInitialized({child.GetHashCode()})");
+        if (child.Parent != null)
+            child.Parent.Children.Remove(child);
+
+        child.Parent = this;
+        Children.Add(child);
+        await OnInit.InvokeAsync(child);
+    }
+
+    public async Task OnEventSubmitted(object evt)
+    {
+        Info($"OnEventSubmitted({evt.GetHashCode()})");
+        await OnEvent.InvokeAsync(evt);
+    }
+
+    public async Task HandleViewEventAsync(object evt) => await OnEventSubmitted(evt);
+
+    public void Error(Exception ex)
+    {
+        Status = 500;
+        StatusMessage = ex.Message;
+        Console.WriteLine($"[{GetType().Name}]: {ex.Message}");
+        Console.WriteLine(ex.StackTrace);
+    }
+
+    public void Info(object item) => Console.WriteLine($"[{GetType().Name}]: {item}");
+
+    public async Task<T> Eval<T>(string js)
+    {
+        Info($"Eval({js})");
+        return await JSR.InvokeAsync<T>("eval", @"(function () {
+            try {
+                " + js + @"
+            } catch (e) {
+                console.error('Ошибка Eval:', e);
+            }
+        })()");
+    }
+}

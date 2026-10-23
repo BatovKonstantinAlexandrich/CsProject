@@ -1,0 +1,135 @@
+@inject IViewLinkResolver LinkResolver
+@inject IViewDataProviderResolver DataProviderResolver
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" Class="my-4" />
+}
+else if (!string.IsNullOrWhiteSpace(_error))
+{
+    <MudAlert Severity="Severity.Error">@_error</MudAlert>
+}
+else if (_descriptor == null)
+{
+    <MudAlert Severity="Severity.Warning">Представление не найдено.</MudAlert>
+}
+else
+{
+    @RenderView()
+}
+
+@code {
+    [Parameter, EditorRequired] public ViewDynamicLink Link { get; set; } = new();
+    [Parameter] public bool SelectionEnabled { get; set; } = true;
+    [Parameter] public bool EnableDragDrop { get; set; }
+    [Parameter] public EventCallback<ViewSelectionEventArgs> OnSelectionChanged { get; set; }
+    [Parameter] public EventCallback<ViewDragDropEventArgs> OnDragDrop { get; set; }
+    [Parameter] public RenderFragment<ViewDescriptor>? UnknownViewTemplate { get; set; }
+
+    private ViewDescriptor? _descriptor;
+    private object? _payload;
+    private bool _loading;
+    private string? _error;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _error = null;
+        _payload = null;
+
+        try
+        {
+            if (!LinkResolver.TryResolve(Link, out var descriptor))
+            {
+                _descriptor = null;
+                _error = $"Ссылка «{Link.Key}» не зарегистрирована.";
+                return;
+            }
+
+            _descriptor = descriptor;
+            var provider = DataProviderResolver.Resolve(descriptor);
+            if (provider == null)
+            {
+                _error = $"Провайдер данных для «{descriptor.Key}» не найден.";
+                return;
+            }
+
+            var request = new ViewDataRequest { Descriptor = descriptor, Link = Link };
+            _payload = await provider.LoadAsync(request);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private RenderFragment RenderView() => _descriptor!.Kind switch
+    {
+        ViewKind.Table when _payload is ViewTableData table => builder =>
+        {
+            builder.OpenComponent<TableView>(0);
+            builder.AddAttribute(1, nameof(TableView.Data), table);
+            builder.AddAttribute(2, nameof(TableView.SelectionEnabled), SelectionEnabled);
+            builder.AddAttribute(3, nameof(TableView.EnableDragDrop), EnableDragDrop);
+            builder.AddAttribute(4, nameof(TableView.OnSelectionChanged), OnSelectionChanged);
+            builder.AddAttribute(5, nameof(TableView.OnDragDrop), OnDragDrop);
+            builder.CloseComponent();
+        },
+        ViewKind.List when _payload is ViewListData list => builder =>
+        {
+            builder.OpenComponent<ListView>(0);
+            builder.AddAttribute(1, nameof(ListView.Data), list);
+            builder.AddAttribute(2, nameof(ListView.SelectionEnabled), SelectionEnabled);
+            builder.AddAttribute(3, nameof(ListView.EnableDragDrop), EnableDragDrop);
+            builder.AddAttribute(4, nameof(ListView.OnSelectionChanged), OnSelectionChanged);
+            builder.AddAttribute(5, nameof(ListView.OnDragDrop), OnDragDrop);
+            builder.CloseComponent();
+        },
+        ViewKind.Hierarchy when _payload is ViewHierarchyData hierarchy => builder =>
+        {
+            builder.OpenComponent<HierarchyView>(0);
+            builder.AddAttribute(1, nameof(HierarchyView.Data), hierarchy);
+            builder.AddAttribute(2, nameof(HierarchyView.SelectionEnabled), SelectionEnabled);
+            builder.AddAttribute(3, nameof(HierarchyView.EnableDragDrop), EnableDragDrop);
+            builder.AddAttribute(4, nameof(HierarchyView.OnSelectionChanged), OnSelectionChanged);
+            builder.AddAttribute(5, nameof(HierarchyView.OnDragDrop), OnDragDrop);
+            builder.CloseComponent();
+        },
+        ViewKind.Chart when _payload is ViewChartData chart => builder =>
+        {
+            builder.OpenComponent<ChartView>(0);
+            builder.AddAttribute(1, nameof(ChartView.Data), chart);
+            builder.AddAttribute(2, nameof(ChartView.SelectionEnabled), SelectionEnabled);
+            builder.AddAttribute(3, nameof(ChartView.OnSelectionChanged), OnSelectionChanged);
+            builder.CloseComponent();
+        },
+        ViewKind.Card when _payload is ViewCardData card => builder =>
+        {
+            builder.OpenComponent<CardView>(0);
+            builder.AddAttribute(1, nameof(CardView.Data), card);
+            builder.AddAttribute(2, nameof(CardView.SelectionEnabled), SelectionEnabled);
+            builder.AddAttribute(3, nameof(CardView.EnableDragDrop), EnableDragDrop);
+            builder.AddAttribute(4, nameof(CardView.OnSelectionChanged), OnSelectionChanged);
+            builder.AddAttribute(5, nameof(CardView.OnDragDrop), OnDragDrop);
+            builder.CloseComponent();
+        },
+        _ => builder =>
+        {
+            if (UnknownViewTemplate != null)
+            {
+                builder.AddContent(0, UnknownViewTemplate(_descriptor!));
+                return;
+            }
+
+            builder.OpenComponent<MudAlert>(1);
+            builder.AddAttribute(2, nameof(MudAlert.Severity), Severity.Warning);
+            builder.AddAttribute(3, nameof(MudAlert.ChildContent), (RenderFragment)(b =>
+                b.AddContent(4, $"Тип представления «{_descriptor!.Kind}» не поддерживается хостом.")));
+            builder.CloseComponent();
+        }
+    };
+}

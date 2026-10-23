@@ -1,0 +1,1367 @@
+@page "/store"
+@attribute [Authorize]
+@inject StoreService StoreService
+@inject SupplierService SupplierService
+@inject OrderService OrderService
+@inject SellerRegistrationService SellerRegistrationService
+@inject CashierRegistrationService CashierRegistrationService
+@inject StoreMediaStorageService StoreMediaStorageService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+
+<PageTitle>Магазин</PageTitle>
+
+<MudText Typo="Typo.h3" Class="page-title">@(_isStoreOwner ? "Панель владельца магазина" : "Мой магазин")</MudText>
+
+@if (!_loaded)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (_isPendingStaff)
+{
+    <MudPaper Class="pa-4">
+        <MudAlert Severity="Severity.Warning" Class="mb-3">
+            Управление магазином «@_pendingStoreName» недоступно — заявка на роль @_pendingStaffRoleLabel ожидает подтверждения владельцем.
+        </MudAlert>
+        <p class="mb-2">Вы можете пользоваться системой: сообщениями, личным кабинетом и другими разделами.</p>
+        <p class="mb-0">Когда владелец одобрит заявку, раздел «Мой магазин» станет доступен. Уведомление придёт в <MudLink Href="/messages">Сообщения</MudLink>.</p>
+    </MudPaper>
+}
+else if (_isRejectedStaff)
+{
+    <MudPaper Class="pa-4">
+        <MudAlert Severity="Severity.Error" Class="mb-3">
+            Заявка на роль @_pendingStaffRoleLabel в магазине «@_pendingStoreName» отклонена.
+        </MudAlert>
+        <p class="mb-0">Подробности — в <MudLink Href="/messages">Сообщениях</MudLink>.</p>
+    </MudPaper>
+}
+else if (_store == null)
+{
+    <MudAlert Severity="Severity.Warning">Магазин не найден.</MudAlert>
+}
+else
+{
+    <MudPaper Class="pa-4 mb-4">
+        <div class="product-detail-grid" style="grid-template-columns: 160px 1fr; align-items: start;">
+            <img src="@GetStoreImage(_store)" alt="@_store.Name" class="product-detail-image" style="max-height:120px;object-fit:cover" />
+            <div>
+                <MudText Typo="Typo.h5">@_store.Name</MudText>
+                @if (!string.IsNullOrWhiteSpace(_store.Address))
+                {
+                    <p class="text-muted mb-1">@_store.Address</p>
+                }
+                @if (!string.IsNullOrWhiteSpace(_store.Description))
+                {
+                    <p class="mb-0">@_store.Description</p>
+                }
+            </div>
+        </div>
+    </MudPaper>
+
+    <MudTabs ActivePanelIndex="_activePanelIndex" ActivePanelIndexChanged="OnActivePanelIndexChanged" Class="mb-4">
+        <MudTabPanel Text="Наличие" />
+        <MudTabPanel Text="Сборка заказов" />
+        @if (_isStoreOwner)
+        {
+            <MudTabPanel Text="Поставщики" />
+            <MudTabPanel Text="Закупки" />
+            <MudTabPanel Text="Статистика" />
+            <MudTabPanel Text="О магазине" />
+            <MudTabPanel Text="Заявки сотрудников" />
+        }
+    </MudTabs>
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <MudAlert Severity="Severity.Success" Class="mb-4">@_message</MudAlert>
+    }
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
+    }
+
+    @switch (GetActivePanelKey())
+    {
+        case "inventory":
+            <MudText Typo="Typo.h5" Class="section-title">Наличие товаров в магазине</MudText>
+            @if (_isStoreOwner)
+            {
+                <MudAlert Severity="Severity.Info" Class="mb-4" Dense="true">
+                    Укажите количество для каждого товара и нажмите «Сохранить» в строке или «Сохранить все изменения».
+                </MudAlert>
+
+                <MudPaper Class="mb-4 pa-4" Style="max-width:720px">
+                <MudText Typo="Typo.subtitle1" Class="mb-3">Добавить товар</MudText>
+                <div class="stack-row" style="flex-wrap:wrap; gap:12px; align-items:flex-end">
+                    @if (GetProductsAvailableToAdd().Any())
+                    {
+                        <MudSelect T="int?" @bind-Value="_newProductId" Label="Товар" Variant="Variant.Outlined" Style="min-width:280px">
+                            @foreach (var product in GetProductsAvailableToAdd())
+                            {
+                                <MudSelectItem T="int?" Value="@product.Id">@product.Name (@product.Price.ToString("N0") ₽)</MudSelectItem>
+                            }
+                        </MudSelect>
+                        <MudNumericField T="int?" @bind-Value="_newProductQty" Label="Кол-во" Min="1" HideSpinButtons="true"
+                                         Variant="Variant.Outlined" Class="number-input" Style="max-width:120px" />
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddProductToInventory"
+                                   Disabled="_newProductId == null || (_newProductQty ?? 0) <= 0">
+                            Добавить
+                        </MudButton>
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Info" Dense="true" Class="mb-0">Все товары каталога уже добавлены в магазин.</MudAlert>
+                    }
+                </div>
+            </MudPaper>
+            }
+
+            @if (_inventory == null || (_isStoreOwner && _catalogProducts == null))
+            {
+                <MudProgressCircular Indeterminate="true" />
+            }
+            else if (_inventory.Count == 0)
+            {
+                <MudAlert Severity="Severity.Info">
+                    В магазине пока нет товаров. Добавьте товар выше или закажите на вкладках «Закупки» / «Поставщики».
+                </MudAlert>
+            }
+            else
+            {
+                <MudPaper Class="mb-4 pa-4">
+                    @if (_isStoreOwner)
+                    {
+                        <div class="stack-row-between mb-3">
+                            <MudText Typo="Typo.subtitle1">Товары в магазине</MudText>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="SaveAllInventory"
+                                       Disabled="_savingInventory">
+                                @(_savingInventory ? "Сохранение..." : "Сохранить все изменения")
+                            </MudButton>
+                        </div>
+                    }
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Товар</th>
+                                <th>Бренд</th>
+                                <th>Категория</th>
+                                <th>Розн. цена</th>
+                                <th>Количество</th>
+                                @if (_isStoreOwner)
+                                {
+                                    <th></th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _inventory)
+                            {
+                                <tr>
+                                    <td>@item.ProductName</td>
+                                    <td>@(item.BrandName ?? "—")</td>
+                                    <td>@item.CategoryName</td>
+                                    <td>@item.RetailPrice.ToString("N0") ₽</td>
+                                    <td>
+                                        @if (_isStoreOwner)
+                                        {
+                                            <MudNumericField T="int?" Value="@GetInventoryQty(item.ProductId)" Min="0"
+                                                             ValueChanged="@(qty => SetInventoryQty(item.ProductId, qty ?? 0))"
+                                                             HideSpinButtons="true" Variant="Variant.Outlined" Class="number-input" />
+                                        }
+                                        else if (item.Quantity > 0)
+                                        {
+                                            <strong>@item.Quantity шт.</strong>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">нет</span>
+                                        }
+                                    </td>
+                                    @if (_isStoreOwner)
+                                    {
+                                        <td>
+                                            <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small"
+                                                       Disabled="_savingProductId == item.ProductId"
+                                                       OnClick="@(() => SaveInventoryItem(item.ProductId))">
+                                                Сохранить
+                                            </MudButton>
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" class="text-end"><strong>Всего позиций</strong></td>
+                                @if (_isStoreOwner)
+                                {
+                                    <td colspan="2"><strong>@_inventory.Count (@GetDraftTotalQty() шт.)</strong></td>
+                                }
+                                else
+                                {
+                                    <td><strong>@_inventory.Count (@_inventory.Sum(i => i.Quantity) шт.)</strong></td>
+                                }
+                            </tr>
+                        </tfoot>
+                    </table>
+                </MudPaper>
+            }
+            break;
+
+        case "preparation":
+            <MudText Typo="Typo.h5" Class="section-title">Заказы, ожидающие сборку</MudText>
+            <MudAlert Severity="Severity.Info" Class="mb-4" Dense="true">
+                После сборки заказа нажмите «Собран» — транспортная компания получит уведомление.
+            </MudAlert>
+            @if (_preparationOrders == null)
+            {
+                <MudProgressCircular Indeterminate="true" />
+            }
+            else if (_preparationOrders.Count == 0)
+            {
+                <MudAlert Severity="Severity.Info">Нет заказов, ожидающих сборки.</MudAlert>
+            }
+            else
+            {
+                @foreach (var order in _preparationOrders)
+                {
+                    <MudPaper Class="fluent-card-padded pa-4 mb-4">
+                        <table class="data-table mb-3">
+                            <tbody>
+                                <tr>
+                                    <td class="text-muted" style="width:30%">Номер</td>
+                                    <td><strong>@order.OrderNumber</strong></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Дата</td>
+                                    <td>@order.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Клиент</td>
+                                    <td>@order.Client.FullName</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Адрес доставки</td>
+                                    <td>@order.DeliveryAddress</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Сумма</td>
+                                    <td>@order.TotalAmount.ToString("N0") ₽</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <MudText Typo="Typo.subtitle2" Class="mb-2">Товары</MudText>
+                        <table class="data-table mb-3">
+                            <thead>
+                                <tr>
+                                    <th>Товар</th>
+                                    <th>Кол-во</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in order.Items)
+                                {
+                                    <tr>
+                                        <td>@item.Product.Name</td>
+                                        <td>@item.Quantity</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                   Disabled="_preparingOrderId == order.Id"
+                                   OnClick="@(() => MarkPrepared(order.Id))">
+                            @(_preparingOrderId == order.Id ? "Сохранение..." : "Собран, готов к доставке")
+                        </MudButton>
+                    </MudPaper>
+                }
+            }
+            break;
+
+        case "suppliers":
+            <MudText Typo="Typo.h5" Class="section-title">Предложения поставщиков</MudText>
+            @if (SupplierService.IsVendorsSetupConfigured)
+            {
+                <MudAlert Severity="Severity.Info" Class="mb-4" Dense="true">
+                    Цены и остатки можно обновить из NgAppVendorsSetup (WebApiVendorsSetup).
+                </MudAlert>
+            }
+            @if (_supplierCatalog == null)
+            {
+                <MudProgressCircular Indeterminate="true" />
+            }
+            else if (_supplierCatalog.Count == 0)
+            {
+                <MudAlert Severity="Severity.Info">Поставщики с доступными товарами не найдены.</MudAlert>
+            }
+            else
+            {
+                @foreach (var group in _supplierCatalog)
+                {
+                    <MudPaper Class="fluent-card-padded pa-4 mb-4">
+                        <MudText Typo="Typo.h6" Class="mb-3">@group.SupplierName</MudText>
+                        @if (SupplierService.GetVendorMapping(group.SupplierName) != null)
+                        {
+                            <MudGrid Class="mb-3">
+                                <MudItem xs="12" md="6">
+                                    <MudTextField T="string"
+                                                  Value="@GetSupplierSearchOrigNr(group.SupplierId)"
+                                                  ValueChanged="@((string value) => SetSupplierSearchOrigNr(group.SupplierId, value))"
+                                                  Label="Артикул (orig_nr) для поиска"
+                                                  Variant="Variant.Outlined"
+                                                  Placeholder="например, 624069" />
+                                </MudItem>
+                                <MudItem xs="12" md="6" Class="d-flex align-center gap-2 flex-wrap">
+                                    <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                                               Disabled="@IsSupplierBusy(group.SupplierId)"
+                                               OnClick="@(() => SearchVendorOffers(group.SupplierId, group.SupplierName))">
+                                        @(IsSupplierBusy(group.SupplierId) ? "Поиск..." : "Найти у поставщика")
+                                    </MudButton>
+                                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary"
+                                               Disabled="@IsSupplierBusy(group.SupplierId)"
+                                               OnClick="@(() => RefreshVendorCatalog(group.SupplierId))">
+                                        @(IsSupplierBusy(group.SupplierId) ? "Обновление..." : "Обновить цены/остатки")
+                                    </MudButton>
+                                </MudItem>
+                            </MudGrid>
+                        }
+                        @if (GetVendorSearchResults(group.SupplierId) is { Count: > 0 } searchResults)
+                        {
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">Результаты поиска VendorsSetup</MudText>
+                            <table class="data-table mb-3">
+                                <thead>
+                                    <tr>
+                                        <th>Артикул</th>
+                                        <th>Бренд</th>
+                                        <th>Наименование</th>
+                                        <th>Цена</th>
+                                        <th>Остаток</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var offer in searchResults)
+                                    {
+                                        <tr>
+                                            <td>@offer.PartNumber</td>
+                                            <td>@offer.Brand</td>
+                                            <td>@offer.Name</td>
+                                            <td>@(offer.Price > 0 ? $"{offer.Price:N0} ₽" : "—")</td>
+                                            <td>@offer.StockQuantity</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        <table class="data-table mb-3">
+                            <thead>
+                                <tr>
+                                    <th>Товар</th>
+                                    <th>Бренд</th>
+                                    <th>Опт. цена</th>
+                                    <th>Доступно</th>
+                                    <th>Кол-во</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in group.Products)
+                                {
+                                    <tr>
+                                        <td>
+                                            @item.ProductName
+                                            @if (_liveVendorProductIds.Contains(item.ProductId))
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Class="ml-1">live</MudChip>
+                                            }
+                                        </td>
+                                        <td><MudChip T="string" Size="Size.Small">@item.BrandName</MudChip></td>
+                                        <td>@item.UnitPrice.ToString("N0") ₽</td>
+                                        <td>@item.StockQuantity</td>
+                                        <td>
+                                            <MudNumericField T="int?" Value="@GetSupplierQty(group.SupplierId, item.ProductId)" Min="0" Max="@item.StockQuantity"
+                                                             ValueChanged="@(qty => SetSupplierQty(group.SupplierId, item.ProductId, qty ?? 0))"
+                                                             Class="number-input" HideSpinButtons="true" Variant="Variant.Outlined" />
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                   OnClick="@(() => CreateSupplierOrder(group.SupplierId))">
+                            Заказать у @group.SupplierName
+                        </MudButton>
+                    </MudPaper>
+                }
+            }
+            break;
+
+        case "procurement":
+            <MudText Typo="Typo.h5" Class="section-title">Заказ с центрального склада</MudText>
+            <MudPaper Class="mb-4 pa-4">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Товар</th>
+                            <th>Бренд</th>
+                            <th>Цена</th>
+                            <th>На складе</th>
+                            <th>Кол-во</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var product in _products ?? [])
+                        {
+                            <tr>
+                                <td>@product.Name</td>
+                                <td>@(product.Brand?.Name ?? "—")</td>
+                                <td>@product.Price.ToString("N0") ₽</td>
+                                <td>@product.StockQuantity</td>
+                                <td>
+                                    <MudNumericField T="int?" Value="@GetWarehouseQty(product.Id)" Min="0" Max="@product.StockQuantity"
+                                                     ValueChanged="@(qty => SetWarehouseQty(product.Id, qty ?? 0))"
+                                                     Class="number-input" HideSpinButtons="true" Variant="Variant.Outlined" />
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </MudPaper>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mb-4" OnClick="CreateWarehouseOrder">
+                Оформить заказ со склада
+            </MudButton>
+
+            <MudText Typo="Typo.h5" Class="section-title">Мои закупки</MudText>
+            @if (_warehouseOrders == null || _supplierOrders == null)
+            {
+                <MudProgressCircular Indeterminate="true" />
+            }
+            else
+            {
+                @if (_warehouseOrders.Count == 0 && _supplierOrders.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">Закупок пока нет.</MudAlert>
+                }
+                else
+                {
+                    @foreach (var wo in _warehouseOrders)
+                    {
+                        <MudPaper Class="fluent-card-padded pa-4 mb-3">
+                            <p>Со склада #@wo.Id — @wo.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy") — @wo.TotalAmount.ToString("N0") ₽</p>
+                            <MudChip T="string" Size="Size.Small" Class="my-2">@GetOrderStatusName(wo.Status)</MudChip>
+                            <ul>
+                                @foreach (var item in wo.Items)
+                                {
+                                    <li>@item.Product.Name × @item.Quantity</li>
+                                }
+                            </ul>
+                            @if (wo.Status == OrderStatus.Pending)
+                            {
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-2"
+                                           OnClick="@(() => ConfirmWarehouseOrder(wo.Id))">Подтвердить получение</MudButton>
+                            }
+                        </MudPaper>
+                    }
+                    @foreach (var order in _supplierOrders)
+                    {
+                        <MudPaper Class="fluent-card-padded pa-4 mb-3">
+                            <p>@order.Supplier.Name #@order.Id — @order.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy") — @order.TotalAmount.ToString("N0") ₽</p>
+                            <MudChip T="string" Color="@(order.Status == OrderStatus.Pending ? Color.Default : Color.Primary)" Size="Size.Small" Class="my-2">
+                                @GetOrderStatusName(order.Status)
+                            </MudChip>
+                            <ul>
+                                @foreach (var item in order.Items)
+                                {
+                                    <li>@item.Product.Name (@item.Product.Brand?.Name) × @item.Quantity</li>
+                                }
+                            </ul>
+                        </MudPaper>
+                    }
+                }
+            }
+            break;
+
+        case "statistics":
+            <MudText Typo="Typo.h5" Class="section-title">Статистика продаж</MudText>
+            @if (_statistics == null)
+            {
+                <MudProgressCircular Indeterminate="true" />
+            }
+            else
+            {
+                <MudGrid Class="mb-4">
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudPaper Class="pa-4 text-center">
+                            <MudText Typo="Typo.h4">@_statistics.TotalOrders</MudText>
+                            <MudText Typo="Typo.body2" Class="text-muted">Всего заказов</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudPaper Class="pa-4 text-center">
+                            <MudText Typo="Typo.h4">@_statistics.CompletedOrders</MudText>
+                            <MudText Typo="Typo.body2" Class="text-muted">Доставлено</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudPaper Class="pa-4 text-center">
+                            <MudText Typo="Typo.h4">@_statistics.TotalRevenue.ToString("N0") ₽</MudText>
+                            <MudText Typo="Typo.body2" Class="text-muted">Выручка (оплаченные)</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudPaper Class="pa-4 text-center">
+                            <MudText Typo="Typo.h4">@_statistics.AwaitingPreparation</MudText>
+                            <MudText Typo="Typo.body2" Class="text-muted">Ожидают сборки</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudPaper Class="pa-4 text-center">
+                            <MudText Typo="Typo.h4">@_statistics.ReadyForDelivery</MudText>
+                            <MudText Typo="Typo.body2" Class="text-muted">Готовы к доставке</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudPaper Class="pa-4 text-center">
+                            <MudText Typo="Typo.h4">@_statistics.CompletedRevenue.ToString("N0") ₽</MudText>
+                            <MudText Typo="Typo.body2" Class="text-muted">Выручка (доставлено)</MudText>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+
+                @if (_statistics.TopProducts.Count > 0)
+                {
+                    <MudText Typo="Typo.h6" Class="mb-3">Топ товаров</MudText>
+                    <MudPaper Class="pa-4">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Товар</th>
+                                    <th>Продано</th>
+                                    <th>Выручка</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var product in _statistics.TopProducts)
+                                {
+                                    <tr>
+                                        <td>@product.ProductName</td>
+                                        <td>@product.QuantitySold шт.</td>
+                                        <td>@product.Revenue.ToString("N0") ₽</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </MudPaper>
+                }
+                else
+                {
+                    <MudAlert Severity="Severity.Info">Продаж через магазин пока не было.</MudAlert>
+                }
+            }
+            break;
+
+        case "profile":
+            <MudText Typo="Typo.h5" Class="section-title">Редактирование магазина</MudText>
+            <MudPaper Class="pa-4" Style="max-width:640px">
+                <EditForm Model="_profileForm" OnValidSubmit="SaveStoreProfile">
+                    <DataAnnotationsValidator />
+                    <div class="stack">
+                        <div>
+                            <MudText Typo="Typo.body2" Class="mb-2">Изображение магазина</MudText>
+                            @if (!string.IsNullOrWhiteSpace(_profileForm.ImageUrl))
+                            {
+                                <img src="@_profileForm.ImageUrl" alt="Предпросмотр" class="product-detail-image" style="max-height:160px;object-fit:cover" />
+                            }
+                            else
+                            {
+                                <img src="@GetStoreImage(_store)" alt="Текущее изображение" class="product-detail-image" style="max-height:160px;object-fit:cover" />
+                            }
+                            <div class="stack-row mt-2" style="flex-wrap:wrap;gap:12px;align-items:center">
+                                <label style="cursor:pointer;margin:0">
+                                    <InputFile OnChange="OnStoreImageSelected" accept="image/*"
+                                               class="d-none" disabled="@_uploadingStoreImage" />
+                                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" HtmlTag="span"
+                                               Disabled="_uploadingStoreImage" StartIcon="@Icons.Material.Filled.Upload">
+                                        @(_uploadingStoreImage ? "Загрузка..." : "Загрузить изображение")
+                                    </MudButton>
+                                </label>
+                                <span class="text-muted">JPG, PNG, GIF, WebP до 5 МБ</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(_imageUploadError))
+                            {
+                                <MudAlert Severity="Severity.Error" Class="mt-2" Dense="true">@_imageUploadError</MudAlert>
+                            }
+                        </div>
+                        <MudTextField @bind-Value="_profileForm.ImageUrl" Label="Или укажите ссылку на изображение" Variant="Variant.Outlined"
+                                      HelperText="URL фото витрины или логотипа, если файл уже размещён в интернете" />
+                        <MudTextField @bind-Value="_profileForm.Name" Label="Название магазина" Required="true" Variant="Variant.Outlined" />
+                        <ValidationMessage For="() => _profileForm.Name" />
+                        <MudTextField @bind-Value="_profileForm.Address" Label="Адрес" Variant="Variant.Outlined" Lines="2" />
+                        <MudTextField @bind-Value="_profileForm.Description" Label="Краткое описание" Variant="Variant.Outlined" Lines="3" />
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="_savingProfile">
+                            @(_savingProfile ? "Сохранение..." : "Сохранить")
+                        </MudButton>
+                    </div>
+                </EditForm>
+            </MudPaper>
+            break;
+
+        case "staff-requests":
+            <MudText Typo="Typo.h5" Class="section-title">Заявки сотрудников</MudText>
+            @if (_sellerRequests == null || _cashierRequests == null)
+            {
+                <MudProgressCircular Indeterminate="true" />
+            }
+            else if (_sellerRequests.Count == 0 && _cashierRequests.Count == 0)
+            {
+                <MudAlert Severity="Severity.Info">Нет заявок на рассмотрении.</MudAlert>
+            }
+            else
+            {
+                @foreach (var request in _sellerRequests)
+                {
+                    <MudPaper Class="fluent-card-padded pa-4 mb-4">
+                        <div class="stack-row-between mb-2">
+                            <div class="stack-row">
+                                <strong>@request.User.FullName</strong>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">Продавец</MudChip>
+                            </div>
+                            <span class="text-muted">@request.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                        </div>
+                        <p class="text-muted mb-1">@request.User.Email</p>
+                        <p class="mb-3">Хочет работать в магазине «@request.Store.Name»</p>
+                        <div class="stack-row">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                       Disabled="_processingRequestId == request.Id"
+                                       OnClick="@(() => ApproveSellerRequest(request.Id))">
+                                Одобрить
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Error"
+                                       Disabled="_processingRequestId == request.Id"
+                                       OnClick="@(() => RejectSellerRequest(request.Id))">
+                                Отклонить
+                            </MudButton>
+                        </div>
+                    </MudPaper>
+                }
+                @foreach (var request in _cashierRequests)
+                {
+                    <MudPaper Class="fluent-card-padded pa-4 mb-4">
+                        <div class="stack-row-between mb-2">
+                            <div class="stack-row">
+                                <strong>@request.User.FullName</strong>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Outlined">Кассир</MudChip>
+                            </div>
+                            <span class="text-muted">@request.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                        </div>
+                        <p class="text-muted mb-1">@request.User.Email</p>
+                        <p class="mb-3">Хочет работать в магазине «@request.Store.Name»</p>
+                        <div class="stack-row">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                       Disabled="_processingCashierRequestId == request.Id"
+                                       OnClick="@(() => ApproveCashierRequest(request.Id))">
+                                Одобрить
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Error"
+                                       Disabled="_processingCashierRequestId == request.Id"
+                                       OnClick="@(() => RejectCashierRequest(request.Id))">
+                                Отклонить
+                            </MudButton>
+                        </div>
+                    </MudPaper>
+                }
+            }
+            break;
+    }
+}
+
+@code {
+    private Store? _store;
+    private List<StoreInventoryItem>? _inventory;
+    private List<Product>? _products;
+    private List<Product>? _catalogProducts;
+    private Dictionary<int, int> _inventoryDraft = new();
+    private int? _newProductId;
+    private int? _newProductQty = 1;
+    private int? _savingProductId;
+    private bool _savingInventory;
+    private List<SupplierCatalogGroup>? _supplierCatalog;
+    private List<WarehouseOrder>? _warehouseOrders;
+    private List<SupplierOrder>? _supplierOrders;
+    private List<Order>? _preparationOrders;
+    private StoreSalesStatistics? _statistics;
+    private List<StoreSellerRegistrationRequest>? _sellerRequests;
+    private List<StoreCashierRegistrationRequest>? _cashierRequests;
+    private StoreProfileForm _profileForm = new();
+    private Dictionary<int, int> _warehouseQuantities = new();
+    private Dictionary<string, int> _supplierQuantities = new();
+    private Dictionary<int, string> _supplierSearchOrigNr = new();
+    private Dictionary<int, List<VendorPartOffer>> _vendorSearchResults = new();
+    private HashSet<int> _liveVendorProductIds = new();
+    private HashSet<int> _busySupplierIds = new();
+    private string? _userId;
+    private int _activePanelIndex;
+    private int? _preparingOrderId;
+    private int? _processingRequestId;
+    private int? _processingCashierRequestId;
+    private bool _isStoreOwner;
+    private bool _isPendingStaff;
+    private bool _isRejectedStaff;
+    private string? _pendingStaffRoleLabel;
+    private string? _pendingStoreName;
+    private bool _loaded;
+    private bool _savingProfile;
+    private bool _uploadingStoreImage;
+    private string? _imageUploadError;
+    private string? _message;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        _userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value!;
+        var isSeller = auth.User.IsInRole(RoleNames.Seller);
+        var isCashier = auth.User.IsInRole(RoleNames.Cashier);
+        var isApprovedStaff = isSeller || isCashier;
+        _isStoreOwner = await StoreService.IsStoreOwnerAsync(_userId!);
+
+        var pendingSeller = await SellerRegistrationService.GetPendingRequestForUserAsync(_userId!);
+        var pendingCashier = await CashierRegistrationService.GetPendingRequestForUserAsync(_userId!);
+        if ((pendingSeller != null || pendingCashier != null) && !isApprovedStaff && !_isStoreOwner)
+        {
+            _isPendingStaff = true;
+            if (pendingSeller != null)
+            {
+                _pendingStaffRoleLabel = "продавца";
+                _pendingStoreName = pendingSeller.Store?.Name ?? "магазин";
+            }
+            else
+            {
+                _pendingStaffRoleLabel = "кассира";
+                _pendingStoreName = pendingCashier!.Store?.Name ?? "магазин";
+            }
+            _loaded = true;
+            return;
+        }
+
+        if (!isApprovedStaff && !_isStoreOwner)
+        {
+            var sellerLatest = await SellerRegistrationService.GetLatestRequestForUserAsync(_userId!);
+            var cashierLatest = await CashierRegistrationService.GetLatestRequestForUserAsync(_userId!);
+
+            if (sellerLatest?.Status == RegistrationRequestStatus.Rejected)
+            {
+                _isRejectedStaff = true;
+                _pendingStaffRoleLabel = "продавца";
+                _pendingStoreName = sellerLatest.Store?.Name ?? "магазин";
+                _loaded = true;
+                return;
+            }
+
+            if (cashierLatest?.Status == RegistrationRequestStatus.Rejected)
+            {
+                _isRejectedStaff = true;
+                _pendingStaffRoleLabel = "кассира";
+                _pendingStoreName = cashierLatest.Store?.Name ?? "магазин";
+                _loaded = true;
+                return;
+            }
+
+            _loaded = true;
+            return;
+        }
+
+        _store = await StoreService.GetStoreForUserAsync(_userId!);
+        _products = await StoreService.GetWarehouseStockAsync();
+        _catalogProducts = await StoreService.GetActiveProductsAsync();
+        SyncProfileForm();
+        _activePanelIndex = ResolvePanelIndex(Tab);
+        _loaded = true;
+        await LoadActivePanelDataAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!_loaded || _store == null)
+            return;
+
+        var index = ResolvePanelIndex(Tab);
+        if (index == _activePanelIndex)
+            return;
+
+        _activePanelIndex = index;
+        _message = null;
+        _error = null;
+        await LoadActivePanelDataAsync();
+    }
+
+    private string GetActivePanelKey() => (_isStoreOwner, _activePanelIndex) switch
+    {
+        (_, 0) => "inventory",
+        (_, 1) => "preparation",
+        (true, 2) => "suppliers",
+        (true, 3) => "procurement",
+        (true, 4) => "statistics",
+        (true, 5) => "profile",
+        (true, 6) => "staff-requests",
+        _ => "inventory"
+    };
+
+    private void SyncProfileForm()
+    {
+        if (_store == null)
+            return;
+
+        _profileForm = new StoreProfileForm
+        {
+            Name = _store.Name,
+            Address = _store.Address ?? "",
+            Description = _store.Description ?? "",
+            ImageUrl = _store.ImageUrl ?? ""
+        };
+    }
+
+    private async Task OnActivePanelIndexChanged(int index)
+    {
+        _activePanelIndex = index;
+        _message = null;
+        _error = null;
+
+        var tabKey = GetPanelKeyFromIndex(index);
+        Navigation.NavigateTo(Navigation.GetUriWithQueryParameter("tab", tabKey), replace: true);
+        await LoadActivePanelDataAsync();
+    }
+
+    private async Task LoadActivePanelDataAsync()
+    {
+        switch (GetActivePanelKey())
+        {
+            case "inventory":
+                _catalogProducts ??= await StoreService.GetActiveProductsAsync();
+                await LoadInventory();
+                break;
+            case "preparation":
+                await LoadPreparationOrders();
+                break;
+            case "suppliers":
+                _supplierCatalog = await SupplierService.GetCatalogForStoreOwnerAsync();
+                break;
+            case "procurement":
+                await LoadOrders();
+                _products = await StoreService.GetWarehouseStockAsync();
+                break;
+            case "statistics":
+                await LoadStatistics();
+                break;
+            case "profile":
+                SyncProfileForm();
+                break;
+            case "staff-requests":
+                await LoadStaffRequests();
+                break;
+        }
+    }
+
+    [SupplyParameterFromQuery(Name = "tab")]
+    public string? Tab { get; set; }
+
+    private int ResolvePanelIndex(string? tab)
+    {
+        if (string.IsNullOrWhiteSpace(tab))
+            return 0;
+
+        var key = tab.Trim().ToLowerInvariant();
+        if (_isStoreOwner)
+        {
+            return key switch
+            {
+                "inventory" => 0,
+                "preparation" => 1,
+                "suppliers" => 2,
+                "procurement" => 3,
+                "statistics" => 4,
+                "profile" => 5,
+                "staff-requests" => 6,
+                _ => 0
+            };
+        }
+
+        return key switch
+        {
+            "inventory" => 0,
+            "preparation" => 1,
+            _ => 0
+        };
+    }
+
+    private string GetPanelKeyFromIndex(int index) => (_isStoreOwner, index) switch
+    {
+        (_, 0) => "inventory",
+        (_, 1) => "preparation",
+        (true, 2) => "suppliers",
+        (true, 3) => "procurement",
+        (true, 4) => "statistics",
+        (true, 5) => "profile",
+        (true, 6) => "staff-requests",
+        _ => "inventory"
+    };
+
+    private async Task LoadStaffRequests()
+    {
+        if (!_isStoreOwner || _userId == null)
+            return;
+
+        _sellerRequests = await SellerRegistrationService.GetPendingRequestsForStoreOwnerAsync(_userId);
+        _cashierRequests = await CashierRegistrationService.GetPendingRequestsForStoreOwnerAsync(_userId);
+    }
+
+    private async Task ApproveSellerRequest(int requestId)
+    {
+        _message = null;
+        _error = null;
+        _processingRequestId = requestId;
+        try
+        {
+            var ok = await SellerRegistrationService.ApproveRequestAsync(requestId, _userId!);
+            _message = ok ? "Заявка продавца одобрена." : "Не удалось одобрить заявку.";
+            await LoadStaffRequests();
+        }
+        finally
+        {
+            _processingRequestId = null;
+        }
+    }
+
+    private async Task RejectSellerRequest(int requestId)
+    {
+        _message = null;
+        _error = null;
+        _processingRequestId = requestId;
+        try
+        {
+            var ok = await SellerRegistrationService.RejectRequestAsync(requestId, _userId!);
+            _message = ok ? "Заявка продавца отклонена." : "Не удалось отклонить заявку.";
+            await LoadStaffRequests();
+        }
+        finally
+        {
+            _processingRequestId = null;
+        }
+    }
+
+    private async Task ApproveCashierRequest(int requestId)
+    {
+        _message = null;
+        _error = null;
+        _processingCashierRequestId = requestId;
+        try
+        {
+            var ok = await CashierRegistrationService.ApproveRequestAsync(requestId, _userId!);
+            _message = ok ? "Заявка кассира одобрена." : "Не удалось одобрить заявку.";
+            await LoadStaffRequests();
+        }
+        finally
+        {
+            _processingCashierRequestId = null;
+        }
+    }
+
+    private async Task RejectCashierRequest(int requestId)
+    {
+        _message = null;
+        _error = null;
+        _processingCashierRequestId = requestId;
+        try
+        {
+            var ok = await CashierRegistrationService.RejectRequestAsync(requestId, _userId!);
+            _message = ok ? "Заявка кассира отклонена." : "Не удалось отклонить заявку.";
+            await LoadStaffRequests();
+        }
+        finally
+        {
+            _processingCashierRequestId = null;
+        }
+    }
+
+    private async Task LoadInventory()
+    {
+        if (_store == null)
+            return;
+
+        _catalogProducts ??= await StoreService.GetActiveProductsAsync();
+        _inventory = await StoreService.GetStoreInventoryAsync(_store.Id);
+        _inventoryDraft = _inventory.ToDictionary(i => i.ProductId, i => i.Quantity);
+    }
+
+    private IEnumerable<Product> GetProductsAvailableToAdd()
+    {
+        if (_catalogProducts == null)
+            return [];
+
+        var inStore = _inventoryDraft.Keys.ToHashSet();
+        return _catalogProducts.Where(p => !inStore.Contains(p.Id));
+    }
+
+    private int GetInventoryQty(int productId) => _inventoryDraft.GetValueOrDefault(productId, 0);
+
+    private void SetInventoryQty(int productId, int qty) => _inventoryDraft[productId] = qty;
+
+    private int GetDraftTotalQty() => _inventoryDraft.Values.Sum();
+
+    private async Task SaveInventoryItem(int productId)
+    {
+        _message = null;
+        _error = null;
+        _savingProductId = productId;
+        try
+        {
+            var qty = GetInventoryQty(productId);
+            await StoreService.SetStoreProductQuantityAsync(_userId!, productId, qty);
+            _message = qty == 0 ? "Товар удалён из магазина." : "Количество сохранено.";
+            await LoadInventory();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _savingProductId = null;
+        }
+    }
+
+    private async Task SaveAllInventory()
+    {
+        _message = null;
+        _error = null;
+        _savingInventory = true;
+        try
+        {
+            if (_inventory == null)
+                return;
+
+            var quantities = _inventory.ToDictionary(i => i.ProductId, i => GetInventoryQty(i.ProductId));
+            await StoreService.SaveStoreInventoryAsync(_userId!, quantities);
+            _message = "Наличие товаров сохранено.";
+            await LoadInventory();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _savingInventory = false;
+        }
+    }
+
+    private async Task AddProductToInventory()
+    {
+        _message = null;
+        _error = null;
+        if (_newProductId == null || (_newProductQty ?? 0) <= 0)
+        {
+            _error = "Выберите товар и укажите количество.";
+            return;
+        }
+
+        try
+        {
+            await StoreService.SetStoreProductQuantityAsync(_userId!, _newProductId.Value, _newProductQty!.Value);
+            _message = "Товар добавлен в магазин.";
+            _newProductId = null;
+            _newProductQty = 1;
+            await LoadInventory();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+
+    private async Task LoadPreparationOrders()
+    {
+        if (_store == null)
+            return;
+
+        _preparationOrders = await OrderService.GetOrdersAwaitingPreparationForStoreAsync(_store.Id);
+    }
+
+    private async Task LoadStatistics()
+    {
+        if (_store == null)
+            return;
+
+        _statistics = await StoreService.GetSalesStatisticsAsync(_store.Id);
+    }
+
+    private async Task MarkPrepared(int orderId)
+    {
+        _message = null;
+        _error = null;
+        _preparingOrderId = orderId;
+        try
+        {
+            var ok = await OrderService.MarkOrderPreparedAsync(orderId, _userId!, isAdmin: false);
+            _message = ok
+                ? "Заказ собран. Транспортная компания получила уведомление."
+                : "Не удалось подтвердить сборку.";
+            await LoadPreparationOrders();
+        }
+        finally
+        {
+            _preparingOrderId = null;
+        }
+    }
+
+    private async Task SaveStoreProfile()
+    {
+        _message = null;
+        _error = null;
+        _imageUploadError = null;
+        _savingProfile = true;
+        try
+        {
+            var previousImageUrl = _store?.ImageUrl;
+            var ok = await StoreService.UpdateStoreProfileAsync(_userId!, new StoreProfileUpdate
+            {
+                Name = _profileForm.Name,
+                Address = _profileForm.Address,
+                Description = _profileForm.Description,
+                ImageUrl = _profileForm.ImageUrl
+            });
+
+            if (!ok)
+            {
+                _error = "Не удалось сохранить данные.";
+                return;
+            }
+
+            if (StoreMediaStorageService.IsLocalStoreImage(previousImageUrl)
+                && !string.Equals(previousImageUrl, _profileForm.ImageUrl, StringComparison.OrdinalIgnoreCase))
+            {
+                StoreMediaStorageService.DeleteStoreImageIfLocal(previousImageUrl);
+            }
+
+            _store = await StoreService.GetStoreByOwnerAsync(_userId!);
+            SyncProfileForm();
+            _message = "Информация о магазине сохранена.";
+        }
+        finally
+        {
+            _savingProfile = false;
+        }
+    }
+
+    private async Task OnStoreImageSelected(InputFileChangeEventArgs e)
+    {
+        _imageUploadError = null;
+        var file = e.File;
+        if (file == null || _store == null)
+            return;
+
+        if (!StoreMediaStorageService.IsAllowedImage(file.ContentType, file.Name))
+        {
+            _imageUploadError = "Допустимы изображения: JPG, PNG, GIF, WebP.";
+            return;
+        }
+
+        _uploadingStoreImage = true;
+        try
+        {
+            await using var stream = file.OpenReadStream(StoreMediaStorageService.MaxImageSizeBytes);
+            using var memory = new MemoryStream();
+            await stream.CopyToAsync(memory);
+            var content = memory.ToArray();
+
+            var url = await StoreMediaStorageService.SaveStoreImageAsync(
+                _store.Id, content, file.Name, file.ContentType);
+            _profileForm.ImageUrl = url;
+        }
+        catch (Exception ex)
+        {
+            _imageUploadError = ex.Message;
+        }
+        finally
+        {
+            _uploadingStoreImage = false;
+        }
+    }
+
+    private int GetWarehouseQty(int productId) => _warehouseQuantities.GetValueOrDefault(productId, 0);
+    private void SetWarehouseQty(int productId, int qty) => _warehouseQuantities[productId] = qty;
+
+    private static string SupplierKey(int supplierId, int productId) => $"{supplierId}:{productId}";
+    private int GetSupplierQty(int supplierId, int productId) => _supplierQuantities.GetValueOrDefault(SupplierKey(supplierId, productId), 0);
+    private void SetSupplierQty(int supplierId, int productId, int qty) => _supplierQuantities[SupplierKey(supplierId, productId)] = qty;
+    private string GetSupplierSearchOrigNr(int supplierId) => _supplierSearchOrigNr.GetValueOrDefault(supplierId, string.Empty);
+    private void SetSupplierSearchOrigNr(int supplierId, string value) => _supplierSearchOrigNr[supplierId] = value ?? string.Empty;
+    private List<VendorPartOffer>? GetVendorSearchResults(int supplierId) =>
+        _vendorSearchResults.TryGetValue(supplierId, out var results) ? results : null;
+    private bool IsSupplierBusy(int supplierId) => _busySupplierIds.Contains(supplierId);
+
+    private async Task SearchVendorOffers(int supplierId, string supplierName)
+    {
+        _message = null;
+        _error = null;
+        var origNr = GetSupplierSearchOrigNr(supplierId).Trim();
+        if (string.IsNullOrWhiteSpace(origNr))
+        {
+            _error = "Укажите артикул (orig_nr) для поиска.";
+            return;
+        }
+
+        _busySupplierIds.Add(supplierId);
+        try
+        {
+            var offers = await SupplierService.SearchVendorOffersAsync(supplierName, origNr);
+            _vendorSearchResults[supplierId] = offers;
+            _message = offers.Count > 0
+                ? $"Найдено предложений: {offers.Count}."
+                : "По артикулу ничего не найдено.";
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busySupplierIds.Remove(supplierId);
+        }
+    }
+
+    private async Task RefreshVendorCatalog(int supplierId)
+    {
+        _message = null;
+        _error = null;
+        _busySupplierIds.Add(supplierId);
+        try
+        {
+            var origNr = GetSupplierSearchOrigNr(supplierId).Trim();
+            var result = await SupplierService.RefreshCatalogFromVendorsSetupAsync(
+                supplierId,
+                string.IsNullOrWhiteSpace(origNr) ? null : origNr);
+
+            _message = result.Message;
+            foreach (var productId in result.UpdatedProductIds)
+                _liveVendorProductIds.Add(productId);
+
+            _supplierCatalog = await SupplierService.GetCatalogForStoreOwnerAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busySupplierIds.Remove(supplierId);
+        }
+    }
+
+    private async Task CreateWarehouseOrder()
+    {
+        _message = null;
+        _error = null;
+        try
+        {
+            var items = _warehouseQuantities.Where(kv => kv.Value > 0).ToDictionary(kv => kv.Key, kv => kv.Value);
+            var order = await StoreService.CreateWarehouseOrderAsync(_userId!, items);
+            if (order == null)
+            {
+                _error = "Выберите товары для заказа.";
+                return;
+            }
+
+            _message = $"Заказ со склада #{order.Id} создан.";
+            _warehouseQuantities.Clear();
+            _products = await StoreService.GetWarehouseStockAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+
+    private async Task CreateSupplierOrder(int supplierId)
+    {
+        _message = null;
+        _error = null;
+        try
+        {
+            var items = _supplierQuantities
+                .Where(kv => kv.Value > 0 && kv.Key.StartsWith($"{supplierId}:"))
+                .ToDictionary(kv => int.Parse(kv.Key.Split(':')[1]), kv => kv.Value);
+
+            var order = await SupplierService.CreateStoreOrderAsync(_userId!, supplierId, items);
+            if (order == null)
+            {
+                _error = "Выберите товары для заказа.";
+                return;
+            }
+
+            foreach (var key in _supplierQuantities.Keys.Where(k => k.StartsWith($"{supplierId}:")).ToList())
+                _supplierQuantities.Remove(key);
+
+            _message = $"Заказ у поставщика #{order.Id} создан. Ожидайте подтверждения.";
+            _supplierCatalog = await SupplierService.GetCatalogForStoreOwnerAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+
+    private async Task LoadOrders()
+    {
+        _warehouseOrders = await StoreService.GetWarehouseOrdersAsync(_userId!);
+        _supplierOrders = await SupplierService.GetStoreSupplierOrdersAsync(_userId!);
+    }
+
+    private async Task ConfirmWarehouseOrder(int orderId)
+    {
+        _message = null;
+        _error = null;
+        try
+        {
+            var ok = await StoreService.ConfirmWarehouseOrderAsync(orderId, _userId!);
+            _message = ok ? "Заказ со склада подтверждён. Товары добавлены в магазин." : "Ошибка подтверждения.";
+            await LoadOrders();
+            await LoadInventory();
+            _products = await StoreService.GetWarehouseStockAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+
+    private static string GetStoreImage(Store store) =>
+        !string.IsNullOrWhiteSpace(store.ImageUrl)
+            ? store.ImageUrl
+            : ProductImageHelper.GetPlaceholderUrl(store.Id, store.Name);
+
+    private static string GetOrderStatusName(OrderStatus status) => status switch
+    {
+        OrderStatus.Pending => "Ожидает",
+        OrderStatus.Paid => "Подтверждён",
+        OrderStatus.ReadyForDelivery => "Готов к доставке",
+        OrderStatus.InDelivery => "В доставке",
+        OrderStatus.Delivered => "Доставлен",
+        _ => status.ToString()
+    };
+
+    private sealed class StoreProfileForm
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Укажите название")]
+        [System.ComponentModel.DataAnnotations.StringLength(200)]
+        public string Name { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.StringLength(500)]
+        public string Address { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.StringLength(1000)]
+        public string Description { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.StringLength(500)]
+        public string ImageUrl { get; set; } = "";
+    }
+}

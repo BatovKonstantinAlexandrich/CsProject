@@ -1,0 +1,554 @@
+@implements IAsyncDisposable
+@inject UsersHubConnectionService HubConnection
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IMessageComposeDraftService ComposeDraft
+@inject NavigationManager Navigation
+
+<div class="message-notifications">
+    @foreach (var toast in _visible)
+    {
+        @if (toast.IsNews && toast.News is { } news)
+        {
+            <MudPaper Class="message-toast news-toast pa-4">
+                <div class="message-toast-header news-toast-header">
+                    <MudIcon Icon="@Icons.Material.Filled.Newspaper" Size="Size.Small" />
+                    <span>Новая публикация</span>
+                    <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" Class="toast-close"
+                                   OnClick="@(() => Dismiss(toast))" />
+                </div>
+                <div class="message-toast-body stack">
+                    <span class="text-muted">От: @news.AuthorName</span>
+                    <strong>@news.Title</strong>
+                    <p class="mb-2">@news.Body</p>
+                    <div class="stack-row">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                   OnClick="@(() => CopyNewsToMessages(toast))">
+                            В сообщения
+                        </MudButton>
+                        <MudButton Href="/" Variant="Variant.Outlined" Color="Color.Primary"
+                                   OnClick="@(() => Dismiss(toast))">
+                            На главную
+                        </MudButton>
+                    </div>
+                </div>
+            </MudPaper>
+        }
+        else if (toast.IsOrderDelivery && toast.OrderDelivery is { } delivery)
+        {
+            <MudPaper Class="message-toast delivery-toast pa-4">
+                <div class="message-toast-header delivery-toast-header">
+                    <MudIcon Icon="@Icons.Material.Filled.LocalShipping" Size="Size.Small" />
+                    <span>Заказ в доставке</span>
+                    <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" Class="toast-close"
+                                   OnClick="@(() => Dismiss(toast))" />
+                </div>
+                <div class="message-toast-body stack">
+                    <strong>@delivery.OrderNumber</strong>
+                    @if (!string.IsNullOrWhiteSpace(delivery.TrackingNumber))
+                    {
+                        <span class="text-muted">Трек-номер: @delivery.TrackingNumber</span>
+                    }
+                    <span class="text-muted">ТК: @delivery.TransportCompanyName</span>
+                    <p class="mb-2">Адрес доставки: @delivery.DeliveryAddress</p>
+                    <MudButton Href="/orders" Variant="Variant.Filled" Color="Color.Primary"
+                               OnClick="@(() => Dismiss(toast))">
+                        Мои заказы
+                    </MudButton>
+                </div>
+            </MudPaper>
+        }
+        else if (toast.IsOrderPreparation && toast.OrderPreparation is { } preparation)
+        {
+            <MudPaper Class="message-toast preparation-toast pa-4">
+                <div class="message-toast-header preparation-toast-header">
+                    <MudIcon Icon="@Icons.Material.Filled.Inventory" Size="Size.Small" />
+                    <span>Подготовка к доставке</span>
+                    <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" Class="toast-close"
+                                   OnClick="@(() => Dismiss(toast))" />
+                </div>
+                <div class="message-toast-body stack">
+                    <strong>@preparation.OrderNumber</strong>
+                    <span class="text-muted">@preparation.LocationName</span>
+                    @if (!string.IsNullOrWhiteSpace(preparation.LocationAddress))
+                    {
+                        <span class="text-muted">@preparation.LocationAddress</span>
+                    }
+                    <span class="text-muted">Клиент: @preparation.ClientName</span>
+                    <p class="mb-2">@preparation.ItemsSummary</p>
+                    <p class="mb-2 text-muted">Доставка: @preparation.DeliveryAddress</p>
+                    @if (!preparation.IsCentralWarehouse)
+                    {
+                        <MudButton Href="/store" Variant="Variant.Filled" Color="Color.Primary"
+                                   OnClick="@(() => Dismiss(toast))">
+                            Панель магазина
+                        </MudButton>
+                    }
+                </div>
+            </MudPaper>
+        }
+        else if (toast.IsOrderReadyForTransport && toast.OrderReadyForTransport is { } ready)
+        {
+            <MudPaper Class="message-toast transport-ready-toast pa-4">
+                <div class="message-toast-header transport-ready-toast-header">
+                    <MudIcon Icon="@Icons.Material.Filled.LocalShipping" Size="Size.Small" />
+                    <span>Заказ готов к доставке</span>
+                    <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" Class="toast-close"
+                                   OnClick="@(() => Dismiss(toast))" />
+                </div>
+                <div class="message-toast-body stack">
+                    <strong>@ready.OrderNumber</strong>
+                    <span class="text-muted">Откуда: @ready.PickupLocationName</span>
+                    @if (!string.IsNullOrWhiteSpace(ready.PickupLocationAddress))
+                    {
+                        <span class="text-muted">@ready.PickupLocationAddress</span>
+                    }
+                    <span class="text-muted">Клиент: @ready.ClientName</span>
+                    <p class="mb-2">@ready.ItemsSummary</p>
+                    <p class="mb-2 text-muted">Куда: @ready.DeliveryAddress</p>
+                    <MudButton Href="/transport" Variant="Variant.Filled" Color="Color.Primary"
+                               OnClick="@(() => Dismiss(toast))">
+                        Взять в работу
+                    </MudButton>
+                </div>
+            </MudPaper>
+        }
+        else if (toast.Message is { } message)
+        {
+            <MudPaper Class="message-toast pa-4">
+                <div class="message-toast-header">
+                    <MudIcon Icon="@Icons.Material.Filled.Mail" Size="Size.Small" />
+                    <span>@(message.IsReply ? "Новый ответ" : "Новое сообщение")</span>
+                    <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" Class="toast-close"
+                                   OnClick="@(() => Dismiss(toast))" />
+                </div>
+                <div class="message-toast-body stack">
+                    <span class="text-muted">От: @message.SenderName</span>
+                    <strong>@message.Subject</strong>
+                    <p class="mb-2">@message.Body</p>
+                    <MudButton Href="/messages" Variant="Variant.Filled" Color="Color.Primary"
+                               OnClick="@(() => Dismiss(toast))">
+                        Открыть сообщения
+                    </MudButton>
+                </div>
+            </MudPaper>
+        }
+    }
+</div>
+
+@code {
+    private const int MaxVisible = 2;
+    private static readonly TimeSpan DisplayDuration = TimeSpan.FromSeconds(10);
+
+    private readonly Queue<PendingNotification> _pending = new();
+    private readonly Queue<PendingNotification> _earlyQueue = new();
+    private readonly HashSet<string> _trackedKeys = [];
+    private readonly List<VisibleToast> _visible = [];
+    private readonly SemaphoreSlim _hubGate = new(1, 1);
+
+    private bool _subscribed;
+    private bool _disposed;
+    private bool _hubInitialized;
+    private bool _renderLoopReady;
+    private bool _pendingRequested;
+
+    protected override void OnInitialized()
+    {
+        AuthStateProvider.AuthenticationStateChanged += OnAuthStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _hubInitialized || _disposed)
+            return;
+
+        _hubInitialized = true;
+        _renderLoopReady = true;
+
+        HubConnection.MessageReceived += OnMessageReceived;
+        HubConnection.NewsReceived += OnNewsReceived;
+        HubConnection.OrderDeliveryReceived += OnOrderDeliveryReceived;
+        HubConnection.OrderPreparationReceived += OnOrderPreparationReceived;
+        HubConnection.OrderReadyForTransportReceived += OnOrderReadyForTransportReceived;
+        _subscribed = true;
+
+        await InitializeHubAsync();
+    }
+
+    private async Task InitializeHubAsync()
+    {
+        if (_disposed)
+            return;
+
+        await _hubGate.WaitAsync();
+        try
+        {
+            if (_disposed)
+                return;
+
+            await HubConnection.EnsureConnectedAsync();
+            await RequestPendingOnceAsync();
+            DrainEarlyQueue();
+            RequestRender();
+        }
+        catch
+        {
+            // Уведомления не должны прерывать работу страницы.
+        }
+        finally
+        {
+            _hubGate.Release();
+        }
+    }
+
+    private async void OnAuthStateChanged(Task<AuthenticationState> authTask)
+    {
+        if (_disposed || !_renderLoopReady)
+            return;
+
+        try
+        {
+            var auth = await authTask;
+            var userId = auth.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            await RunOnUiAsync(async () =>
+            {
+                if (_disposed)
+                    return;
+
+                await _hubGate.WaitAsync();
+                try
+                {
+                    if (_disposed)
+                        return;
+
+                    if (string.IsNullOrEmpty(userId))
+                    {
+                        await HubConnection.DisconnectAsync();
+                        ClearAllToasts();
+                        RequestRender();
+                        return;
+                    }
+
+                    await HubConnection.EnsureConnectedAsync();
+                    RequestRender();
+                }
+                finally
+                {
+                    _hubGate.Release();
+                }
+            });
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
+        }
+    }
+
+    private async Task RequestPendingOnceAsync()
+    {
+        if (_disposed || _pendingRequested)
+            return;
+
+        _pendingRequested = true;
+
+        try
+        {
+            await HubConnection.RequestPendingNotificationsAsync();
+        }
+        catch
+        {
+            _pendingRequested = false;
+        }
+    }
+
+    private void OnMessageReceived(MessageNotificationDto? notification)
+    {
+        if (notification == null || notification.IsRead || _disposed)
+            return;
+
+        ScheduleNotification(new PendingNotification(Message: notification));
+    }
+
+    private void OnNewsReceived(NewsNotificationDto? notification)
+    {
+        if (notification == null || _disposed)
+            return;
+
+        ScheduleNotification(new PendingNotification(News: notification));
+    }
+
+    private void OnOrderDeliveryReceived(OrderDeliveryNotificationDto? notification)
+    {
+        if (notification == null || _disposed)
+            return;
+
+        ScheduleNotification(new PendingNotification(OrderDelivery: notification));
+    }
+
+    private void OnOrderPreparationReceived(OrderPreparationNotificationDto? notification)
+    {
+        if (notification == null || _disposed)
+            return;
+
+        ScheduleNotification(new PendingNotification(OrderPreparation: notification));
+    }
+
+    private void OnOrderReadyForTransportReceived(OrderReadyForTransportNotificationDto? notification)
+    {
+        if (notification == null || _disposed)
+            return;
+
+        ScheduleNotification(new PendingNotification(OrderReadyForTransport: notification));
+    }
+
+    private void ScheduleNotification(PendingNotification item)
+    {
+        if (_disposed)
+            return;
+
+        if (!_renderLoopReady)
+        {
+            _earlyQueue.Enqueue(item);
+            return;
+        }
+
+        _ = RunOnUiAsync(() =>
+        {
+            Enqueue(item);
+            return Task.CompletedTask;
+        });
+    }
+
+    private void DrainEarlyQueue()
+    {
+        while (_earlyQueue.TryDequeue(out var item))
+            Enqueue(item);
+    }
+
+    private void Enqueue(PendingNotification item)
+    {
+        if (_disposed || string.IsNullOrEmpty(item.Key))
+            return;
+
+        if (!_trackedKeys.Add(item.Key))
+            return;
+
+        _pending.Enqueue(item);
+        PromoteFromQueue();
+        RequestRender();
+    }
+
+    private void PromoteFromQueue()
+    {
+        while (_visible.Count < MaxVisible && _pending.TryDequeue(out var item))
+        {
+            var toast = new VisibleToast(item, DisplayDuration, OnToastExpired);
+            _visible.Add(toast);
+        }
+    }
+
+    private void OnToastExpired(VisibleToast toast)
+    {
+        if (_disposed)
+            return;
+
+        _ = RunOnUiAsync(() =>
+        {
+            if (_disposed)
+                return Task.CompletedTask;
+
+            RemoveToast(toast);
+            PromoteFromQueue();
+            RequestRender();
+            return Task.CompletedTask;
+        });
+    }
+
+    private void Dismiss(VisibleToast toast)
+    {
+        if (_disposed)
+            return;
+
+        toast.Cancel();
+        RemoveToast(toast);
+        PromoteFromQueue();
+        RequestRender();
+    }
+
+    private void RemoveToast(VisibleToast toast)
+    {
+        if (!_visible.Remove(toast))
+            return;
+
+        toast.Dispose();
+        var key = toast.Item?.Key;
+        if (!string.IsNullOrEmpty(key))
+            _trackedKeys.Remove(key);
+    }
+
+    private void ClearAllToasts()
+    {
+        foreach (var toast in _visible)
+            toast.Dispose();
+
+        _visible.Clear();
+        _pending.Clear();
+        _earlyQueue.Clear();
+        _trackedKeys.Clear();
+        _pendingRequested = false;
+    }
+
+    private void CopyNewsToMessages(VisibleToast toast)
+    {
+        if (toast.News == null)
+            return;
+
+        ComposeDraft.SetDraft(toast.News.Title, toast.News.FullBody);
+        Dismiss(toast);
+        Navigation.NavigateTo("/messages?compose=1");
+    }
+
+    private void RequestRender()
+    {
+        if (_disposed || !_renderLoopReady)
+            return;
+
+        try
+        {
+            StateHasChanged();
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
+        }
+    }
+
+    private async Task RunOnUiAsync(Func<Task> action)
+    {
+        if (_disposed || !_renderLoopReady)
+            return;
+
+        try
+        {
+            await InvokeAsync(async () =>
+            {
+                if (_disposed)
+                    return;
+
+                await action();
+            });
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _disposed = true;
+        _renderLoopReady = false;
+
+        AuthStateProvider.AuthenticationStateChanged -= OnAuthStateChanged;
+        if (_subscribed)
+        {
+            HubConnection.MessageReceived -= OnMessageReceived;
+            HubConnection.NewsReceived -= OnNewsReceived;
+            HubConnection.OrderDeliveryReceived -= OnOrderDeliveryReceived;
+            HubConnection.OrderPreparationReceived -= OnOrderPreparationReceived;
+            HubConnection.OrderReadyForTransportReceived -= OnOrderReadyForTransportReceived;
+        }
+
+        foreach (var toast in _visible)
+            toast.Dispose();
+
+        _visible.Clear();
+        _pending.Clear();
+        _earlyQueue.Clear();
+        _trackedKeys.Clear();
+
+        try
+        {
+            await _hubGate.WaitAsync();
+            try
+            {
+                await HubConnection.DisconnectAsync();
+            }
+            finally
+            {
+                _hubGate.Release();
+            }
+        }
+        catch
+        {
+        }
+
+        _hubGate.Dispose();
+    }
+
+    private sealed record PendingNotification(
+        MessageNotificationDto? Message = null,
+        NewsNotificationDto? News = null,
+        OrderDeliveryNotificationDto? OrderDelivery = null,
+        OrderPreparationNotificationDto? OrderPreparation = null,
+        OrderReadyForTransportNotificationDto? OrderReadyForTransport = null)
+    {
+        public string Key => Message != null
+            ? $"msg:{Message.MessageId}"
+            : News != null
+                ? $"news:{News.NewsId}"
+                : OrderDelivery != null
+                    ? $"order-delivery:{OrderDelivery.OrderId}"
+                    : OrderPreparation != null
+                        ? $"order-prep:{OrderPreparation.OrderId}"
+                        : OrderReadyForTransport != null
+                            ? $"order-transport:{OrderReadyForTransport.OrderId}"
+                            : string.Empty;
+    }
+
+    private sealed class VisibleToast : IDisposable
+    {
+        private readonly CancellationTokenSource _cts = new();
+        private readonly Action<VisibleToast> _onExpired;
+
+        public PendingNotification Item { get; }
+        public MessageNotificationDto? Message => Item.Message;
+        public NewsNotificationDto? News => Item.News;
+        public OrderDeliveryNotificationDto? OrderDelivery => Item.OrderDelivery;
+        public OrderPreparationNotificationDto? OrderPreparation => Item.OrderPreparation;
+        public OrderReadyForTransportNotificationDto? OrderReadyForTransport => Item.OrderReadyForTransport;
+        public bool IsNews => Item.News != null;
+        public bool IsOrderDelivery => Item.OrderDelivery != null;
+        public bool IsOrderPreparation => Item.OrderPreparation != null;
+        public bool IsOrderReadyForTransport => Item.OrderReadyForTransport != null;
+
+        public VisibleToast(PendingNotification item, TimeSpan duration, Action<VisibleToast> onExpired)
+        {
+            Item = item;
+            _onExpired = onExpired;
+            _ = RunTimerAsync(duration);
+        }
+
+        private async Task RunTimerAsync(TimeSpan duration)
+        {
+            try
+            {
+                await Task.Delay(duration, _cts.Token);
+                _onExpired(this);
+            }
+            catch (TaskCanceledException)
+            {
+            }
+        }
+
+        public void Cancel() => _cts.Cancel();
+
+        public void Dispose() => _cts.Dispose();
+    }
+}

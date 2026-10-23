@@ -1,0 +1,791 @@
+@page "/autoservice"
+@attribute [Authorize]
+@inject AutoServiceService AutoServiceService
+@inject AutoServiceEmployeeRegistrationService AutoServiceEmployeeRegistrationService
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Автосервис</PageTitle>
+
+<MudText Typo="Typo.h3" Class="page-title">@(_isOwner ? "Панель автосервиса" : "Мой автосервис")</MudText>
+
+@if (!_loaded)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (_isPendingStaff)
+{
+    <MudPaper Class="pa-4">
+        <MudAlert Severity="Severity.Warning" Class="mb-3">
+            Раздел автосервиса «@_pendingAutoServiceName» недоступен — заявка на роль @_pendingStaffRoleLabel ожидает подтверждения владельцем.
+        </MudAlert>
+        <p class="mb-2">Вы можете пользоваться системой: сообщениями, личным кабинетом и другими разделами.</p>
+        <p class="mb-0">Когда владелец одобрит заявку, раздел «Автосервис» станет доступен. Уведомление придёт в <MudLink Href="/messages">Сообщения</MudLink>.</p>
+    </MudPaper>
+}
+else if (_isRejectedStaff)
+{
+    <MudPaper Class="pa-4">
+        <MudAlert Severity="Severity.Error" Class="mb-3">
+            Заявка на роль @_pendingStaffRoleLabel в автосервисе «@_pendingAutoServiceName» отклонена.
+        </MudAlert>
+        <p class="mb-0">Подробности — в <MudLink Href="/messages">Сообщениях</MudLink>.</p>
+    </MudPaper>
+}
+else if (_autoService == null)
+{
+    <MudAlert Severity="Severity.Warning">Профиль автосервиса не найден.</MudAlert>
+}
+else
+{
+    <MudPaper Class="fluent-card-padded pa-4 mb-4">
+        <MudText Typo="Typo.h5">@_autoService.Name</MudText>
+        @if (!string.IsNullOrWhiteSpace(_autoService.Address))
+        {
+            <p class="text-muted mb-1">@_autoService.Address</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(_autoService.Phone))
+        {
+            <p class="text-muted mb-1">@_autoService.Phone</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(_autoService.Description))
+        {
+            <p class="mb-0">@_autoService.Description</p>
+        }
+    </MudPaper>
+
+    <MudTabs ActivePanelIndex="_activePanelIndex" ActivePanelIndexChanged="OnActivePanelIndexChanged" Class="mb-4">
+        <MudTabPanel Text="Расписание" />
+        @if (_isOwner)
+        {
+            <MudTabPanel Text="Услуги" />
+            <MudTabPanel Text="Персонал" />
+            <MudTabPanel Text="Заявки сотрудников" />
+        }
+    </MudTabs>
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <MudAlert Severity="Severity.Success" Class="mb-4">@_message</MudAlert>
+    }
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
+    }
+
+    @switch (GetActivePanelKey())
+    {
+        case "schedule":
+            <MudText Typo="Typo.h5" Class="section-title">Расписание записей</MudText>
+            <div class="stack-row mb-4">
+                <MudButton Variant="Variant.Outlined" OnClick="@(() => ShiftScheduleWeek(-7))">← Неделя</MudButton>
+                <MudText>@_scheduleWeekStart.ToLocalTime().ToString("dd.MM.yyyy") — @_scheduleWeekEnd.ToLocalTime().AddDays(-1).ToString("dd.MM.yyyy")</MudText>
+                <MudButton Variant="Variant.Outlined" OnClick="@(() => ShiftScheduleWeek(7))">Неделя →</MudButton>
+                @if (_isOwner)
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowNewAppointmentForm">Новая запись</MudButton>
+                }
+            </div>
+
+            @if (_isOwner && _showAppointmentForm)
+            {
+                <MudPaper Class="fluent-card-padded pa-4 mb-4">
+                    <MudText Typo="Typo.h6" Class="mb-3">@(_editingAppointmentId == null ? "Новая запись" : "Редактирование записи")</MudText>
+                    <div class="stack">
+                        <MudTextField @bind-Value="_appointmentForm.ClientName" Label="Клиент" Required="true" Variant="Variant.Outlined" />
+                        <MudTextField @bind-Value="_appointmentForm.ClientPhone" Label="Телефон" Variant="Variant.Outlined" />
+                        <MudDatePicker @bind-Date="_appointmentDate" Label="Дата" Variant="Variant.Outlined" />
+                        <MudTimePicker @bind-Time="_appointmentTime" Label="Время" Variant="Variant.Outlined" />
+                        <MudSelect T="int?" @bind-Value="_appointmentForm.OfferingId" Label="Услуга" Variant="Variant.Outlined" Clearable="true">
+                            @foreach (var offering in _activeOfferings)
+                            {
+                                <MudSelectItem T="int?" Value="@offering.Id">@offering.Name (@offering.DurationMinutes мин.)</MudSelectItem>
+                            }
+                        </MudSelect>
+                        <MudSelect T="int?" @bind-Value="_appointmentForm.StaffMemberId" Label="Мастер" Variant="Variant.Outlined" Clearable="true">
+                            @foreach (var member in _activeStaff)
+                            {
+                                <MudSelectItem T="int?" Value="@member.Id">@member.FullName (@member.Position)</MudSelectItem>
+                            }
+                        </MudSelect>
+                        <MudTextField @bind-Value="_appointmentForm.Notes" Label="Примечание" Variant="Variant.Outlined" Lines="2" />
+                        <div class="stack-row">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_saving" OnClick="SaveAppointment">Сохранить</MudButton>
+                            <MudButton Variant="Variant.Outlined" OnClick="CancelAppointmentForm">Отмена</MudButton>
+                        </div>
+                    </div>
+                </MudPaper>
+            }
+
+            @if (_appointments == null)
+            {
+                <MudProgressCircular Indeterminate="true" />
+            }
+            else if (_appointments.Count == 0)
+            {
+                <MudAlert Severity="Severity.Info">На выбранную неделю записей нет.</MudAlert>
+            }
+            else
+            {
+                <MudPaper Class="pa-4">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Дата и время</th>
+                                <th>Клиент</th>
+                                <th>Услуга</th>
+                                <th>Мастер</th>
+                                <th>Статус</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _appointments)
+                            {
+                                <tr>
+                                    <td>@item.ScheduledAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm") (@item.DurationMinutes мин.)</td>
+                                    <td>
+                                        @item.ClientName
+                                        @if (!string.IsNullOrWhiteSpace(item.ClientPhone))
+                                        {
+                                            <br /><span class="text-muted">@item.ClientPhone</span>
+                                        }
+                                    </td>
+                                    <td>@(item.Offering?.Name ?? "—")</td>
+                                    <td>@(item.StaffMember?.FullName ?? "—")</td>
+                                    <td>@GetStatusLabel(item.Status)</td>
+                                    <td>
+                                        <div class="stack-row">
+                                            @if (item.Status == AutoServiceAppointmentStatus.Scheduled)
+                                            {
+                                                <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success"
+                                                           OnClick="@(() => CompleteAppointment(item.Id))">Выполнено</MudButton>
+                                                <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error"
+                                                           OnClick="@(() => CancelAppointment(item.Id))">Отмена</MudButton>
+                                                @if (_isOwner)
+                                                {
+                                                    <MudButton Size="Size.Small" Variant="Variant.Text"
+                                                               OnClick="@(() => EditAppointment(item))">Изменить</MudButton>
+                                                }
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </MudPaper>
+            }
+            break;
+
+        case "offerings":
+            <div class="stack-row-between mb-3">
+                <MudText Typo="Typo.h5" Class="section-title mb-0">Услуги</MudText>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowNewOfferingForm">Добавить услугу</MudButton>
+            </div>
+
+            @if (_showOfferingForm)
+            {
+                <MudPaper Class="fluent-card-padded pa-4 mb-4">
+                    <MudText Typo="Typo.h6" Class="mb-3">@(_editingOfferingId == null ? "Новая услуга" : "Редактирование услуги")</MudText>
+                    <div class="stack">
+                        <MudTextField @bind-Value="_offeringForm.Name" Label="Название" Required="true" Variant="Variant.Outlined" />
+                        <MudTextField @bind-Value="_offeringForm.Description" Label="Описание" Variant="Variant.Outlined" Lines="2" />
+                        <MudNumericField @bind-Value="_offeringForm.Price" Label="Цена, ₽" Min="0" Variant="Variant.Outlined" />
+                        <MudNumericField @bind-Value="_offeringForm.DurationMinutes" Label="Длительность, мин." Min="15" Step="15" Variant="Variant.Outlined" />
+                        <MudSwitch @bind-Value="_offeringForm.IsActive" Label="Активна" Color="Color.Primary" />
+                        <div class="stack-row">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_saving" OnClick="SaveOffering">Сохранить</MudButton>
+                            <MudButton Variant="Variant.Outlined" OnClick="CancelOfferingForm">Отмена</MudButton>
+                        </div>
+                    </div>
+                </MudPaper>
+            }
+
+            @if (_offerings == null)
+            {
+                <MudProgressCircular Indeterminate="true" />
+            }
+            else if (_offerings.Count == 0)
+            {
+                <MudAlert Severity="Severity.Info">Услуги не добавлены.</MudAlert>
+            }
+            else
+            {
+                <MudPaper Class="pa-4">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Название</th>
+                                <th>Описание</th>
+                                <th>Цена</th>
+                                <th>Длительность</th>
+                                <th>Статус</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var offering in _offerings)
+                            {
+                                <tr>
+                                    <td>@offering.Name</td>
+                                    <td>@(offering.Description ?? "—")</td>
+                                    <td>@offering.Price.ToString("N0") ₽</td>
+                                    <td>@offering.DurationMinutes мин.</td>
+                                    <td>@(offering.IsActive ? "Активна" : "Скрыта")</td>
+                                    <td>
+                                        <div class="stack-row">
+                                            <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => EditOffering(offering))">Изменить</MudButton>
+                                            <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Error"
+                                                       OnClick="@(() => DeleteOffering(offering.Id))">Удалить</MudButton>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </MudPaper>
+            }
+            break;
+
+        case "staff":
+            <div class="stack-row-between mb-3">
+                <MudText Typo="Typo.h5" Class="section-title mb-0">Персонал</MudText>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowNewStaffForm">Добавить сотрудника</MudButton>
+            </div>
+
+            @if (_showStaffForm)
+            {
+                <MudPaper Class="fluent-card-padded pa-4 mb-4">
+                    <MudText Typo="Typo.h6" Class="mb-3">@(_editingStaffId == null ? "Новый сотрудник" : "Редактирование сотрудника")</MudText>
+                    <div class="stack">
+                        <MudTextField @bind-Value="_staffForm.FullName" Label="ФИО" Required="true" Variant="Variant.Outlined" />
+                        <MudTextField @bind-Value="_staffForm.Position" Label="Должность" Required="true" Variant="Variant.Outlined" />
+                        <MudTextField @bind-Value="_staffForm.Phone" Label="Телефон" Variant="Variant.Outlined" />
+                        <MudTextField @bind-Value="_staffForm.Email" Label="Email" Variant="Variant.Outlined" />
+                        <MudSwitch @bind-Value="_staffForm.IsActive" Label="Работает" Color="Color.Primary" />
+                        <div class="stack-row">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_saving" OnClick="SaveStaff">Сохранить</MudButton>
+                            <MudButton Variant="Variant.Outlined" OnClick="CancelStaffForm">Отмена</MudButton>
+                        </div>
+                    </div>
+                </MudPaper>
+            }
+
+            @if (_staff == null)
+            {
+                <MudProgressCircular Indeterminate="true" />
+            }
+            else if (_staff.Count == 0)
+            {
+                <MudAlert Severity="Severity.Info">Сотрудники не добавлены.</MudAlert>
+            }
+            else
+            {
+                <MudPaper Class="pa-4">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ФИО</th>
+                                <th>Должность</th>
+                                <th>Телефон</th>
+                                <th>Email</th>
+                                <th>Статус</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var member in _staff)
+                            {
+                                <tr>
+                                    <td>@member.FullName</td>
+                                    <td>@member.Position</td>
+                                    <td>@(member.Phone ?? "—")</td>
+                                    <td>@(member.Email ?? "—")</td>
+                                    <td>@(member.IsActive ? "Работает" : "Неактивен")</td>
+                                    <td>
+                                        <div class="stack-row">
+                                            <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => EditStaff(member))">Изменить</MudButton>
+                                            <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Error"
+                                                       OnClick="@(() => DeleteStaff(member.Id))">Удалить</MudButton>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </MudPaper>
+            }
+            break;
+
+        case "employee-requests":
+            <MudText Typo="Typo.h5" Class="section-title">Заявки сотрудников</MudText>
+            @if (_employeeRequests == null)
+            {
+                <MudProgressCircular Indeterminate="true" />
+            }
+            else if (_employeeRequests.Count == 0)
+            {
+                <MudAlert Severity="Severity.Info">Нет заявок на рассмотрении.</MudAlert>
+            }
+            else
+            {
+                @foreach (var request in _employeeRequests)
+                {
+                    <MudPaper Class="fluent-card-padded pa-4 mb-4">
+                        <div class="stack-row-between mb-2">
+                            <div class="stack-row">
+                                <strong>@request.User.FullName</strong>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">
+                                    @AutoServiceStaffRoles.GetDisplayName(request.StaffRole)
+                                </MudChip>
+                            </div>
+                            <span class="text-muted">@request.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                        </div>
+                        <p class="text-muted mb-1">@request.User.Email</p>
+                        <p class="mb-3">Хочет работать в автосервисе «@request.AutoService.Name»</p>
+                        <div class="stack-row">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                       Disabled="_processingRequestId == request.Id"
+                                       OnClick="@(() => ApproveEmployeeRequest(request.Id))">
+                                Одобрить
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Error"
+                                       Disabled="_processingRequestId == request.Id"
+                                       OnClick="@(() => RejectEmployeeRequest(request.Id))">
+                                Отклонить
+                            </MudButton>
+                        </div>
+                    </MudPaper>
+                }
+            }
+            break;
+    }
+}
+
+@code {
+    private AutoService? _autoService;
+    private string? _userId;
+    private bool _loaded;
+    private bool _isOwner;
+    private bool _isPendingStaff;
+    private bool _isRejectedStaff;
+    private string? _pendingStaffRoleLabel;
+    private string? _pendingAutoServiceName;
+    private int _activePanelIndex;
+    private int? _processingRequestId;
+    private string? _message;
+    private string? _error;
+    private bool _saving;
+
+    private DateTime _scheduleWeekStart = GetWeekStart(DateTime.UtcNow);
+    private DateTime _scheduleWeekEnd => _scheduleWeekStart.AddDays(7);
+
+    private List<AutoServiceAppointment>? _appointments;
+    private List<AutoServiceOffering>? _offerings;
+    private List<AutoServiceStaffMember>? _staff;
+    private List<AutoServiceEmployeeRegistrationRequest>? _employeeRequests;
+
+    private bool _showAppointmentForm;
+    private int? _editingAppointmentId;
+    private AutoServiceAppointment _appointmentForm = new();
+    private DateTime? _appointmentDate = DateTime.Today.AddDays(1);
+    private TimeSpan? _appointmentTime = new(10, 0, 0);
+
+    private bool _showOfferingForm;
+    private int? _editingOfferingId;
+    private AutoServiceOffering _offeringForm = new() { DurationMinutes = 60, IsActive = true };
+
+    private bool _showStaffForm;
+    private int? _editingStaffId;
+    private AutoServiceStaffMember _staffForm = new() { IsActive = true };
+
+    private IEnumerable<AutoServiceOffering> _activeOfferings =>
+        _offerings?.Where(o => o.IsActive) ?? [];
+
+    private IEnumerable<AutoServiceStaffMember> _activeStaff =>
+        _staff?.Where(s => s.IsActive) ?? [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        _userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (_userId == null)
+        {
+            _loaded = true;
+            return;
+        }
+
+        _isOwner = await AutoServiceService.IsAutoServiceOwnerAsync(_userId);
+        var isApprovedStaff = AutoServiceStaffRoles.All.Any(auth.User.IsInRole);
+
+        var pending = await AutoServiceEmployeeRegistrationService.GetPendingRequestForUserAsync(_userId);
+        if (pending != null && !isApprovedStaff && !_isOwner)
+        {
+            _isPendingStaff = true;
+            _pendingStaffRoleLabel = AutoServiceStaffRoles.GetDisplayNameAccusative(pending.StaffRole);
+            _pendingAutoServiceName = pending.AutoService?.Name ?? "автосервис";
+            _loaded = true;
+            return;
+        }
+
+        if (!isApprovedStaff && !_isOwner)
+        {
+            var latest = await AutoServiceEmployeeRegistrationService.GetLatestRequestForUserAsync(_userId);
+            if (latest?.Status == RegistrationRequestStatus.Rejected)
+            {
+                _isRejectedStaff = true;
+                _pendingStaffRoleLabel = AutoServiceStaffRoles.GetDisplayNameAccusative(latest.StaffRole);
+                _pendingAutoServiceName = latest.AutoService?.Name ?? "автосервис";
+                _loaded = true;
+                return;
+            }
+
+            _loaded = true;
+            return;
+        }
+
+        _autoService = await AutoServiceService.GetAutoServiceForUserAsync(_userId);
+        _loaded = true;
+
+        if (_autoService != null)
+            await LoadSchedule();
+    }
+
+    private string GetActivePanelKey() => (_isOwner, _activePanelIndex) switch
+    {
+        (_, 0) => "schedule",
+        (true, 1) => "offerings",
+        (true, 2) => "staff",
+        (true, 3) => "employee-requests",
+        _ => "schedule"
+    };
+
+    private async Task OnActivePanelIndexChanged(int index)
+    {
+        _activePanelIndex = index;
+        _message = null;
+        _error = null;
+
+        if (_autoService == null)
+            return;
+
+        switch (GetActivePanelKey())
+        {
+            case "schedule":
+                await LoadSchedule();
+                break;
+            case "offerings":
+                await LoadOfferings();
+                break;
+            case "staff":
+                await LoadStaff();
+                break;
+            case "employee-requests":
+                await LoadEmployeeRequests();
+                break;
+        }
+    }
+
+    private async Task LoadEmployeeRequests()
+    {
+        if (!_isOwner || _userId == null)
+            return;
+
+        _employeeRequests = await AutoServiceEmployeeRegistrationService.GetPendingRequestsForOwnerAsync(_userId);
+    }
+
+    private async Task ApproveEmployeeRequest(int requestId)
+    {
+        _message = null;
+        _error = null;
+        _processingRequestId = requestId;
+        try
+        {
+            var ok = await AutoServiceEmployeeRegistrationService.ApproveRequestAsync(requestId, _userId!);
+            _message = ok ? "Заявка одобрена." : "Не удалось одобрить заявку.";
+            await LoadEmployeeRequests();
+        }
+        finally
+        {
+            _processingRequestId = null;
+        }
+    }
+
+    private async Task RejectEmployeeRequest(int requestId)
+    {
+        _message = null;
+        _error = null;
+        _processingRequestId = requestId;
+        try
+        {
+            var ok = await AutoServiceEmployeeRegistrationService.RejectRequestAsync(requestId, _userId!);
+            _message = ok ? "Заявка отклонена." : "Не удалось отклонить заявку.";
+            await LoadEmployeeRequests();
+        }
+        finally
+        {
+            _processingRequestId = null;
+        }
+    }
+
+    private async Task LoadSchedule()
+    {
+        if (_autoService == null)
+            return;
+
+        await LoadOfferings();
+        await LoadStaff();
+        _appointments = await AutoServiceService.GetAppointmentsAsync(_autoService.Id, _scheduleWeekStart, _scheduleWeekEnd);
+    }
+
+    private async Task LoadOfferings()
+    {
+        if (_autoService == null)
+            return;
+
+        _offerings = await AutoServiceService.GetOfferingsAsync(_autoService.Id);
+    }
+
+    private async Task LoadStaff()
+    {
+        if (_autoService == null)
+            return;
+
+        _staff = await AutoServiceService.GetStaffAsync(_autoService.Id);
+    }
+
+    private void ShiftScheduleWeek(int days)
+    {
+        _scheduleWeekStart = _scheduleWeekStart.AddDays(days);
+        _ = LoadSchedule();
+    }
+
+    private void ShowNewAppointmentForm()
+    {
+        _editingAppointmentId = null;
+        _appointmentForm = new AutoServiceAppointment { DurationMinutes = 60 };
+        _appointmentDate = DateTime.Today.AddDays(1);
+        _appointmentTime = new TimeSpan(10, 0, 0);
+        _showAppointmentForm = true;
+    }
+
+    private void EditAppointment(AutoServiceAppointment appointment)
+    {
+        _editingAppointmentId = appointment.Id;
+        _appointmentForm = new AutoServiceAppointment
+        {
+            Id = appointment.Id,
+            OfferingId = appointment.OfferingId,
+            StaffMemberId = appointment.StaffMemberId,
+            ClientName = appointment.ClientName,
+            ClientPhone = appointment.ClientPhone,
+            ScheduledAt = appointment.ScheduledAt,
+            DurationMinutes = appointment.DurationMinutes,
+            Status = appointment.Status,
+            Notes = appointment.Notes
+        };
+        var local = appointment.ScheduledAt.ToLocalTime();
+        _appointmentDate = local.Date;
+        _appointmentTime = local.TimeOfDay;
+        _showAppointmentForm = true;
+    }
+
+    private void CancelAppointmentForm() => _showAppointmentForm = false;
+
+    private async Task SaveAppointment()
+    {
+        if (_autoService == null || _appointmentDate == null || _appointmentTime == null)
+            return;
+
+        _message = null;
+        _error = null;
+        _saving = true;
+        try
+        {
+            _appointmentForm.ScheduledAt = DateTime.SpecifyKind(
+                _appointmentDate.Value.Date.Add(_appointmentTime.Value),
+                DateTimeKind.Local).ToUniversalTime();
+
+            if (_appointmentForm.OfferingId != null)
+            {
+                var offering = _offerings?.FirstOrDefault(o => o.Id == _appointmentForm.OfferingId);
+                if (offering != null)
+                    _appointmentForm.DurationMinutes = offering.DurationMinutes;
+            }
+
+            var saved = await AutoServiceService.SaveAppointmentAsync(_autoService.Id, _appointmentForm);
+            if (saved == null)
+            {
+                _error = "Не удалось сохранить запись. Проверьте данные.";
+                return;
+            }
+
+            _message = "Запись сохранена.";
+            _showAppointmentForm = false;
+            await LoadSchedule();
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task CompleteAppointment(int id)
+    {
+        if (_autoService == null)
+            return;
+
+        await AutoServiceService.UpdateAppointmentStatusAsync(_autoService.Id, id, AutoServiceAppointmentStatus.Completed);
+        _message = "Запись отмечена как выполненная.";
+        await LoadSchedule();
+    }
+
+    private async Task CancelAppointment(int id)
+    {
+        if (_autoService == null)
+            return;
+
+        await AutoServiceService.UpdateAppointmentStatusAsync(_autoService.Id, id, AutoServiceAppointmentStatus.Cancelled);
+        _message = "Запись отменена.";
+        await LoadSchedule();
+    }
+
+    private void ShowNewOfferingForm()
+    {
+        _editingOfferingId = null;
+        _offeringForm = new AutoServiceOffering { DurationMinutes = 60, IsActive = true };
+        _showOfferingForm = true;
+    }
+
+    private void EditOffering(AutoServiceOffering offering)
+    {
+        _editingOfferingId = offering.Id;
+        _offeringForm = new AutoServiceOffering
+        {
+            Id = offering.Id,
+            Name = offering.Name,
+            Description = offering.Description,
+            Price = offering.Price,
+            DurationMinutes = offering.DurationMinutes,
+            IsActive = offering.IsActive
+        };
+        _showOfferingForm = true;
+    }
+
+    private void CancelOfferingForm() => _showOfferingForm = false;
+
+    private async Task SaveOffering()
+    {
+        if (_autoService == null)
+            return;
+
+        _message = null;
+        _error = null;
+        _saving = true;
+        try
+        {
+            var saved = await AutoServiceService.SaveOfferingAsync(_autoService.Id, _offeringForm);
+            if (saved == null)
+            {
+                _error = "Не удалось сохранить услугу.";
+                return;
+            }
+
+            _message = "Услуга сохранена.";
+            _showOfferingForm = false;
+            await LoadOfferings();
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task DeleteOffering(int id)
+    {
+        if (_autoService == null)
+            return;
+
+        var ok = await AutoServiceService.DeleteOfferingAsync(_autoService.Id, id);
+        _message = ok ? "Услуга удалена." : null;
+        _error = ok ? null : "Не удалось удалить услугу.";
+        await LoadOfferings();
+    }
+
+    private void ShowNewStaffForm()
+    {
+        _editingStaffId = null;
+        _staffForm = new AutoServiceStaffMember { IsActive = true };
+        _showStaffForm = true;
+    }
+
+    private void EditStaff(AutoServiceStaffMember member)
+    {
+        _editingStaffId = member.Id;
+        _staffForm = new AutoServiceStaffMember
+        {
+            Id = member.Id,
+            FullName = member.FullName,
+            Position = member.Position,
+            Phone = member.Phone,
+            Email = member.Email,
+            IsActive = member.IsActive
+        };
+        _showStaffForm = true;
+    }
+
+    private void CancelStaffForm() => _showStaffForm = false;
+
+    private async Task SaveStaff()
+    {
+        if (_autoService == null)
+            return;
+
+        _message = null;
+        _error = null;
+        _saving = true;
+        try
+        {
+            var saved = await AutoServiceService.SaveStaffMemberAsync(_autoService.Id, _staffForm);
+            if (saved == null)
+            {
+                _error = "Не удалось сохранить сотрудника.";
+                return;
+            }
+
+            _message = "Сотрудник сохранён.";
+            _showStaffForm = false;
+            await LoadStaff();
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task DeleteStaff(int id)
+    {
+        if (_autoService == null)
+            return;
+
+        var ok = await AutoServiceService.DeleteStaffMemberAsync(_autoService.Id, id);
+        _message = ok ? "Сотрудник удалён." : null;
+        _error = ok ? null : "Не удалось удалить сотрудника.";
+        await LoadStaff();
+    }
+
+    private static DateTime GetWeekStart(DateTime date)
+    {
+        var local = date.ToLocalTime().Date;
+        var diff = (7 + (local.DayOfWeek - DayOfWeek.Monday)) % 7;
+        return DateTime.SpecifyKind(local.AddDays(-diff), DateTimeKind.Local).ToUniversalTime();
+    }
+
+    private static string GetStatusLabel(AutoServiceAppointmentStatus status) => status switch
+    {
+        AutoServiceAppointmentStatus.Scheduled => "Запланирована",
+        AutoServiceAppointmentStatus.Completed => "Выполнена",
+        AutoServiceAppointmentStatus.Cancelled => "Отменена",
+        _ => status.ToString()
+    };
+}

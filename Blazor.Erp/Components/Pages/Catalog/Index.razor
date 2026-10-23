@@ -1,0 +1,158 @@
+@page "/catalog"
+@attribute [Authorize(Roles = RoleNames.Client)]
+@inject CatalogService CatalogService
+@inject CartService CartService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ISnackbar Snackbar
+
+<PageTitle>Каталог</PageTitle>
+
+<MudText Typo="Typo.h4" Class="page-title">Каталог товаров</MudText>
+
+<div class="catalog-layout">
+    <aside class="catalog-sidebar">
+        @if (_categoryTree == null)
+        {
+            <MudProgressCircular Indeterminate="true" />
+        }
+        else
+        {
+            <MudText Typo="Typo.body1" Class="mb-2">Категории</MudText>
+            <CategoryTree Items="_categoryTree"
+                          SelectedCategoryId="_selectedCategoryId"
+                          OnCategorySelected="SelectCategory" />
+        }
+    </aside>
+
+    <div class="catalog-content">
+        <MudGrid Class="mb-4">
+            <MudItem xs="12" md="5">
+                <MudTextField @bind-Value="_search" @bind-Value:after="LoadProducts"
+                              Placeholder="Название, бренд, категория, описание, цена, отзывы, магазин..."
+                              Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="6" sm="4" md="2">
+                <MudNumericField T="decimal?" @bind-Value="_minPrice" @bind-Value:after="LoadProducts"
+                                 Label="Цена от, ₽" Min="0m" HideSpinButtons="true" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="6" sm="4" md="2">
+                <MudNumericField T="decimal?" @bind-Value="_maxPrice" @bind-Value:after="LoadProducts"
+                                 Label="Цена до, ₽" Min="0m" HideSpinButtons="true" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="4" md="3">
+                <MudSelect T="string" @bind-Value="_sortKey" @bind-Value:after="LoadProducts" Label="Сортировка" Variant="Variant.Outlined">
+                    <MudSelectItem Value="@("Name")">По названию</MudSelectItem>
+                    <MudSelectItem Value="@("PriceAsc")">Цена: по возрастанию</MudSelectItem>
+                    <MudSelectItem Value="@("PriceDesc")">Цена: по убыванию</MudSelectItem>
+                    <MudSelectItem Value="@("RatingDesc")">По рейтингу</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+
+        @if (_products == null)
+        {
+            <MudProgressCircular Indeterminate="true" />
+        }
+        else if (_products.Count == 0)
+        {
+            <MudAlert Severity="Severity.Info">Товары не найдены.</MudAlert>
+        }
+        else
+        {
+            <div class="card-grid">
+                @foreach (var product in _products)
+                {
+                    <MudPaper Elevation="2" Class="product-card">
+                        @if (ShowImage(product))
+                        {
+                            <div class="product-card-media">
+                                <img src="@product.ImageUrl" alt="@product.Name" loading="lazy"
+                                     @onerror="() => HideImage(product.Id)" />
+                            </div>
+                        }
+                        <div class="product-card-body">
+                            <MudText Typo="Typo.h6">@product.Name</MudText>
+                            <MudChip T="string" Size="Size.Small">@product.CategoryName</MudChip>
+                            @if (product.ReviewCount > 0)
+                            {
+                                <div class="stack-row">
+                                    <MudRating ReadOnly="true" MaxValue="5" SelectedValue="@((int)Math.Round(product.AverageRating))" />
+                                    <span class="text-muted">@product.AverageRating.ToString("0.0") (@product.ReviewCount)</span>
+                                </div>
+                            }
+                            <p class="product-desc">@product.Description</p>
+                            <span class="price">@product.Price.ToString("N0") ₽</span>
+                        </div>
+                        <div class="product-card-actions">
+                            <MudButton Href="@($"/catalog/{product.Id}")" Color="Color.Primary" Variant="Variant.Outlined">Подробнее</MudButton>
+                            <AuthorizeView>
+                                <Authorized>
+                                    <MudButton Color="Color.Primary" Variant="Variant.Filled"
+                                               OnClick="@(() => AddToCart(product.Id, product.Name))"
+                                               Disabled="@(_adding == product.Id)">
+                                        @(_adding == product.Id ? "..." : "В корзину")
+                                    </MudButton>
+                                </Authorized>
+                            </AuthorizeView>
+                        </div>
+                    </MudPaper>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<CategoryTreeItem>? _categoryTree;
+    private List<ProductListItem>? _products;
+    private int? _selectedCategoryId;
+    private string _search = "";
+    private string _sortKey = "Name";
+    private decimal? _minPrice;
+    private decimal? _maxPrice;
+    private int? _adding;
+    private string? _userId;
+    private readonly HashSet<int> _failedImages = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        _userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        _categoryTree = await CatalogService.GetCategoryTreeAsync();
+        await LoadProducts();
+    }
+
+    private async Task SelectCategory(int? categoryId)
+    {
+        _selectedCategoryId = categoryId;
+        await LoadProducts();
+    }
+
+    private async Task LoadProducts()
+    {
+        _products = await CatalogService.GetProductsAsync(
+            _selectedCategoryId,
+            string.IsNullOrWhiteSpace(_search) ? null : _search,
+            Enum.Parse<ProductSort>(_sortKey),
+            _minPrice,
+            _maxPrice);
+    }
+
+    private async Task AddToCart(int productId, string productName)
+    {
+        if (_userId == null) return;
+        _adding = productId;
+        await CartService.AddToCartAsync(_userId, productId);
+        Snackbar.Add($"«{productName}» добавлен в корзину", Severity.Success);
+        _adding = null;
+    }
+
+    private bool ShowImage(ProductListItem product) =>
+        !string.IsNullOrWhiteSpace(product.ImageUrl) && !_failedImages.Contains(product.Id);
+
+    private void HideImage(int productId)
+    {
+        if (_failedImages.Add(productId))
+            StateHasChanged();
+    }
+}

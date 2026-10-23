@@ -1,0 +1,32 @@
+@page "/Account/LoginWith2fa"
+@model BlazorErp.Pages.Account.LoginWith2faModel
+@{
+    ViewData["Title"] = "Двухфакторная аутентификация";
+    Layout = "_AccountLayout";
+}
+
+<div class="account-card">
+    <h2>Код аутентификатора</h2>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    <form method="post">
+        <div class="mb-3">
+            <label class="form-label">Код из приложения</label>
+            <input asp-for="Input.TwoFactorCode" class="form-control" autocomplete="off" />
+            <span asp-validation-for="Input.TwoFactorCode" class="text-danger"></span>
+        </div>
+        <div class="mb-3 form-check">
+            <input asp-for="Input.RememberMachine" class="form-check-input" />
+            <label asp-for="Input.RememberMachine" class="form-check-label">Запомнить устройство</label>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Подтвердить</button>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

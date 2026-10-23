@@ -1,0 +1,125 @@
+@page "/orders"
+@attribute [Authorize(Roles = RoleNames.Client)]
+@inject OrderService OrderService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+
+<PageTitle>Мои заказы</PageTitle>
+
+<MudText Typo="Typo.h3" Class="page-title">Мои заказы</MudText>
+
+@if (_orders == null)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (_orders.Count == 0)
+{
+    <MudAlert Severity="Severity.Info">Заказов пока нет.</MudAlert>
+}
+else
+{
+    <MudPaper Class="pa-4">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Номер</th>
+                    <th>Дата</th>
+                    <th>Сумма</th>
+                    <th>Статус</th>
+                    <th>Оплата</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in _orders)
+                {
+                    <tr class="order-row-clickable" @onclick="() => NavigateToOrder(order.Id)" style="cursor:pointer">
+                        <td>
+                            <MudLink Href="@($"/orders/{order.Id}")" Underline="Underline.Hover" Color="Color.Primary">
+                                @order.OrderNumber
+                            </MudLink>
+                        </td>
+                        <td>@order.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")</td>
+                        <td>@order.TotalAmount.ToString("N0") ₽</td>
+                        <td><MudChip T="string" Color="@GetStatusColor(order.Status)" Size="Size.Small">@GetStatusName(order.Status)</MudChip></td>
+                        <td>@GetPaymentStatus(order)</td>
+                        <td @onclick:stopPropagation="true">
+                            <div class="stack-row">
+                                <MudButton Href="@($"/orders/{order.Id}")" Variant="Variant.Text" Color="Color.Primary" Size="Size.Small">
+                                    Подробнее
+                                </MudButton>
+                                @if (order.Payment?.Status == PaymentStatus.Pending)
+                                {
+                                    <MudButton Href="@($"/orders/{order.Id}/pay")" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small">Оплатить</MudButton>
+                                }
+                                @if (order.Status == OrderStatus.Delivered && order.Review == null)
+                                {
+                                    <MudButton Href="@($"/orders/{order.Id}/review")" Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">Отзыв</MudButton>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                    @if (order.Status != OrderStatus.Pending && order.Status != OrderStatus.Cancelled)
+                    {
+                        <tr>
+                            <td colspan="6" class="text-muted" style="font-size:0.875rem;padding-top:0">
+                                <MudIcon Icon="@Icons.Material.Filled.Store" Size="Size.Small" Class="mr-1" />
+                                @if (order.Store != null)
+                                {
+                                    @:Магазин: @order.Store.Name@(!string.IsNullOrWhiteSpace(order.Store.Address) ? $", {order.Store.Address}" : "")
+                                }
+                                else
+                                {
+                                    @:Сборка: @WarehouseConstants.CentralWarehouseName, @WarehouseConstants.CentralWarehouseAddress
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </MudPaper>
+}
+
+@code {
+    private List<Order>? _orders;
+    private string? _userId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        _userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value!;
+        _orders = await OrderService.GetClientOrdersAsync(_userId);
+    }
+
+    private void NavigateToOrder(int orderId) => Navigation.NavigateTo($"/orders/{orderId}");
+
+    private static string GetStatusName(OrderStatus status) => status switch
+    {
+        OrderStatus.Pending => "Ожидает оплаты",
+        OrderStatus.Paid => "Оплачен",
+        OrderStatus.ReadyForDelivery => "Готов к доставке",
+        OrderStatus.Processing => "Обработка",
+        OrderStatus.Shipped => "Отправлен",
+        OrderStatus.InDelivery => "В доставке",
+        OrderStatus.Delivered => "Доставлен",
+        OrderStatus.Cancelled => "Отменён",
+        _ => status.ToString()
+    };
+
+    private static Color GetStatusColor(OrderStatus status) => status switch
+    {
+        OrderStatus.Delivered => Color.Success,
+        OrderStatus.ReadyForDelivery => Color.Info,
+        OrderStatus.Cancelled => Color.Default,
+        OrderStatus.Pending => Color.Warning,
+        _ => Color.Default
+    };
+
+    private static string GetPaymentStatus(Order order) => order.Payment?.Status switch
+    {
+        PaymentStatus.Completed => "Оплачен",
+        PaymentStatus.Failed => "Ошибка",
+        _ => "Ожидает"
+    };
+}

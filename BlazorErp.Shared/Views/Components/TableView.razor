@@ -1,0 +1,110 @@
+@inherits ViewInteractionComponentBase
+
+<MudPaper Class="pa-3 view-table" Elevation="1">
+    @if (!string.IsNullOrWhiteSpace(Data.Title))
+    {
+        <MudText Typo="Typo.h6" Class="mb-3">@Data.Title</MudText>
+    }
+
+    @if (Data.Rows.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info">Нет данных для отображения.</MudAlert>
+    }
+    else
+    {
+        <MudTable Items="Data.Rows" Dense="true" Hover="true" Striped="true" FixedHeader="true" Height="@Height"
+                  RowClassFunc="@GetTableRowClass">
+            <HeaderContent>
+                @foreach (var col in OrderedColumns)
+                {
+                    <MudTh>@col.Title</MudTh>
+                }
+            </HeaderContent>
+            <RowTemplate>
+                @{
+                    var row = context;
+                    var rowId = GetRowId(row);
+                    var colIndex = 0;
+                }
+                @foreach (var col in OrderedColumns)
+                {
+                    var isFirst = colIndex++ == 0;
+                    <MudTd DataLabel="@col.Title" @onclick="@(_ => SelectRowAsync(rowId, row))">
+                        @if (EnableDragDrop && isFirst)
+                        {
+                            <div draggable="true"
+                                 @ondragstart="@(e => HandleDragStart(e, rowId, row))"
+                                 @ondragover:preventDefault="true"
+                                 @ondragover="@(e => HandleDragOver(e, rowId, row))"
+                                 @ondrop="@(e => HandleDrop(e, rowId, row))">
+                                @ViewFormatHelper.FormatCell(row, col)
+                            </div>
+                        }
+                        else
+                        {
+                            @ViewFormatHelper.FormatCell(row, col)
+                        }
+                    </MudTd>
+                }
+            </RowTemplate>
+        </MudTable>
+
+        @if (OrderedColumns.Any(c => c.ShowSum))
+        {
+            <MudStack Row="true" Spacing="4" Class="mt-2">
+                @foreach (var col in OrderedColumns.Where(c => c.ShowSum))
+                {
+                    <MudText Typo="Typo.caption"><b>@col.Title:</b> @ViewFormatHelper.FormatSum(Data.Rows, col)</MudText>
+                }
+            </MudStack>
+        }
+    }
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public ViewTableData Data { get; set; } = new();
+    [Parameter] public string? RowIdField { get; set; }
+    [Parameter] public string Height { get; set; } = "420px";
+
+    private string? _dragSourceId;
+    private IReadOnlyDictionary<string, object?>? _dragSourceRow;
+
+    protected override void OnInitialized()
+    {
+        ViewKind = ViewKind.Table;
+    }
+
+    private IEnumerable<ViewColumnDefinition> OrderedColumns =>
+        Data.Columns.OrderBy(c => c.SortOrder).ThenBy(c => c.Title);
+
+    private string GetRowId(IReadOnlyDictionary<string, object?> row)
+    {
+        if (!string.IsNullOrWhiteSpace(RowIdField) && row.TryGetValue(RowIdField, out var id) && id != null)
+            return id.ToString()!;
+
+        return Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(string.Join('|', row.Values.Select(v => v?.ToString() ?? ""))));
+    }
+
+    private string GetTableRowClass(IReadOnlyDictionary<string, object?> row, int _) =>
+        GetRowClass(GetRowId(row));
+
+    private Task SelectRowAsync(string rowId, IReadOnlyDictionary<string, object?> row) =>
+        NotifySelectionAsync(rowId, row);
+
+    private async Task HandleDragStart(DragEventArgs _, string rowId, IReadOnlyDictionary<string, object?> row)
+    {
+        _dragSourceId = rowId;
+        _dragSourceRow = row;
+        await NotifyDragDropAsync(ViewDragDropPhase.DragStart, rowId, null, row);
+    }
+
+    private Task HandleDragOver(DragEventArgs _, string rowId, IReadOnlyDictionary<string, object?> row) =>
+        NotifyDragDropAsync(ViewDragDropPhase.DragOver, _dragSourceId, rowId, _dragSourceRow, row);
+
+    private async Task HandleDrop(DragEventArgs _, string rowId, IReadOnlyDictionary<string, object?> row)
+    {
+        await NotifyDragDropAsync(ViewDragDropPhase.Drop, _dragSourceId, rowId, _dragSourceRow, row);
+        _dragSourceId = null;
+        _dragSourceRow = null;
+    }
+}

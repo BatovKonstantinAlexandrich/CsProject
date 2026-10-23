@@ -1,0 +1,266 @@
+@page "/orders/{OrderId:int}"
+@attribute [Authorize(Roles = RoleNames.Client)]
+@inject OrderService OrderService
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Заказ @(_order?.OrderNumber ?? "")</PageTitle>
+
+@if (_order == null && !_notFound)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (_notFound)
+{
+    <MudAlert Severity="Severity.Error">Заказ не найден.</MudAlert>
+    <MudButton Href="/orders" Variant="Variant.Text" Class="mt-3">← К списку заказов</MudButton>
+}
+else
+{
+    var fulfillment = GetFulfillmentInfo(_order!);
+
+    <div class="stack mb-4">
+        <MudButton Href="/orders" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack">Мои заказы</MudButton>
+        <MudText Typo="Typo.h3" Class="page-title">Заказ @_order!.OrderNumber</MudText>
+    </div>
+
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" md="8">
+            <MudPaper Class="pa-4 mb-4">
+                <MudText Typo="Typo.h6" Class="mb-3">Информация о заказе</MudText>
+                <MudSimpleTable Dense="true" Hover="false" Bordered="false" Striped="false">
+                    <tbody>
+                        <tr>
+                            <td class="text-muted" style="width:40%">Дата</td>
+                            <td>@_order.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Статус</td>
+                            <td><MudChip T="string" Color="@GetStatusColor(_order.Status)" Size="Size.Small">@GetStatusName(_order.Status)</MudChip></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Оплата</td>
+                            <td>@GetPaymentStatus(_order)</td>
+                        </tr>
+                        @if (_order.Payment?.Status == PaymentStatus.Completed && !string.IsNullOrEmpty(_order.Payment.TransactionId))
+                        {
+                            <tr>
+                                <td class="text-muted">Транзакция</td>
+                                <td>@_order.Payment.TransactionId</td>
+                            </tr>
+                        }
+                        <tr>
+                            <td class="text-muted">Способ доставки</td>
+                            <td>@GetDeliveryMethodName(_order.DeliveryMethod)</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Адрес доставки</td>
+                            <td>@_order.DeliveryAddress</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Сумма</td>
+                            <td><strong>@_order.TotalAmount.ToString("N0") ₽</strong></td>
+                        </tr>
+                        @if (_order.DeliveredAt != null)
+                        {
+                            <tr>
+                                <td class="text-muted">Доставлен</td>
+                                <td>@_order.DeliveredAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            </MudPaper>
+
+            <MudPaper Class="pa-4 mb-4">
+                <MudText Typo="Typo.h6" Class="mb-3">Товары в заказе</MudText>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Товар</th>
+                            <th>Кол-во</th>
+                            <th>Цена</th>
+                            <th>Сумма</th>
+                            <th>Место сборки</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in _order.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@item.Product.Name</strong>
+                                    @if (item.Product.Brand != null)
+                                    {
+                                        <br /><span class="text-muted">@item.Product.Brand.Name</span>
+                                    }
+                                </td>
+                                <td>@item.Quantity</td>
+                                <td>@item.UnitPrice.ToString("N0") ₽</td>
+                                <td>@((item.UnitPrice * item.Quantity).ToString("N0")) ₽</td>
+                                <td>@FormatFulfillmentLocation(fulfillment)</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-end"><strong>Итого</strong></td>
+                            <td colspan="2"><strong>@_order.TotalAmount.ToString("N0") ₽</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-4 mb-4" Style="border-left: 4px solid var(--mud-palette-primary);">
+                <div class="stack-row mb-2">
+                    <MudIcon Icon="@Icons.Material.Filled.Store" Color="Color.Primary" />
+                    <MudText Typo="Typo.h6">Где находятся товары</MudText>
+                </div>
+                @if (_order.Status == OrderStatus.Pending)
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true" Class="mb-0">
+                        Магазин будет определён автоматически после оплаты — выбирается ближайший, где есть все товары.
+                    </MudAlert>
+                }
+                else
+                {
+                    <MudText Typo="Typo.subtitle1" Class="mb-1"><strong>@fulfillment.Name</strong></MudText>
+                    @if (!string.IsNullOrWhiteSpace(fulfillment.Address))
+                    {
+                        <MudText Typo="Typo.body2" Class="text-muted mb-2">@fulfillment.Address</MudText>
+                    }
+                    <MudText Typo="Typo.body2">@fulfillment.Hint</MudText>
+                }
+            </MudPaper>
+
+            @if (_order.DeliveryMethod == DeliveryMethod.TransportCompany
+                && _order.Status != OrderStatus.Pending
+                && _order.Status != OrderStatus.Cancelled)
+            {
+                <MudPaper Class="pa-4 mb-4">
+                    <MudText Typo="Typo.h6" Class="mb-3">Доставка</MudText>
+                    @if (!string.IsNullOrEmpty(_order.Delivery?.TrackingNumber))
+                    {
+                        <p class="mb-1"><span class="text-muted">Трек-номер:</span> @_order.Delivery.TrackingNumber</p>
+                    }
+                    @if (_order.Status == OrderStatus.ReadyForDelivery)
+                    {
+                        <MudAlert Severity="Severity.Info" Dense="true">Заказ собран и ожидает транспортную компанию.</MudAlert>
+                    }
+                    else if (_order.Status == OrderStatus.InDelivery)
+                    {
+                        <MudAlert Severity="Severity.Warning" Dense="true">Заказ в пути.</MudAlert>
+                    }
+                    else if (_order.Status == OrderStatus.Paid)
+                    {
+                        <MudAlert Severity="Severity.Info" Dense="true">Заказ оплачен, идёт сборка в @fulfillment.Name.</MudAlert>
+                    }
+                </MudPaper>
+            }
+
+            <MudPaper Class="pa-4">
+                <div class="stack">
+                    @if (_order.Payment?.Status == PaymentStatus.Pending)
+                    {
+                        <MudButton Href="@($"/orders/{_order.Id}/pay")" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true">
+                            Оплатить
+                        </MudButton>
+                    }
+                    @if (_order.Status == OrderStatus.Delivered && _order.Review == null)
+                    {
+                        <MudButton Href="@($"/orders/{_order.Id}/review")" Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true">
+                            Оставить отзыв
+                        </MudButton>
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    [Parameter] public int OrderId { get; set; }
+
+    private Order? _order;
+    private bool _notFound;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value!;
+        _order = await OrderService.GetClientOrderAsync(OrderId, userId);
+        _notFound = _order == null;
+    }
+
+    private sealed record FulfillmentInfo(string Name, string? Address, string Hint);
+
+    private static FulfillmentInfo GetFulfillmentInfo(Order order)
+    {
+        if (order.Store != null)
+        {
+            return new FulfillmentInfo(
+                order.Store.Name,
+                order.Store.Address,
+                "Все товары заказа находятся в этом магазине и будут собраны здесь.");
+        }
+
+        if (order.Status != OrderStatus.Pending && order.Status != OrderStatus.Cancelled)
+        {
+            return new FulfillmentInfo(
+                WarehouseConstants.CentralWarehouseName,
+                WarehouseConstants.CentralWarehouseAddress,
+                "Товары находятся на центральном складе и будут собраны там.");
+        }
+
+        return new FulfillmentInfo("—", null, "");
+    }
+
+    private static string FormatFulfillmentLocation(FulfillmentInfo info)
+    {
+        if (info.Name == "—")
+            return "После оплаты";
+
+        return string.IsNullOrWhiteSpace(info.Address)
+            ? info.Name
+            : $"{info.Name}, {info.Address}";
+    }
+
+    private static string GetStatusName(OrderStatus status) => status switch
+    {
+        OrderStatus.Pending => "Ожидает оплаты",
+        OrderStatus.Paid => "Оплачен",
+        OrderStatus.ReadyForDelivery => "Готов к доставке",
+        OrderStatus.Processing => "Обработка",
+        OrderStatus.Shipped => "Отправлен",
+        OrderStatus.InDelivery => "В доставке",
+        OrderStatus.Delivered => "Доставлен",
+        OrderStatus.Cancelled => "Отменён",
+        _ => status.ToString()
+    };
+
+    private static Color GetStatusColor(OrderStatus status) => status switch
+    {
+        OrderStatus.Delivered => Color.Success,
+        OrderStatus.ReadyForDelivery => Color.Info,
+        OrderStatus.InDelivery => Color.Warning,
+        OrderStatus.Cancelled => Color.Default,
+        OrderStatus.Pending => Color.Warning,
+        _ => Color.Default
+    };
+
+    private static string GetPaymentStatus(Order order) => order.Payment?.Status switch
+    {
+        PaymentStatus.Completed => "Оплачен",
+        PaymentStatus.Failed => "Ошибка",
+        _ => "Ожидает оплаты"
+    };
+
+    private static string GetDeliveryMethodName(DeliveryMethod method) => method switch
+    {
+        DeliveryMethod.Courier => "Курьер",
+        DeliveryMethod.Pickup => "Самовывоз",
+        DeliveryMethod.TransportCompany => "Транспортная компания",
+        _ => method.ToString()
+    };
+}

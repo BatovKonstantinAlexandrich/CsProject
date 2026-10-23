@@ -1,0 +1,63 @@
+@inherits ViewInteractionComponentBase
+
+<MudPaper Class="pa-3 view-list" Elevation="1">
+    @if (!string.IsNullOrWhiteSpace(Data.Title))
+    {
+        <MudText Typo="Typo.h6" Class="mb-3">@Data.Title</MudText>
+    }
+
+    @if (Data.Items.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info">Список пуст.</MudAlert>
+    }
+    else
+    {
+        <MudList T="ViewItemNode" Dense="true">
+            @foreach (var item in Data.Items)
+            {
+                <MudListItem T="ViewItemNode" Value="item"
+                             Icon="@item.Icon"
+                             Class="@GetRowClass(item.Id)"
+                             @onclick="@(_ => NotifySelectionAsync(item.Id, item))">
+                    <div draggable="@EnableDragDrop"
+                         @ondragstart="@(_ => HandleDragStart(item))"
+                         @ondragover:preventDefault="@EnableDragDrop"
+                         @ondragover="@(_ => HandleDragOver(item))"
+                         @ondrop="@(_ => HandleDrop(item))">
+                        <MudText Typo="Typo.body2">@item.Title</MudText>
+                        @if (!string.IsNullOrWhiteSpace(item.Subtitle))
+                        {
+                            <MudText Typo="Typo.caption" Class="text-muted">@item.Subtitle</MudText>
+                        }
+                    </div>
+                </MudListItem>
+            }
+        </MudList>
+    }
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public ViewListData Data { get; set; } = new();
+
+    private string? _dragSourceId;
+    private ViewItemNode? _dragSourceItem;
+
+    protected override void OnInitialized() => ViewKind = ViewKind.List;
+
+    private async Task HandleDragStart(ViewItemNode item)
+    {
+        _dragSourceId = item.Id;
+        _dragSourceItem = item;
+        await NotifyDragDropAsync(ViewDragDropPhase.DragStart, item.Id, null, item);
+    }
+
+    private Task HandleDragOver(ViewItemNode item) =>
+        NotifyDragDropAsync(ViewDragDropPhase.DragOver, _dragSourceId, item.Id, _dragSourceItem, item);
+
+    private async Task HandleDrop(ViewItemNode item)
+    {
+        await NotifyDragDropAsync(ViewDragDropPhase.Drop, _dragSourceId, item.Id, _dragSourceItem, item);
+        _dragSourceId = null;
+        _dragSourceItem = null;
+    }
+}

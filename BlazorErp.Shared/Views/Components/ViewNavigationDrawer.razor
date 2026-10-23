@@ -1,0 +1,81 @@
+@inherits ViewInteractionComponentBase
+
+<MudDrawer @bind-Open="_open" Anchor="@Anchor" Elevation="2" Variant="@Variant" Class="view-nav-drawer">
+    <MudDrawerHeader>
+        <MudText Typo="Typo.h6">@Title</MudText>
+    </MudDrawerHeader>
+    <MudNavMenu>
+        @foreach (var item in Items)
+        {
+            <MudNavLink Match="NavLinkMatch.All"
+                        Icon="@item.Icon"
+                        Class="@GetRowClass(item.Id)"
+                        @onclick="@(_ => SelectItemAsync(item))">
+                <span draggable="@EnableDragDrop"
+                      @ondragstart="@(_ => HandleDragStart(item))"
+                      @ondragover:preventDefault="@EnableDragDrop"
+                      @ondragover="@(_ => HandleDragOver(item))"
+                      @ondrop="@(_ => HandleDrop(item))">
+                    @item.Title
+                </span>
+            </MudNavLink>
+        }
+    </MudNavMenu>
+    @if (FooterContent != null)
+    {
+        <div class="pa-3">@FooterContent</div>
+    }
+</MudDrawer>
+
+@if (ShowToggleButton)
+{
+    <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="Toggle" />
+}
+
+@code {
+    [Parameter] public string Title { get; set; } = "Навигация";
+    [Parameter] public IList<ViewItemNode> Items { get; set; } = [];
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+    [Parameter] public Anchor Anchor { get; set; } = Anchor.Start;
+    [Parameter] public DrawerVariant Variant { get; set; } = DrawerVariant.Responsive;
+    [Parameter] public bool ShowToggleButton { get; set; } = true;
+    [Parameter] public RenderFragment? FooterContent { get; set; }
+
+    private bool _open;
+    private string? _dragSourceId;
+    private ViewItemNode? _dragSourceItem;
+
+    protected override void OnInitialized()
+    {
+        ViewKind = ViewKind.NavigationDrawer;
+        _open = Open;
+    }
+
+    protected override void OnParametersSet() => _open = Open;
+
+    private async Task Toggle()
+    {
+        _open = !_open;
+        await OpenChanged.InvokeAsync(_open);
+    }
+
+    private Task SelectItemAsync(ViewItemNode item) => NotifySelectionAsync(item.Id, item);
+
+    private async Task HandleDragStart(ViewItemNode item)
+    {
+        _dragSourceId = item.Id;
+        _dragSourceItem = item;
+        await NotifyDragDropAsync(ViewDragDropPhase.DragStart, item.Id, null, item);
+    }
+
+    private Task HandleDragOver(ViewItemNode item) =>
+        NotifyDragDropAsync(ViewDragDropPhase.DragOver, _dragSourceId, item.Id, _dragSourceItem, item);
+
+    private async Task HandleDrop(ViewItemNode item)
+    {
+        await NotifyDragDropAsync(ViewDragDropPhase.Drop, _dragSourceId, item.Id, _dragSourceItem, item);
+        _dragSourceId = null;
+        _dragSourceItem = null;
+    }
+}

@@ -1,0 +1,323 @@
+@page "/messages"
+@attribute [Authorize]
+@inject BlazorErp.Services.MessageService MessageService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IMessageComposeDraftService ComposeDraft
+@inject NavigationManager Navigation
+
+<PageTitle>Сообщения</PageTitle>
+
+<MudText Typo="Typo.h3" Class="page-title">Сообщения</MudText>
+
+<MudTabs ActivePanelIndex="_activePanelIndex" ActivePanelIndexChanged="OnActivePanelIndexChanged" Class="mb-4">
+    <MudTabPanel Text="@InboxLabel" />
+    <MudTabPanel Text="Отправленные" />
+    <MudTabPanel Text="Написать" />
+</MudTabs>
+
+@if (_tab == "compose")
+{
+    <MudPaper Elevation="2" Class="message-compose-card pa-4">
+        <MudText Typo="Typo.h5" Class="mb-3">Новое сообщение</MudText>
+        @if (!string.IsNullOrEmpty(_composeMessage))
+        {
+            <MudAlert Severity="Severity.Success" Class="mb-4">@_composeMessage</MudAlert>
+        }
+        <div class="stack">
+            <MudSelect T="string" @bind-Value="_recipientId" Label="Получатель" Variant="Variant.Outlined">
+                <MudSelectItem T="string" Value="@("")">Выберите...</MudSelectItem>
+                @foreach (var u in _users ?? [])
+                {
+                    <MudSelectItem T="string" Value="@u.Id">@u.FullName (@u.Email)</MudSelectItem>
+                }
+            </MudSelect>
+            <MudTextField @bind-Value="_subject" Label="Тема" Variant="Variant.Outlined" />
+            <MudTextField @bind-Value="_body" Label="Сообщение" Lines="5" Variant="Variant.Outlined" />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SendMessage">Отправить</MudButton>
+        </div>
+    </MudPaper>
+}
+else if (_selectedMessage != null)
+{
+    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="BackToList" Class="mb-3">
+        К списку
+    </MudButton>
+
+    <div class="stack-row mb-3">
+        <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete"
+                   OnClick="DeleteSelectedMessage" Disabled="_deleting">
+            Удалить переписку
+        </MudButton>
+    </div>
+
+    <MudPaper Elevation="2" Class="message-thread-card pa-4 mb-3">
+        <div class="message-card-top">
+            <MudText Typo="Typo.h5">@_selectedMessage.Subject</MudText>
+            @if (_tab == "sent")
+            {
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Filled"
+                         Color="@(_selectedMessage.IsRead ? Color.Success : Color.Default)">
+                    @(_selectedMessage.IsRead ? "Прочитано" : "Не прочитано")
+                </MudChip>
+            }
+            else if (_selectedMessage.IsRead)
+            {
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success">Прочитано</MudChip>
+            }
+        </div>
+        <div class="message-card-meta-row mt-2 mb-3">
+            <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="text-muted" />
+            <span class="text-muted">
+                @(_tab == "sent" ? $"Кому: {_selectedMessage.Recipient.FullName}" : $"От: {_selectedMessage.Sender.FullName}")
+            </span>
+            <span class="text-muted">@_selectedMessage.SentAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+        </div>
+        <MudDivider Class="mb-3" />
+        <MudText Typo="Typo.body1" Style="white-space: pre-wrap;">@_selectedMessage.Body</MudText>
+    </MudPaper>
+
+    @foreach (var reply in _selectedMessage.Replies.OrderBy(r => r.SentAt))
+    {
+        var isMine = reply.SenderId == _userId;
+        <MudPaper Elevation="1" Class="@($"message-reply-card pa-3 mb-2 {(isMine ? "message-reply-mine" : "message-reply-other")}")">
+            <div class="message-card-meta-row mb-2">
+                <MudIcon Icon="@Icons.Material.Filled.Reply" Size="Size.Small" Class="text-muted" />
+                <span class="text-muted">@reply.Sender.FullName</span>
+                <span class="text-muted">@reply.SentAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+            </div>
+            <MudText Typo="Typo.body2" Style="white-space: pre-wrap;">@reply.Body</MudText>
+        </MudPaper>
+    }
+
+    <MudPaper Elevation="2" Class="message-compose-card pa-4 mt-4">
+        <MudText Typo="Typo.h6" Class="mb-3">Ответить</MudText>
+        <MudTextField @bind-Value="_replyBody" Lines="3" Class="mb-3" Variant="Variant.Outlined" Placeholder="Ваш ответ..." />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SendReply">Отправить ответ</MudButton>
+    </MudPaper>
+}
+else
+{
+    @if (_messages == null)
+    {
+        <MudProgressCircular Indeterminate="true" />
+    }
+    else if (_messages.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info">Сообщений нет.</MudAlert>
+    }
+    else
+    {
+        <div class="message-cards">
+            @foreach (var msg in _messages)
+            {
+                var isInbox = _tab == "inbox";
+                <MudPaper Elevation="@(msg.IsRead ? 1 : 2)"
+                          Class="@($"message-card pa-0 {(isInbox && !msg.IsRead ? "message-card-unread" : "")}")"
+                          @onclick="@(() => OpenMessage(msg.Id))">
+                    <div class="message-card-inner">
+                        <div class="message-card-icon">
+                            <MudIcon Icon="@(isInbox ? Icons.Material.Filled.Inbox : Icons.Material.Filled.Send)"
+                                     Color="@(isInbox && !msg.IsRead ? Color.Primary : Color.Default)" />
+                        </div>
+                        <div class="message-card-content">
+                            <div class="message-card-top">
+                                <MudText Typo="Typo.subtitle1" Class="message-card-subject">@msg.Subject</MudText>
+                                @if (!isInbox)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Filled"
+                                             Color="@(msg.IsRead ? Color.Success : Color.Default)">
+                                        @(msg.IsRead ? "Прочитано" : "Не прочитано")
+                                    </MudChip>
+                                }
+                                else if (msg.IsRead)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success">Прочитано</MudChip>
+                                }
+                                else
+                                {
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary">Новое</MudChip>
+                                }
+                            </div>
+                            <MudText Typo="Typo.body2" Class="message-card-preview text-muted">
+                                @GetPreview(msg.Body)
+                            </MudText>
+                            <div class="message-card-meta-row">
+                                <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="text-muted" />
+                                <span class="text-muted">
+                                    @(isInbox ? msg.Sender.FullName : msg.Recipient.FullName)
+                                </span>
+                                <span class="message-card-date text-muted">
+                                    @msg.SentAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                </span>
+                            </div>
+                        </div>
+                        <div class="message-card-actions" @onclick:stopPropagation="true">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                           title="Удалить"
+                                           Disabled="_deletingId == msg.Id"
+                                           OnClick="@(() => DeleteMessage(msg.Id))" />
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Class="message-card-chevron text-muted" />
+                    </div>
+                </MudPaper>
+            }
+        </div>
+    }
+}
+
+@code {
+    private string _tab = "inbox";
+    private int _activePanelIndex;
+    private List<BlazorErp.Models.Message>? _messages;
+    private BlazorErp.Models.Message? _selectedMessage;
+    private List<ApplicationUser>? _users;
+    private string? _userId;
+    private int _unread;
+    private string _recipientId = "";
+    private string _subject = "";
+    private string _body = "";
+    private string _replyBody = "";
+    private string? _composeMessage;
+    private int? _deletingId;
+    private bool _deleting;
+
+    private string InboxLabel => _unread > 0 ? $"Входящие ({_unread})" : "Входящие";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        _userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value!;
+
+        var openCompose = Navigation.Uri.Contains("compose=1", StringComparison.OrdinalIgnoreCase);
+        if (ComposeDraft.TryTakeDraft(out var draftSubject, out var draftBody) || openCompose)
+        {
+            _tab = "compose";
+            _activePanelIndex = 2;
+            if (!string.IsNullOrEmpty(draftSubject))
+                _subject = draftSubject;
+            if (!string.IsNullOrEmpty(draftBody))
+                _body = draftBody;
+            _users = await MessageService.GetUsersForMessagingAsync(_userId!);
+        }
+
+        await LoadMessages();
+        _unread = await MessageService.GetUnreadCountAsync(_userId!);
+    }
+
+    private async Task OnActivePanelIndexChanged(int index)
+    {
+        _activePanelIndex = index;
+        _tab = index switch { 1 => "sent", 2 => "compose", _ => "inbox" };
+        _selectedMessage = null;
+        if (_tab == "compose")
+            _users = await MessageService.GetUsersForMessagingAsync(_userId!);
+        else
+            await LoadMessages();
+    }
+
+    private async Task LoadMessages()
+    {
+        _messages = _tab == "sent"
+            ? await MessageService.GetSentAsync(_userId!)
+            : await MessageService.GetInboxAsync(_userId!);
+    }
+
+    private async Task OpenMessage(int id)
+    {
+        _selectedMessage = await MessageService.GetMessageThreadAsync(id, _userId!);
+        _unread = await MessageService.GetUnreadCountAsync(_userId!);
+
+        var item = _messages?.FirstOrDefault(m => m.Id == id);
+        if (item != null)
+            item.IsRead = true;
+    }
+
+    private async Task BackToList()
+    {
+        _selectedMessage = null;
+        await LoadMessages();
+        _unread = await MessageService.GetUnreadCountAsync(_userId!);
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrEmpty(_recipientId) || string.IsNullOrWhiteSpace(_subject) || string.IsNullOrWhiteSpace(_body))
+            return;
+
+        await MessageService.SendMessageAsync(_userId!, _recipientId, _subject, _body);
+        _composeMessage = "Сообщение отправлено.";
+        _subject = "";
+        _body = "";
+        _recipientId = "";
+    }
+
+    private async Task SendReply()
+    {
+        if (_selectedMessage == null || string.IsNullOrWhiteSpace(_replyBody))
+            return;
+
+        var recipientId = _selectedMessage.SenderId == _userId
+            ? _selectedMessage.RecipientId
+            : _selectedMessage.SenderId;
+
+        await MessageService.SendMessageAsync(
+            _userId!, recipientId, $"Re: {_selectedMessage.Subject}", _replyBody, _selectedMessage.Id);
+
+        _replyBody = "";
+        _selectedMessage = await MessageService.GetMessageThreadAsync(_selectedMessage.Id, _userId!);
+    }
+
+    private async Task DeleteMessage(int id)
+    {
+        if (_userId == null)
+            return;
+
+        _deletingId = id;
+        try
+        {
+            if (await MessageService.DeleteMessageAsync(id, _userId))
+            {
+                if (_selectedMessage?.Id == id)
+                    _selectedMessage = null;
+
+                await LoadMessages();
+                _unread = await MessageService.GetUnreadCountAsync(_userId);
+            }
+        }
+        finally
+        {
+            _deletingId = null;
+        }
+    }
+
+    private async Task DeleteSelectedMessage()
+    {
+        if (_selectedMessage == null || _userId == null)
+            return;
+
+        _deleting = true;
+        try
+        {
+            var id = _selectedMessage.Id;
+            if (await MessageService.DeleteMessageAsync(id, _userId))
+            {
+                _selectedMessage = null;
+                await LoadMessages();
+                _unread = await MessageService.GetUnreadCountAsync(_userId);
+            }
+        }
+        finally
+        {
+            _deleting = false;
+        }
+    }
+
+    private static string GetPreview(string body)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+            return "—";
+
+        var line = body.ReplaceLineEndings(" ").Trim();
+        return line.Length > 120 ? line[..120] + "…" : line;
+    }
+}

@@ -1,0 +1,146 @@
+﻿<MudNavMenu Class="nav-menu" Margin="Margin.Dense">
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Главная</MudNavLink>
+
+    <AuthorizeView Roles="@RoleNames.Client">
+        <Authorized>
+            <MudNavLink Href="catalog" Icon="@Icons.Material.Filled.GridView">Каталог</MudNavLink>
+            <MudNavLink Href="cart" Icon="@Icons.Material.Filled.ShoppingCart">Корзина</MudNavLink>
+            <MudNavLink Href="orders" Icon="@Icons.Material.Filled.ReceiptLong">Мои заказы</MudNavLink>
+            <MudNavLink Href="client/sto-booking" Icon="@Icons.Material.Filled.CarRepair">Запись на СТО</MudNavLink>
+        </Authorized>
+    </AuthorizeView>
+
+    <AuthorizeView Roles="@RoleNames.TransportCompany">
+        <Authorized>
+            <MudNavLink Href="transport" Icon="@Icons.Material.Filled.LocalShipping">Доставка</MudNavLink>
+        </Authorized>
+    </AuthorizeView>
+
+    <AuthorizeView Roles="@RoleNames.StoreOwner">
+        <Authorized>
+            <MudNavGroup Title="Мой магазин" Icon="@Icons.Material.Filled.Store" Expanded="true">
+                <MudNavLink Href="store?tab=inventory" Icon="@Icons.Material.Filled.Inventory2">Наличие</MudNavLink>
+                <MudNavLink Href="store?tab=preparation" Icon="@Icons.Material.Filled.Construction">Сборка заказов</MudNavLink>
+                <MudNavLink Href="store?tab=suppliers" Icon="@Icons.Material.Filled.LocalShipping">Поставщики</MudNavLink>
+                <MudNavLink Href="store?tab=procurement" Icon="@Icons.Material.Filled.ShoppingBag">Закупки</MudNavLink>
+                <MudNavLink Href="store?tab=statistics" Icon="@Icons.Material.Filled.BarChart">Статистика</MudNavLink>
+                <MudNavLink Href="manager/reports" Icon="@Icons.Material.Filled.Assessment">Отчёты</MudNavLink>
+                <MudNavLink Href="store?tab=profile" Icon="@Icons.Material.Filled.Info">О магазине</MudNavLink>
+                <MudNavLink Href="store?tab=staff-requests" Icon="@Icons.Material.Filled.GroupAdd">Заявки сотрудников</MudNavLink>
+            </MudNavGroup>
+        </Authorized>
+    </AuthorizeView>
+
+    <AuthorizeView Roles="@RoleNames.Cashier">
+        <Authorized>
+            <MudNavLink Href="cashier" Icon="@Icons.Material.Filled.PointOfSale">Касса</MudNavLink>
+        </Authorized>
+    </AuthorizeView>
+
+    <AuthorizeView Roles="@($"{RoleNames.Seller},{RoleNames.Cashier}")">
+        <Authorized Context="storeStaffAuth">
+            @if (!storeStaffAuth.User.IsInRole(RoleNames.StoreOwner))
+            {
+                <MudNavGroup Title="Мой магазин" Icon="@Icons.Material.Filled.Store" Expanded="true">
+                    <MudNavLink Href="store?tab=inventory" Icon="@Icons.Material.Filled.Inventory2">Наличие</MudNavLink>
+                    <MudNavLink Href="store?tab=preparation" Icon="@Icons.Material.Filled.Construction">Сборка заказов</MudNavLink>
+                </MudNavGroup>
+            }
+        </Authorized>
+    </AuthorizeView>
+
+    @if (_showPendingStoreNav)
+    {
+        <MudNavLink Href="store" Icon="@Icons.Material.Filled.Store">Мой магазин</MudNavLink>
+    }
+
+    <AuthorizeView Roles="@($"{RoleNames.AutoServiceOwner},{string.Join(",", AutoServiceStaffRoles.All)}")">
+        <Authorized>
+            <MudNavLink Href="autoservice" Icon="@Icons.Material.Filled.CarRepair">Автосервис</MudNavLink>
+        </Authorized>
+    </AuthorizeView>
+    @if (_showPendingAutoServiceNav)
+    {
+        <MudNavLink Href="autoservice" Icon="@Icons.Material.Filled.CarRepair">Автосервис</MudNavLink>
+    }
+
+    <AuthorizeView Roles="@RoleNames.Supplier">
+        <Authorized>
+            <MudNavLink Href="supplier" Icon="@Icons.Material.Filled.Inventory">Поставщик</MudNavLink>
+        </Authorized>
+    </AuthorizeView>
+
+    <AuthorizeView Roles="@RoleNames.Marketing">
+        <Authorized>
+            <MudNavLink Href="marketing/mailings" Icon="@Icons.Material.Filled.Campaign">Настройки рассылок</MudNavLink>
+        </Authorized>
+    </AuthorizeView>
+
+    <AuthorizeView Roles="@RoleNames.Analyst">
+        <Authorized>
+            <MudNavLink Href="analyst" Icon="@Icons.Material.Filled.Analytics">Аналитика</MudNavLink>
+        </Authorized>
+    </AuthorizeView>
+
+    <AuthorizeView Roles="@($"{RoleNames.Admin},{RoleNames.Developer}")">
+        <Authorized>
+            <MudNavLink Href="admin" Icon="@Icons.Material.Filled.AdminPanelSettings">Администрирование</MudNavLink>
+        </Authorized>
+    </AuthorizeView>
+
+    <AuthorizeView>
+        <Authorized>
+            <MudDivider Class="my-2" />
+            <MudNavLink Href="messages" Icon="@Icons.Material.Filled.Mail">Сообщения</MudNavLink>
+            <MudNavLink Href="account" Icon="@Icons.Material.Filled.Person">Личный кабинет</MudNavLink>
+        </Authorized>
+        <NotAuthorized>
+            <MudDivider Class="my-2" />
+            <MudNavLink Href="Account/Login" Icon="@Icons.Material.Filled.Login">Вход</MudNavLink>
+            <MudNavLink Href="Account/Register" Icon="@Icons.Material.Filled.PersonAdd">Регистрация</MudNavLink>
+        </NotAuthorized>
+    </AuthorizeView>
+</MudNavMenu>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationState { get; set; }
+
+    [Inject] private SellerRegistrationService SellerRegistrationService { get; set; } = null!;
+    [Inject] private CashierRegistrationService CashierRegistrationService { get; set; } = null!;
+    [Inject] private AutoServiceEmployeeRegistrationService AutoServiceEmployeeRegistrationService { get; set; } = null!;
+
+    private bool _showPendingStoreNav;
+    private bool _showPendingAutoServiceNav;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (AuthenticationState == null)
+            return;
+
+        var auth = await AuthenticationState;
+        var user = auth.User;
+        _showPendingStoreNav = false;
+        _showPendingAutoServiceNav = false;
+
+        if (user.Identity?.IsAuthenticated != true)
+            return;
+
+        if (user.IsInRole(RoleNames.StoreOwner) || user.IsInRole(RoleNames.Seller) || user.IsInRole(RoleNames.Cashier))
+            return;
+
+        if (user.IsInRole(RoleNames.AutoServiceOwner) || AutoServiceStaffRoles.All.Any(user.IsInRole))
+            return;
+
+        var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null)
+            return;
+
+        var pendingSeller = await SellerRegistrationService.GetPendingRequestForUserAsync(userId);
+        var pendingCashier = await CashierRegistrationService.GetPendingRequestForUserAsync(userId);
+        _showPendingStoreNav = pendingSeller != null || pendingCashier != null;
+
+        var pendingAutoService = await AutoServiceEmployeeRegistrationService.GetPendingRequestForUserAsync(userId);
+        _showPendingAutoServiceNav = pendingAutoService != null;
+    }
+}

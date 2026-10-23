@@ -1,0 +1,23 @@
+@using BlazorErp.Models.Catalog
+
+<MudPaper Elevation="2" Class="category-tree pa-4 mb-4">
+    <MudButton Color="@(SelectedCategoryId == null ? Color.Primary : Color.Default)"
+               Variant="@(SelectedCategoryId == null ? Variant.Filled : Variant.Text)"
+               Class="category-tree-item"
+               OnClick="@(() => OnCategorySelected.InvokeAsync(null))">
+        Все категории
+    </MudButton>
+    @foreach (var node in Items)
+    {
+        <CategoryTreeNode Node="node"
+                          Level="0"
+                          SelectedCategoryId="SelectedCategoryId"
+                          OnCategorySelected="OnCategorySelected" />
+    }
+</MudPaper>
+
+@code {
+    [Parameter] public List<CategoryTreeItem> Items { get; set; } = [];
+    [Parameter] public int? SelectedCategoryId { get; set; }
+    [Parameter] public EventCallback<int?> OnCategorySelected { get; set; }
+}

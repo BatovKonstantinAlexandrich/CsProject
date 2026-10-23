@@ -1,0 +1,79 @@
+@page "/orders/{OrderId:int}/review"
+@attribute [Authorize(Roles = RoleNames.Client)]
+@inject OrderService OrderService
+@inject ReviewService ReviewService
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Отзыв</PageTitle>
+
+@if (_order == null && !_notFound)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (_notFound || _order!.Status != OrderStatus.Delivered)
+{
+    <MudAlert Severity="Severity.Warning">Нельзя оставить отзыв для этого заказа.</MudAlert>
+}
+else if (_submitted)
+{
+    <MudAlert Severity="Severity.Success" Class="mb-4">Спасибо за отзыв!</MudAlert>
+    <MudButton Href="/orders" Variant="Variant.Filled" Color="Color.Primary">К заказам</MudButton>
+}
+else
+{
+    <MudText Typo="Typo.h3" Class="page-title">Отзыв о заказе @_order.OrderNumber</MudText>
+    <MudPaper Class="fluent-card-padded pa-4" Style="max-width:480px">
+        <EditForm Model="_model" OnValidSubmit="Submit">
+            <DataAnnotationsValidator />
+            <div class="stack">
+                <MudNumericField T="int" @bind-Value="_model.Rating" Label="Оценка (1-5)" Min="1" Max="5" Variant="Variant.Outlined" />
+                <ValidationMessage For="() => _model.Rating" />
+                <MudTextField @bind-Value="_model.Comment" Label="Комментарий" Lines="4" Variant="Variant.Outlined" />
+                <ValidationMessage For="() => _model.Comment" />
+                @if (!string.IsNullOrEmpty(_error))
+                {
+                    <MudAlert Severity="Severity.Error">@_error</MudAlert>
+                }
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Отправить отзыв</MudButton>
+            </div>
+        </EditForm>
+    </MudPaper>
+}
+
+@code {
+    [Parameter] public int OrderId { get; set; }
+
+    private Order? _order;
+    private bool _notFound;
+    private bool _submitted;
+    private string? _userId;
+    private string? _error;
+    private ReviewModel _model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        _userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value!;
+        _order = await OrderService.GetOrderAsync(OrderId);
+        if (_order == null || _order.ClientId != _userId)
+            _notFound = true;
+    }
+
+    private async Task Submit()
+    {
+        var review = await ReviewService.CreateReviewAsync(OrderId, _userId!, _model.Rating, _model.Comment);
+        if (review == null)
+            _error = "Не удалось сохранить отзыв.";
+        else
+            _submitted = true;
+    }
+
+    private class ReviewModel
+    {
+        [System.ComponentModel.DataAnnotations.Range(1, 5)]
+        public int Rating { get; set; } = 5;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Введите комментарий")]
+        public string Comment { get; set; } = "";
+    }
+}

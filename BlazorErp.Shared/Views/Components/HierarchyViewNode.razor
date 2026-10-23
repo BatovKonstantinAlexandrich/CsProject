@@ -1,0 +1,45 @@
+@{
+    var padding = Level * 16;
+}
+
+<MudButton Variant="Variant.Text"
+           Class="@($"justify-start view-hierarchy-node {GetRowClass(Node.Id)}")"
+           Style="@($"padding-left:{padding}px; width:100%;")"
+           StartIcon="@(Node.Icon ?? Icons.Material.Filled.AccountTree)"
+           @onclick="@(_ => OnSelect.InvokeAsync(Node))">
+    <div class="text-start"
+         draggable="@EnableDragDrop"
+         @ondragstart="@(_ => OnDragStart.InvokeAsync(Node))"
+         @ondragover:preventDefault="@EnableDragDrop"
+         @ondragover="@(_ => OnDragOver.InvokeAsync(Node))"
+         @ondrop="@(_ => OnDrop.InvokeAsync(Node))">
+        <MudText Typo="Typo.body2">@Node.Title</MudText>
+        @if (!string.IsNullOrWhiteSpace(Node.Subtitle))
+        {
+            <MudText Typo="Typo.caption" Class="text-muted">@Node.Subtitle</MudText>
+        }
+    </div>
+</MudButton>
+
+@foreach (var child in Node.Children)
+{
+    <HierarchyViewNode Node="child"
+                       Level="@(Level + 1)"
+                       EnableDragDrop="EnableDragDrop"
+                       GetRowClass="GetRowClass"
+                       OnSelect="OnSelect"
+                       OnDragStart="OnDragStart"
+                       OnDragOver="OnDragOver"
+                       OnDrop="OnDrop" />
+}
+
+@code {
+    [Parameter, EditorRequired] public ViewItemNode Node { get; set; } = new();
+    [Parameter] public int Level { get; set; }
+    [Parameter] public bool EnableDragDrop { get; set; }
+    [Parameter] public Func<string?, string> GetRowClass { get; set; } = _ => string.Empty;
+    [Parameter] public EventCallback<ViewItemNode> OnSelect { get; set; }
+    [Parameter] public EventCallback<ViewItemNode> OnDragStart { get; set; }
+    [Parameter] public EventCallback<ViewItemNode> OnDragOver { get; set; }
+    [Parameter] public EventCallback<ViewItemNode> OnDrop { get; set; }
+}

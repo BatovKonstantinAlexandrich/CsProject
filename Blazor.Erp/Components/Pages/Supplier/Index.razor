@@ -1,0 +1,183 @@
+@page "/supplier"
+@attribute [Authorize(Roles = RoleNames.Supplier)]
+@inject SupplierService SupplierService
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Поставщик</PageTitle>
+
+<MudText Typo="Typo.h3" Class="page-title">Панель поставщика</MudText>
+
+@if (_supplier == null && !_loaded)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (_supplier == null)
+{
+    <MudAlert Severity="Severity.Warning">Профиль поставщика не найден.</MudAlert>
+}
+else
+{
+    <MudPaper Class="fluent-card-padded pa-4 mb-4">
+        <MudText Typo="Typo.h5">@_supplier.Name</MudText>
+        @if (!string.IsNullOrWhiteSpace(_supplier.ContactInfo))
+        {
+            <p class="text-muted">@_supplier.ContactInfo</p>
+        }
+        <p class="mt-3 mb-2"><strong>Доступные бренды</strong></p>
+        <div class="stack-row mb-3">
+            @foreach (var brand in _supplier.Brands)
+            {
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@brand.Brand.Name</MudChip>
+            }
+        </div>
+        <MudAlert Severity="Severity.Info">
+            Вы можете продавать владельцам магазинов только товары указанных брендов.
+        </MudAlert>
+    </MudPaper>
+
+    <MudTabs ActivePanelIndex="_activePanelIndex" ActivePanelIndexChanged="OnActivePanelIndexChanged" Class="mb-4">
+        <MudTabPanel Text="Склад" />
+        <MudTabPanel Text="@OrdersTabLabel" />
+    </MudTabs>
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <MudAlert Severity="Severity.Success" Class="mb-4">@_message</MudAlert>
+    }
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
+    }
+
+    @if (_activePanelIndex == 0)
+    {
+        <MudText Typo="Typo.h5" Class="section-title">Товары по вашим брендам</MudText>
+        @if (_stock == null)
+        {
+            <MudProgressCircular Indeterminate="true" />
+        }
+        else if (_stock.Count == 0)
+        {
+            <MudAlert Severity="Severity.Info">Товары не назначены.</MudAlert>
+        }
+        else
+        {
+            <MudPaper Class="pa-4">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Товар</th>
+                            <th>Бренд</th>
+                            <th>Опт. цена</th>
+                            <th>На складе</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in _stock)
+                        {
+                            <tr>
+                                <td>@item.Product.Name</td>
+                                <td>@item.Product.Brand?.Name</td>
+                                <td>@item.UnitPrice.ToString("N0") ₽</td>
+                                <td>@item.StockQuantity</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </MudPaper>
+        }
+    }
+    else
+    {
+        @if (_orders == null)
+        {
+            <MudProgressCircular Indeterminate="true" />
+        }
+        else if (_orders.Count == 0)
+        {
+            <MudAlert Severity="Severity.Info">Заказов от магазинов пока нет.</MudAlert>
+        }
+        else
+        {
+            <div class="stack">
+                @foreach (var order in _orders)
+                {
+                    <MudPaper Class="fluent-card-padded pa-4">
+                        <p>
+                            Заказ #@order.Id — @order.Store.Name — @order.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                        </p>
+                        <p class="text-muted mb-2">@order.Store.Address</p>
+                        <MudChip T="string" Color="@(order.Status == OrderStatus.Pending ? Color.Default : Color.Primary)" Size="Size.Small" Class="mb-2">
+                            @order.Status
+                        </MudChip>
+                        <ul>
+                            @foreach (var item in order.Items)
+                            {
+                                <li>@item.Product.Name (@item.Product.Brand?.Name) × @item.Quantity — @((item.UnitPrice * item.Quantity).ToString("N0")) ₽</li>
+                            }
+                        </ul>
+                        <p class="mt-2"><strong>Итого: @order.TotalAmount.ToString("N0") ₽</strong></p>
+                        @if (order.Status == OrderStatus.Pending)
+                        {
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-2"
+                                       OnClick="@(() => ConfirmOrder(order.Id))">Подтвердить отгрузку</MudButton>
+                        }
+                    </MudPaper>
+                }
+            </div>
+        }
+    }
+}
+
+@code {
+    private Supplier? _supplier;
+    private List<SupplierProduct>? _stock;
+    private List<SupplierOrder>? _orders;
+    private string? _userId;
+    private int _activePanelIndex;
+    private int _pendingOrders;
+    private bool _loaded;
+    private string? _message;
+    private string? _error;
+
+    private string OrdersTabLabel => _pendingOrders > 0 ? $"Заказы магазинов ({_pendingOrders})" : "Заказы магазинов";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        _userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value!;
+        _supplier = await SupplierService.GetSupplierByOwnerAsync(_userId!);
+        _stock = await SupplierService.GetSupplierStockAsync(_userId!);
+        _loaded = true;
+    }
+
+    private async Task OnActivePanelIndexChanged(int index)
+    {
+        _activePanelIndex = index;
+        if (index == 1)
+            await LoadOrders();
+    }
+
+    private async Task LoadOrders()
+    {
+        _orders = await SupplierService.GetIncomingOrdersAsync(_userId!);
+        _pendingOrders = _orders.Count(o => o.Status == OrderStatus.Pending);
+    }
+
+    private async Task ConfirmOrder(int orderId)
+    {
+        _message = null;
+        _error = null;
+        try
+        {
+            var ok = await SupplierService.ConfirmOrderAsync(orderId, _userId!);
+            _message = ok ? "Заказ подтверждён, товар отгружен в магазин." : "Не удалось подтвердить заказ.";
+            _stock = await SupplierService.GetSupplierStockAsync(_userId!);
+            await LoadOrders();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+}

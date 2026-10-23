@@ -1,0 +1,63 @@
+﻿@page "/"
+@inject NewsService NewsService
+
+<PageTitle>BlazorErp — Главная</PageTitle>
+
+<div class="page-hero">
+    <MudText Typo="Typo.h4" Class="page-title">BlazorErp</MudText>
+    <p class="mb-4">
+        Система управления заказами, доставкой и продажами
+    </p>
+</div>
+
+<MudText Typo="Typo.h5" Class="section-title">Новости системы</MudText>
+
+@if (_news == null)
+{
+    <MudProgressCircular Indeterminate="true" Class="mb-2" />
+    <p class="text-muted">Загрузка...</p>
+}
+else if (_news.Count == 0)
+{
+    <MudAlert Severity="Severity.Info">Новостей пока нет.</MudAlert>
+}
+else
+{
+    <div class="stack">
+        @foreach (var item in _news)
+        {
+            <MudPaper Elevation="2" Class="pa-4 mb-4">
+                <MudText Typo="Typo.h6">@item.Title</MudText>
+                <p class="mb-2">@item.Content</p>
+                <NewsAttachmentsDisplay Attachments="item.Attachments" />
+                <div class="stack-row text-muted">
+                    <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" />
+                    <span>@item.PublishedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm") — @item.Author.FullName</span>
+                </div>
+            </MudPaper>
+        }
+    </div>
+}
+
+<div class="stack-row mt-4">
+    <AuthorizeView>
+        <NotAuthorized>
+            <MudButton Href="/Account/Login" Color="Color.Primary" Variant="Variant.Filled">Войти</MudButton>
+            <MudButton Href="/Account/Register" Color="Color.Primary" Variant="Variant.Outlined">Регистрация</MudButton>
+        </NotAuthorized>
+    </AuthorizeView>
+    <AuthorizeView Roles="@RoleNames.Client">
+        <Authorized>
+            <MudButton Href="/catalog" Color="Color.Primary" Variant="Variant.Filled">Перейти в каталог</MudButton>
+        </Authorized>
+    </AuthorizeView>
+</div>
+
+@code {
+    private List<NewsItem>? _news;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _news = await NewsService.GetPublishedNewsAsync();
+    }
+}

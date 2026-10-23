@@ -1,0 +1,41 @@
+@inherits ViewInteractionComponentBase
+
+<MudPaper Class="pa-3 view-chart" Elevation="1">
+    @if (!string.IsNullOrWhiteSpace(Data.Title))
+    {
+        <MudText Typo="Typo.h6" Class="mb-3">@Data.Title</MudText>
+    }
+
+    @if (Data.Labels.Length == 0 || Data.Series.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info">Нет данных для диаграммы.</MudAlert>
+    }
+    else
+    {
+        <MudChart ChartType="@ViewFormatHelper.ToMudChartType(Data.ChartType)"
+                  Labels="@Data.Labels"
+                  ChartSeries="@_mudSeries"
+                  Width="100%"
+                  Height="@Height"
+                  @onclick="HandleChartClick" />
+    }
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public ViewChartData Data { get; set; } = new();
+    [Parameter] public string Height { get; set; } = "360px";
+
+    private List<ChartSeries> _mudSeries = [];
+
+    protected override void OnInitialized() => ViewKind = ViewKind.Chart;
+
+    protected override void OnParametersSet()
+    {
+        _mudSeries = Data.Series
+            .Select(s => new ChartSeries { Name = s.Name, Data = s.Values })
+            .ToList();
+    }
+
+    private Task HandleChartClick() =>
+        NotifySelectionAsync(null, Data, additive: false);
+}

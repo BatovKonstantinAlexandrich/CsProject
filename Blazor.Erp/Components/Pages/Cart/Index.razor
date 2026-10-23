@@ -1,0 +1,82 @@
+@page "/cart"
+@attribute [Authorize(Roles = RoleNames.Client)]
+@inject CartService CartService
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Корзина</PageTitle>
+
+<MudText Typo="Typo.h4" Class="page-title">Корзина</MudText>
+
+@if (_items == null)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (_items.Count == 0)
+{
+    <MudAlert Severity="Severity.Info" Class="mb-4">Корзина пуста.</MudAlert>
+    <MudButton Href="/catalog" Color="Color.Primary" Variant="Variant.Filled">Перейти в каталог</MudButton>
+}
+else
+{
+    <MudPaper Elevation="2" Class="mb-4">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Товар</th>
+                    <th>Цена</th>
+                    <th>Кол-во</th>
+                    <th>Сумма</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in _items)
+                {
+                    <tr>
+                        <td>@item.Product.Name</td>
+                        <td>@item.Product.Price.ToString("N0") ₽</td>
+                        <td>
+                            <InputNumber @bind-Value="item.Quantity" min="1" max="@item.Product.StockQuantity"
+                                         @bind-Value:after="@(() => UpdateQty(item.Id, item.Quantity))" class="number-input" />
+                        </td>
+                        <td>@((item.Product.Price * item.Quantity).ToString("N0")) ₽</td>
+                        <td>
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Variant="Variant.Text"
+                                           OnClick="@(() => Remove(item.Id))" />
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </MudPaper>
+
+    <div class="stack-row-between mb-4">
+        <MudText Typo="Typo.h6">Итого: @_items.Sum(i => i.Product.Price * i.Quantity).ToString("N0") ₽</MudText>
+        <MudButton Href="/checkout" Color="Color.Primary" Variant="Variant.Filled">Оформить заказ</MudButton>
+    </div>
+}
+
+@code {
+    private List<CartItem>? _items;
+    private string? _userId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        _userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value!;
+        _items = await CartService.GetCartAsync(_userId);
+    }
+
+    private async Task UpdateQty(int cartItemId, int qty)
+    {
+        await CartService.UpdateQuantityAsync(_userId!, cartItemId, qty);
+        _items = await CartService.GetCartAsync(_userId!);
+    }
+
+    private async Task Remove(int cartItemId)
+    {
+        await CartService.RemoveFromCartAsync(_userId!, cartItemId);
+        _items = await CartService.GetCartAsync(_userId!);
+    }
+}

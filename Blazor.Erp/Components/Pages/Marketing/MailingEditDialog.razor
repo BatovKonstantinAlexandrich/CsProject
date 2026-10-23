@@ -1,0 +1,36 @@
+@using MudBlazor
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="Model.SettingsName" Label="Название настройки" ReadOnly="@ReadOnly" Class="mb-3" />
+        <MudTextField @bind-Value="Model.MarketerName" Label="Маркетолог / Midvix ID" ReadOnly="@ReadOnly" Class="mb-3" />
+        <MudSelect T="MailingConfigurationStatus" @bind-Value="Model.Status" Label="Статус" ReadOnly="@ReadOnly" Class="mb-3">
+            @foreach (MailingConfigurationStatus s in Enum.GetValues<MailingConfigurationStatus>())
+            {
+                <MudSelectItem Value="@s">@MailingConfigurationService.GetStatusLabel(s)</MudSelectItem>
+            }
+        </MudSelect>
+        <MudDatePicker @bind-Date="Model.MailingStartDate" Label="Дата начала рассылки" ReadOnly="@ReadOnly" Class="mb-3" />
+        <MudNumericField @bind-Value="Model.AudienceTotal" Label="Размер аудитории" Min="0" ReadOnly="@ReadOnly" Class="mb-3" />
+        <MudNumericField @bind-Value="Model.AudienceSent" Label="Отправлено" Min="0" ReadOnly="@ReadOnly" Class="mb-3" />
+        <MudNumericField @bind-Value="Model.TimeoutMinutes" Label="Таймаут (мин)" Min="1" ReadOnly="@ReadOnly" Class="mb-3" />
+        <MudTextField @bind-Value="Model.ExportFileName" Label="Файл экспорта" ReadOnly="@ReadOnly" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">@(ReadOnly ? "Закрыть" : "Отмена")</MudButton>
+        @if (!ReadOnly)
+        {
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Сохранить</MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter, EditorRequired] public MailingConfiguration Model { get; set; } = new();
+    [Parameter] public bool ReadOnly { get; set; }
+
+    private void Cancel() => MudDialog.Cancel();
+    private void Submit() => MudDialog.Close(DialogResult.Ok(Model));
+}

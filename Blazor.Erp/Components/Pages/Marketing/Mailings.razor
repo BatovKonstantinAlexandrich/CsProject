@@ -1,0 +1,160 @@
+@page "/marketing/mailings"
+@attribute [Authorize(Roles = $"{RoleNames.Marketing},{RoleNames.Analyst}")]
+@inject MailingConfigurationService MailingService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Настройки рассылок</PageTitle>
+
+<MudText Typo="Typo.h3" Class="page-title">Настройки рассылок</MudText>
+<MudText Typo="Typo.body2" Class="text-muted mb-4">Раздел на базе marketer-web — список и управление конфигурациями рассылок.</MudText>
+
+<div class="stack-row mb-4" style="gap:12px; flex-wrap:wrap; align-items:flex-end">
+    <MudTextField @bind-Value="_search" Label="Поиск" Placeholder="Название или маркетолог" Style="min-width:220px" />
+    <MudSelect T="MailingConfigurationStatus?" @bind-Value="_statusFilter" Label="Статус" Style="min-width:160px" Clearable="true">
+        @foreach (MailingConfigurationStatus s in Enum.GetValues<MailingConfigurationStatus>())
+        {
+            <MudSelectItem T="MailingConfigurationStatus?" Value="@s">@MailingConfigurationService.GetStatusLabel(s)</MudSelectItem>
+        }
+    </MudSelect>
+    <MudDatePicker @bind-Date="_startFrom" Label="Дата с" Clearable="true" />
+    <MudDatePicker @bind-Date="_startTo" Label="Дата по" Clearable="true" />
+    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadAsync">Обновить</MudButton>
+    @if (_canEdit)
+    {
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="CreateAsync">Создать</MudButton>
+    }
+</div>
+
+<MudTable Items="_items" Dense="true" Hover="true" SelectedItem="_selected" SelectedItemChanged="@(async (MailingConfiguration? m) => _selected = m)">
+    <HeaderContent>
+        <MudTh>ID</MudTh>
+        <MudTh>Название</MudTh>
+        <MudTh>Маркетолог</MudTh>
+        <MudTh>Статус</MudTh>
+        <MudTh>Дата начала</MudTh>
+        <MudTh>Аудитория</MudTh>
+        <MudTh>Отправлено</MudTh>
+        <MudTh></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Id</MudTd>
+        <MudTd>@context.SettingsName</MudTd>
+        <MudTd>@context.MarketerName</MudTd>
+        <MudTd>@MailingConfigurationService.GetStatusLabel(context.Status)</MudTd>
+        <MudTd>@(context.MailingStartDate?.ToString("dd.MM.yyyy") ?? "—")</MudTd>
+        <MudTd>@context.AudienceTotal</MudTd>
+        <MudTd>@context.AudienceSent</MudTd>
+        <MudTd>
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditAsync(context))" />
+            @if (_canEdit)
+            {
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                               OnClick="@(() => DeleteAsync(context.Id))" />
+            }
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@if (_selected != null)
+{
+    <MudPaper Class="pa-4 mt-4">
+        <MudText Typo="Typo.h6" Class="mb-2">@_selected.SettingsName</MudText>
+        <MudSimpleTable Dense="true" Class="mb-3">
+            <tbody>
+                <tr><td>Таймаут (мин)</td><td>@_selected.TimeoutMinutes</td></tr>
+                <tr><td>Файл экспорта</td><td>@(_selected.ExportFileName ?? "—")</td></tr>
+                <tr><td>Изменено</td><td>@_selected.LastEditDate.ToLocalTime().ToString("g")</td></tr>
+            </tbody>
+        </MudSimpleTable>
+
+        <MudText Typo="Typo.subtitle1" Class="mb-2">Тестовая аудитория</MudText>
+        <MudTable Items="_selected.TestAudience" Dense="true">
+            <HeaderContent>
+                <MudTh>Телефон</MudTh>
+                <MudTh>Мессенджеры</MudTh>
+                <MudTh>SMS fallback</MudTh>
+                <MudTh>Активен</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.Phone</MudTd>
+                <MudTd>@context.MessengersOrder</MudTd>
+                <MudTd>@(context.FallbackToSms ? "Да" : "Нет")</MudTd>
+                <MudTd>@(context.IsActive ? "Да" : "Нет")</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+}
+
+@code {
+    private bool _canEdit;
+    private List<MailingConfiguration> _items = [];
+    private MailingConfiguration? _selected;
+    private string? _search;
+    private MailingConfigurationStatus? _statusFilter;
+    private DateTime? _startFrom;
+    private DateTime? _startTo;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        _canEdit = auth.User.IsInRole(RoleNames.Marketing) || auth.User.IsInRole(RoleNames.Admin);
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _items = await MailingService.GetAllAsync(_search, _statusFilter, _startFrom, _startTo);
+        if (_selected != null)
+            _selected = _items.FirstOrDefault(i => i.Id == _selected.Id);
+    }
+
+    private async Task CreateAsync()
+    {
+        var parameters = new DialogParameters<MailingEditDialog> { { x => x.Model, new MailingConfiguration() } };
+        var dialog = await DialogService.ShowAsync<MailingEditDialog>("Новая рассылка", parameters);
+        var result = await dialog.Result;
+        if (result?.Canceled != false || result.Data is not MailingConfiguration model)
+            return;
+
+        await MailingService.CreateAsync(model);
+        Snackbar.Add("Рассылка создана", Severity.Success);
+        await LoadAsync();
+    }
+
+    private async Task EditAsync(MailingConfiguration item)
+    {
+        var clone = new MailingConfiguration
+        {
+            Id = item.Id,
+            SettingsName = item.SettingsName,
+            MarketerName = item.MarketerName,
+            Status = item.Status,
+            MailingStartDate = item.MailingStartDate,
+            AudienceTotal = item.AudienceTotal,
+            AudienceSent = item.AudienceSent,
+            TimeoutMinutes = item.TimeoutMinutes,
+            ExportFileName = item.ExportFileName
+        };
+
+        var parameters = new DialogParameters<MailingEditDialog> { { x => x.Model, clone }, { x => x.ReadOnly, !_canEdit } };
+        var dialog = await DialogService.ShowAsync<MailingEditDialog>("Редактирование рассылки", parameters);
+        var result = await dialog.Result;
+        if (result?.Canceled != false || result.Data is not MailingConfiguration model)
+            return;
+
+        await MailingService.UpdateAsync(model);
+        Snackbar.Add("Сохранено", Severity.Success);
+        await LoadAsync();
+    }
+
+    private async Task DeleteAsync(int id)
+    {
+        await MailingService.DeleteAsync(id);
+        Snackbar.Add("Удалено", Severity.Info);
+        _selected = null;
+        await LoadAsync();
+    }
+}

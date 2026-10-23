@@ -1,0 +1,307 @@
+@page "/manager/reports"
+@attribute [Authorize(Roles = RoleNames.StoreOwner)]
+@inject ReportService ReportService
+@inject StoreService StoreService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Отчёты</PageTitle>
+
+<MudText Typo="Typo.h3" Class="page-title">Отчёты</MudText>
+<MudText Typo="Typo.body2" Class="text-muted mb-4">
+    Интерфейс модуля «Разные отчёты» (commonpas Reps): группы, параметры, таблица и диаграмма.
+</MudText>
+
+@if (_store == null)
+{
+    <MudAlert Severity="Severity.Warning">Магазин не найден. Отчёты доступны владельцам магазина.</MudAlert>
+}
+else
+{
+    <MudGrid>
+        <MudItem xs="12" md="4" lg="3">
+            <MudPaper Class="pa-3" Style="height: calc(100vh - 220px); overflow: auto;">
+                <MudText Typo="Typo.subtitle2" Class="mb-2">Группы</MudText>
+                <MudStack Spacing="1">
+                    @foreach (var group in _groups)
+                    {
+                        <MudButton Variant="@(_selectedGroup?.Id == group.Id ? Variant.Filled : Variant.Text)"
+                                   Color="@(_selectedGroup?.Id == group.Id ? Color.Primary : Color.Default)"
+                                   FullWidth="true" Class="justify-start"
+                                   OnClick="@(() => SelectGroup(group))">
+                            @group.Name
+                        </MudButton>
+                    }
+                </MudStack>
+
+                <MudDivider Class="my-3" />
+
+                <MudTextField @bind-Value="_titleFilter" Label="Фильтр отчётов" Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true"
+                              DebounceInterval="300" OnDebounceIntervalElapsed="@(async _ => await LoadReportsAsync())" Class="mb-3" />
+
+                <MudTable Items="_reports" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm"
+                          RowClassFunc="@GetReportRowClass">
+                    <HeaderContent>
+                        <MudTh>Отчёт</MudTh>
+                        <MudTh Style="width: 96px;"></MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Отчёт">
+                            <MudText Typo="Typo.body2">@context.Title</MudText>
+                            <MudText Typo="Typo.caption" Class="text-muted">@context.GroupName · @ReportService.GetDiagramLabel(context.DiagramType)</MudText>
+                        </MudTd>
+                        <MudTd>
+                            <MudIconButton Icon="@Icons.Material.Filled.PlayArrow" Size="Size.Small" Color="Color.Primary"
+                                           OnClick="@(_ => RunReportAsync(context.Id))" />
+                            <MudIconButton Icon="@(context.IsFavorite ? Icons.Material.Filled.Star : Icons.Material.Outlined.StarBorder)"
+                                           Size="Size.Small" Color="Color.Warning"
+                                           OnClick="@(_ => ToggleFavorite(context))" />
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="8" lg="9">
+            <MudPaper Class="pa-3" Style="min-height: calc(100vh - 220px);">
+                @if (_result == null)
+                {
+                    <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Style="min-height: 300px;">
+                        <MudIcon Icon="@Icons.Material.Filled.Assessment" Size="Size.Large" Color="Color.Default" />
+                        <MudText Typo="Typo.body1" Class="text-muted">Выберите отчёт в списке слева (двойной клик или один клик + параметры)</MudText>
+                    </MudStack>
+                }
+                else
+                {
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+                        <div>
+                            <MudText Typo="Typo.h6">@_result.ReportTitle</MudText>
+                            <MudText Typo="Typo.caption" Class="text-muted">@_store.Name · строк: @_result.Rows.Count</MudText>
+                        </div>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Refresh"
+                                   OnClick="RerunLastReportAsync">Обновить</MudButton>
+                    </MudStack>
+
+                    <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-3">
+                        <MudTabPanel Text="Таблица" Icon="@Icons.Material.Filled.TableChart">
+                            @if (_result.Rows.Count == 0)
+                            {
+                                <MudAlert Severity="Severity.Info">Нет данных за выбранный период.</MudAlert>
+                            }
+                            else
+                            {
+                                <MudTable Items="_result.Rows" Dense="true" Hover="true" Striped="true" FixedHeader="true" Height="420px">
+                                    <HeaderContent>
+                                        @foreach (var col in _result.Columns)
+                                        {
+                                            <MudTh>@col.Title</MudTh>
+                                        }
+                                    </HeaderContent>
+                                    <RowTemplate>
+                                        @foreach (var col in _result.Columns)
+                                        {
+                                            <MudTd DataLabel="@col.Title">@FormatCell(context, col)</MudTd>
+                                        }
+                                    </RowTemplate>
+                                </MudTable>
+                                @if (_result.Columns.Any(c => c.ShowSum))
+                                {
+                                    <MudStack Row="true" Spacing="4" Class="mt-2">
+                                        @foreach (var col in _result.Columns.Where(c => c.ShowSum))
+                                        {
+                                            <MudText Typo="Typo.caption"><b>@col.Title:</b> @FormatSum(col)</MudText>
+                                        }
+                                    </MudStack>
+                                }
+                            }
+                        </MudTabPanel>
+
+                        @if (_result.DiagramType != ReportDiagramType.None && _chartLabels.Length > 0)
+                        {
+                            <MudTabPanel Text="Диаграмма" Icon="@Icons.Material.Filled.BarChart">
+                                <MudChart ChartType="@GetChartType()" Labels="@_chartLabels" ChartSeries="@_chartSeries"
+                                          Width="100%" Height="360px" />
+                            </MudTabPanel>
+                        }
+                    </MudTabs>
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private Store? _store;
+    private string _userId = string.Empty;
+    private List<ReportGroupItem> _groups = [];
+    private List<ReportListItem> _reports = [];
+    private ReportGroupItem? _selectedGroup;
+    private string _titleFilter = string.Empty;
+    private ReportResult? _result;
+    private int? _lastReportId;
+    private Dictionary<string, string?> _lastParameters = new(StringComparer.OrdinalIgnoreCase);
+
+    private string[] _chartLabels = [];
+    private List<ChartSeries> _chartSeries = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        _userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+        _store = await StoreService.GetStoreByOwnerAsync(_userId);
+        _groups = await ReportService.GetGroupsAsync();
+        _selectedGroup = _groups.FirstOrDefault(g => g.Id == ReportService.AllReportsGroupId) ?? _groups.FirstOrDefault();
+        await LoadReportsAsync();
+    }
+
+    private async Task LoadReportsAsync()
+    {
+        if (string.IsNullOrEmpty(_userId) || _selectedGroup == null)
+            return;
+
+        _reports = await ReportService.GetReportsAsync(_userId, _selectedGroup.Id, _titleFilter);
+    }
+
+    private async Task SelectGroup(ReportGroupItem group)
+    {
+        _selectedGroup = group;
+        await LoadReportsAsync();
+    }
+
+    private string GetReportRowClass(ReportListItem item, int _) =>
+        _lastReportId == item.Id ? "mud-table-row-selected" : string.Empty;
+
+    private async Task RunReportAsync(int reportId)
+    {
+        var report = await ReportService.GetReportAsync(reportId);
+        if (report == null)
+            return;
+
+        Dictionary<string, string?> parameters = new(StringComparer.OrdinalIgnoreCase);
+
+        if (report.Parameters.Count > 0)
+        {
+            var dialog = await DialogService.ShowAsync<ReportParamDialog>("Параметры отчёта",
+                new DialogParameters { ["Report"] = report },
+                new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+
+            var dialogResult = await dialog.Result;
+            if (dialogResult == null || dialogResult.Canceled)
+                return;
+
+            parameters = dialogResult.Data as Dictionary<string, string?> ?? parameters;
+        }
+
+        _lastReportId = reportId;
+        _lastParameters = parameters;
+        await ExecuteReportAsync(reportId, parameters);
+    }
+
+    private async Task RerunLastReportAsync()
+    {
+        if (_lastReportId.HasValue)
+            await ExecuteReportAsync(_lastReportId.Value, _lastParameters);
+    }
+
+    private async Task ExecuteReportAsync(int reportId, Dictionary<string, string?> parameters)
+    {
+        _result = await ReportService.ExecuteReportAsync(reportId, _store?.Id, parameters);
+        BuildChartData();
+        StateHasChanged();
+    }
+
+    private async Task ToggleFavorite(ReportListItem item)
+    {
+        var wasFavorite = item.IsFavorite;
+        await ReportService.ToggleFavoriteAsync(_userId, item.Id);
+        await LoadReportsAsync();
+        Snackbar.Add(wasFavorite ? "Убрано из избранного" : "Добавлено в избранное", Severity.Success);
+    }
+
+    private void BuildChartData()
+    {
+        _chartLabels = [];
+        _chartSeries = [];
+
+        if (_result == null || _result.DiagramType == ReportDiagramType.None)
+            return;
+
+        var xField = _result.ChartXField;
+        var yField = _result.ChartYField;
+        if (string.IsNullOrEmpty(xField) || string.IsNullOrEmpty(yField))
+            return;
+
+        _chartLabels = _result.Rows
+            .Select(r => FormatChartLabel(r.GetValueOrDefault(xField)))
+            .ToArray();
+
+        var values = _result.Rows
+            .Select(r => Convert.ToDouble(r.GetValueOrDefault(yField) ?? 0))
+            .ToArray();
+
+        _chartSeries =
+        [
+            new ChartSeries { Name = _result.Columns.FirstOrDefault(c => c.Name == yField)?.Title ?? yField, Data = values }
+        ];
+    }
+
+    private static string FormatChartLabel(object? value) => value switch
+    {
+        DateTime dt => dt.ToString("dd.MM"),
+        decimal dec => dec.ToString("N0"),
+        double dbl => dbl.ToString("N0"),
+        _ => value?.ToString() ?? "—"
+    };
+
+    private ChartType GetChartType() => _result?.DiagramType switch
+    {
+        ReportDiagramType.Line => ChartType.Line,
+        ReportDiagramType.Bar => ChartType.Bar,
+        ReportDiagramType.Pie => ChartType.Pie,
+        _ => ChartType.Bar
+    };
+
+    private static string FormatCell(Dictionary<string, object?> row, ReportColumnInfo col)
+    {
+        if (!row.TryGetValue(col.Name, out var value) || value == null)
+            return "—";
+
+        return col.Format switch
+        {
+            "date" when value is DateTime dt => dt.ToString("dd.MM.yyyy"),
+            "money" when value is decimal dec => dec.ToString("N2") + " ₽",
+            "money" when value is double dbl => dbl.ToString("N2") + " ₽",
+            "int" => Convert.ToInt32(value).ToString("N0"),
+            _ => value.ToString() ?? "—"
+        };
+    }
+
+    private string FormatSum(ReportColumnInfo col)
+    {
+        if (!_result!.Columns.Any(c => c.ShowSum) || !col.ShowSum || _result.Rows.Count == 0)
+            return col.ShowSum ? "0" : string.Empty;
+
+        if (col.Format is "money")
+        {
+            decimal sum = 0;
+            foreach (var row in _result.Rows)
+            {
+                if (row.TryGetValue(col.Name, out var val) && val != null)
+                    sum += Convert.ToDecimal(val);
+            }
+
+            return sum.ToString("N2") + " ₽";
+        }
+
+        if (col.Format is "int")
+        {
+            var sum = _result.Rows.Sum(row =>
+                row.TryGetValue(col.Name, out var val) && val != null ? Convert.ToInt32(val) : 0);
+            return sum.ToString("N0");
+        }
+
+        return string.Empty;
+    }
+}

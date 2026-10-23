@@ -1,0 +1,58 @@
+@inherits ViewInteractionComponentBase
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">@Title</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (ChildContent != null)
+        {
+            @ChildContent
+        }
+        else if (_embeddedLink != null)
+        {
+            <DynamicViewHost Link="_embeddedLink"
+                             SelectionEnabled="SelectionEnabled"
+                             EnableDragDrop="EnableDragDrop"
+                             OnSelectionChanged="OnSelectionChanged"
+                             OnDragDrop="OnDragDrop" />
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Warning">Содержимое диалога не задано.</MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        @if (ShowCloseButton)
+        {
+            <MudButton OnClick="CloseAsync">@CloseButtonText</MudButton>
+        }
+        @if (Actions != null)
+        {
+            @Actions
+        }
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter] public string Title { get; set; } = "Диалог";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? Actions { get; set; }
+    [Parameter] public ViewDynamicLink? EmbeddedLink { get; set; }
+    [Parameter] public bool ShowCloseButton { get; set; } = true;
+    [Parameter] public string CloseButtonText { get; set; } = "Закрыть";
+
+    private ViewDynamicLink? _embeddedLink;
+
+    protected override void OnInitialized()
+    {
+        ViewKind = ViewKind.Dialog;
+        _embeddedLink = EmbeddedLink;
+    }
+
+    protected override void OnParametersSet() => _embeddedLink = EmbeddedLink;
+
+    private void CloseAsync() => MudDialog.Close();
+}

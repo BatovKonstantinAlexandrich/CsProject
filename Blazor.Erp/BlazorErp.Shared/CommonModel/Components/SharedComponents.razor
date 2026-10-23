@@ -1,0 +1,85 @@
+@inject IComponentsFactory ComponentsFactory
+@inherits BaseComponent
+
+@if (RootView == null)
+{
+    <MudAlert Severity="Severity.Info">Представление не задано.</MudAlert>
+}
+else
+{
+    @if (!string.IsNullOrWhiteSpace(RootView.Title))
+    {
+        <MudText Typo="Typo.h6" Class="mb-2">@RootView.Title</MudText>
+    }
+    @if (!string.IsNullOrWhiteSpace(RootView.Description))
+    {
+        <MudText Typo="Typo.body2" Class="text-muted mb-3">@RootView.Description</MudText>
+    }
+
+    @if (RootView.Top != null)
+    {
+        <div class="view-layout-top mb-2">
+            <SharedComponent Model="RootView.Top" Type="@RootView.Top.ViewTypeName" OnInit="OnChildInitialized" />
+        </div>
+    }
+
+    <div class="view-layout-body d-flex gap-2 flex-wrap">
+        @if (RootView.Left != null)
+        {
+            <div class="view-layout-left">
+                <SharedComponent Model="RootView.Left" Type="@RootView.Left.ViewTypeName" OnInit="OnChildInitialized" />
+            </div>
+        }
+
+        <div class="view-layout-content flex-grow-1">
+            @if (RenderRootAsLeaf)
+            {
+                <DynamicComponent Type="_leafRender!.ComponentType" Parameters="_leafRender.Parameters" />
+            }
+            else
+            {
+                @foreach (var child in RootView.Controls)
+                {
+                    <div class="mb-2">
+                        <SharedComponent Model="child" Type="@child.ViewTypeName" OnInit="OnChildInitialized" />
+                    </div>
+                }
+            }
+        </div>
+
+        @if (RootView.Right != null)
+        {
+            <div class="view-layout-right">
+                <SharedComponent Model="RootView.Right" Type="@RootView.Right.ViewTypeName" OnInit="OnChildInitialized" />
+            </div>
+        }
+    </div>
+
+    @if (RootView.Bottom != null)
+    {
+        <div class="view-layout-bottom mt-2">
+            <SharedComponent Model="RootView.Bottom" Type="@RootView.Bottom.ViewTypeName" OnInit="OnChildInitialized" />
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public AppViewBase? RootView { get; set; }
+
+    private ComponentRenderInfo? _leafRender;
+    private bool RenderRootAsLeaf => _leafRender != null;
+
+    protected override void OnParametersSet()
+    {
+        if (RootView == null)
+        {
+            _leafRender = null;
+            return;
+        }
+
+        ViewItem = RootView;
+        _leafRender = RootView.Controls.Count == 0 && RootView.Payload != null
+            ? ComponentsFactory.CreateControl(RootView)
+            : null;
+    }
+}
