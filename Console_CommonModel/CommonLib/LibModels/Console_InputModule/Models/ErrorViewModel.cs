@@ -1,0 +1,2 @@
+namespace Console_CommonModel.CommonLib.LibModels.Console_InputModule.Models;
+

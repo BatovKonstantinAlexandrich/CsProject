@@ -1,0 +1,119 @@
+using System;
+using System.Collections.Generic;
+
+using Console_CommonModel.CommonLib.Others;
+
+namespace Console_CommonModel.API
+{
+    public interface IConsoleСontrol
+    {
+        bool DebugMode { get; set; }
+        bool UserInteractive { get; set; }
+
+        IEnumerable<string> CheckList(string title, IEnumerable<string> options, ref string[] args);
+        IEnumerable<T> CheckListTitle<T>(string title, IEnumerable<T> applications, Func<T, string> convert);
+        IEnumerable<T> CheckListTitle<T>(string title, IEnumerable<T> applications, IEnumerable<T> selected, Func<T, string> convert);
+        void Clear();
+        string Combine(params string[] path);
+        bool Confirm(string name);
+        bool ConfirmActionDialog(string title, Action todo);
+        bool ConfirmContinue(string title = "");
+        bool ConfirmContinue(ref string[] args, string message = "");
+        int ConfirmContinue(string title, Func<object, bool> value, ref string[] args);
+        bool ConfirmContinue(string message, Func<object, List<string>> validate, ref string[] args);
+        void ConfirmExecute(string name, Action todo);
+        void CreateTreeModel(string title, ref string[] args);
+        void Error(params object[] args);
+        void Exit();
+        string GetDirectoryName(string path);
+        IEnumerable<string> GetDlls();
+        IEnumerable<string> GetFiles();
+        IEnumerable<string> GetIniFiles();
+        IEnumerable<string> GetJsonFiles();
+        List<PortInfo> GetOpenPort();
+        string GetProcessName();
+        string GetWrk();
+        void Info(params object[] args);
+        object Input(object pObject);
+        string Input(string name, ref string[] args);
+        TModel Input<TModel>(string title, Func<object, List<string>> value, ref string[] args);
+        bool InputBool(string title, Func<object, List<string>> value, ref string[] args);
+        object InputChar(string v, object value, ref string[] args);
+        string InputColor(string title, Func<object, List<string>> value, ref string[] args);
+        string InputCreditCard(string title, Func<object, List<string>> value, ref string[] args);
+        string InputCurrency(string title, Func<object, List<string>> value, ref string[] args);
+        string InputDate(string title, Func<object, List<string>> value, ref string[] args);
+        object InputDateTime(string v, object value, ref string[] args);
+        object InputDateTime2(string v, object value, ref string[] args);
+        object InputDateTimeOffset(string v, object value, ref string[] args);
+        string InputDecimal(string title, Func<object, List<string>> value, ref string[] args);
+        string InputDirectory(string title, Func<object, List<string>> value, ref string[] args);
+        string InputEmail(string title, Func<object, List<string>> value, ref string[] args);
+        string InputEngWord(string title, Func<object, List<string>> value, ref string[] args);
+        string InputFile(string message, Func<object, List<string>> validate, ref string[] args);
+        string InputFilePath(string title, Func<object, List<string>> value, ref string[] args);
+        string InputFloat(string title, Func<object, List<string>> value, ref string[] args);
+        string InputIcon(string title, Func<object, List<string>> value, ref string[] args);
+        string InputImage(string title, Func<object, List<string>> value, ref string[] args);
+        int InputInt(string title, Func<object, List<string>> validate, ref string[] args);
+        object InputMoney(string v, object value, ref string[] args);
+        string InputMonth(string title, Func<object, List<string>> value, ref string[] args);
+        string InputName(string title, Func<object, List<string>> value, ref string[] args);
+        object InputNchar(string v, object value, ref string[] args);
+        int InputNumber(string title, Func<object, List<string>> validate, ref string[] args);
+        string InputPassword(string title, Func<object, List<string>> value, ref string[] args);
+        int InputPercent(string title, Func<object, List<string>> validate, ref string[] args);
+        string InputPhone(string title, Func<object, List<string>> value, ref string[] args);
+        int InputPositiveNumber(string title, Func<object, List<string>> validate, ref string[] args);
+        List<Dictionary<string, object>> InputPrimitiveCollection(string title, Func<object, List<string>> value, ref string[] args);
+        object InputReal(string v, object value, ref string[] args);
+        string InputRusWord(string title, Func<object, List<string>> value, ref string[] args);
+        object InputSmallDateTime(string v, object value, ref string[] args);
+        object InputSmallInt(string v, object value, ref string[] args);
+        object InputSmallMoney(string v, object value, ref string[] args);
+        string InputString(string title, Func<object, List<string>> validate, ref string[] args);
+        string InputString(string name, Func<string, IEnumerable<string>> validate, ref string[] args);
+        string InputString(string name, Func<string, List<string>> validate, ref string[] args);
+        List<Dictionary<string, object>> InputStructureCollection(string title, Func<object, List<string>> value, ref string[] args);
+        object InputStructured(string v, object value, ref string[] args);
+        int InputTcpPort(string title, ref string[] args);
+        string InputText(string title, Func<object, List<string>> validate, ref string[] args);
+        string InputTime(string title, Func<object, List<string>> value, ref string[] args);
+        object InputTimestamp(string v, object value, ref string[] args);
+        object InputTinyInt(string v, object value, ref string[] args);
+        object InputUdt(string v, object value, ref string[] args);
+        object InputUniqueIdentifier(string v, object value, ref string[] args);
+        string InputUrl(ref string[] args, string title);
+        string InputUrl(string title, Func<object, List<string>> value, ref string[] args);
+        object InputVarBinary(string v, object value, ref string[] args);
+        object InputVariant(string v, object value, ref string[] args);
+        string InputWeek(string title, Func<object, List<string>> value, ref string[] args);
+        string InputXml(string title, Func<object, List<string>> value, ref string[] args);
+        string InputYear(string title, Func<object, List<string>> value, ref string[] args);
+        void Interactive();
+        IEnumerable<string> MultiSelect(string title, IEnumerable<string> options, ref string[] args);
+        ConsoleKeyInfo ReadKey();
+        T ReadKeyRepeat<T>(Action beforeRead, Action<object> onKeyPressed, Func<T> onCompleted, Action onCanceled);
+        string ReadLine();
+        string ReadText(string name, Func<string, List<string>> validate, ref string[] args);
+        void SelectAction(string title, Dictionary<Action, string> actions);
+        void SelectAction(string title, Dictionary<Action, string> options, ref string[] args);
+        void SelectAction(string title, Dictionary<string, Action> actions);
+        void SelectAction(string title, Dictionary<string, Action> options, ref string[] args);
+        string SelectDirectory(ref string[] args);
+        string SelectFile(string title, Func<string, List<string>> validate, ref string[] args);
+        string SelectFile(string title, ref string[] args);
+        void SelectList(string title, List<string> options, Action<string> onselect);
+        string Shift(ref string[] args);
+        string SingleSelect(string title, IEnumerable<string> options);
+        string SingleSelect(string title, IEnumerable<string> options, ref string[] args);
+        string SingleSelect(string title, List<string> options);
+        string SingleSelect(string title, List<string> options, ref string[] args);
+        T Wait<T>(string title, Func<T> todo);
+        void Warn(params object[] args);
+        void Write(object arg);
+        void Write(object[] args);
+        void WriteLine(params object[] args);
+        void WriteYellow(params object[] args);
+    }
+}

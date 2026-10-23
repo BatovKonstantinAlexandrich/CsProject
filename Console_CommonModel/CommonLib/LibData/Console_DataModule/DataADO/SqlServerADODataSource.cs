@@ -1,0 +1,188 @@
+﻿using Console_CommonModel.CommonLib.LibData.Console_DataModule.Data.ADOServices;
+using Console_CommonModel.CommonLib.LibData.Console_DataModule.DataApi;
+using Console_CommonModel.CommonLib.LibData.Console_DataModule.DataCommon.DatabaseMetadata;
+
+using Newtonsoft.Json.Linq;
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Data;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace Console_CommonModel.CommonLib.LibData.Console_DataModule.DataADO
+{
+    [Label("Источник ADO SqlServer")]
+    public class SqlServerADODataSource : SqlServerADOService, APIdataSource
+    {
+
+        public static string FOREIGN_KEYS =
+                "\nSELECT " +
+                    "CCU.TABLE_NAME AS SOURCE_TABLE " +
+                    ",CCU.COLUMN_NAME AS SOURCE_COLUMN " +
+                    ",KCU.TABLE_NAME AS TARGET_TABLE " +
+                    ",KCU.COLUMN_NAME AS TARGET_COLUMN " +
+                "FROM INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE CCU " +
+                    "INNER JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS RC " +
+                    " ON CCU.CONSTRAINT_NAME = RC.CONSTRAINT_NAME " +
+                    "INNER JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE KCU " +
+                    " ON KCU.CONSTRAINT_NAME = RC.UNIQUE_CONSTRAINT_NAME " +
+                "ORDER BY CCU.TABLE_NAME\n";
+        private IDataTableService DataTableService = new DataTableService();
+        public IEnumerable<string> GetTables() => GetTables(ToString());
+        public SqlServerADODataSource(string server, string database) : base(server, database)
+        {
+        }
+
+        public SqlServerADODataSource()
+        {
+
+        }
+
+        public DatabaseMetadata GetDatabaseMetadata()
+        {
+            var metadata = new DatabaseMetadata();
+            metadata.SetProcedures(GetStoredProcedures());
+            foreach (string table in GetTables())
+            {
+                metadata.Tables[table] = GetTableMetaData(table);
+            }
+            //DataTable foreignKeysDataTable = ExecuteQuery(FOREIGN_KEYS);
+            /*foreach (DataRow row in foreignKeysDataTable.Rows)
+            {
+                string SourceTable = row["SOURCE_TABLE"].ToString();
+                string SourceColumn = row["SOURCE_COLUMN"].ToString();
+                string TargetTable = row["TARGET_TABLE"].ToString();
+                string TargetColumn = row["TARGET_COLUMN"].ToString();
+                /*metadata.Keys[SourceTable + "." + SourceColumn] = TargetTable + "." + TargetColumn;
+                if (TargetTable != null)
+                {
+                    metadata.Tables[SourceTable].fk[SourceColumn] = Naming.GetSingleCountName(TargetTable);
+                }
+                else
+                {
+                    metadata.Tables[SourceTable].pk = SourceColumn;
+                }* /
+            }*/
+            return metadata;
+        }
+
+        private TableInfo GetTableMetaData(string table)
+        {
+            try
+            {
+                TableInfo metadata = new TableInfo();
+                metadata.name = table;
+                DataTable columnDataTable = ExecuteQuery(base.ToString(), @"select * from INFORMATION_SCHEMA.COLUMNS");
+                foreach (DataRow row in columnDataTable.Rows)
+                {
+                    foreach (DataColumn column in columnDataTable.Columns)
+                    {
+                        var columnMetaData = new ColumnMetaData();
+                        string columnName = row["COLUMN_NAME"].ToString();
+                        columnMetaData.name = columnName;
+                        columnMetaData.type = row["DATA_TYPE"].ToString();
+                        columnMetaData.nullable = row["IS_NULLABLE"].ToString().Trim().ToUpper() == "NO" ? false : true;
+                        metadata.columns[columnName] = columnMetaData;
+                    }
+                }
+
+
+                return metadata;
+            }
+            catch (Exception ex)
+            {
+                this.Error($"Исключение при etTableMetaData({table}) => {ex.Message}");
+                throw new Exception($"Исключение при etTableMetaData({table}) => {ex.Message}");
+            }
+        }
+
+
+
+        public bool canConnect()
+            => CanConnect(GetConenctionString());
+
+
+        public bool canReadAndWrite()
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool canCreateAlterTables()
+        {
+            throw new NotImplementedException();
+        }
+
+        public string GetConenctionString() =>
+            base.ToString();
+
+        public object SingleSelect(string sql)
+        {
+            throw new NotImplementedException();
+        }
+
+        public object MultiSelect(string sql)
+        {
+            throw new NotImplementedException();
+        }
+
+        public object Exec(string sql)
+        {
+            throw new NotImplementedException();
+        }
+
+        public object Prepare(string sql)
+        {
+            throw new NotImplementedException();
+        }
+
+        public JArray GetJsonResult(string sql)
+        {
+            DataTable ResultDataTable = ExecuteQuery(sql);
+            JArray JResult = DataTableService.GetJArray(ResultDataTable);
+            return JResult;
+        }
+
+        public DataTable GetDataTable(string sql)
+        {
+            DataTable ResultDataTable = ExecuteQuery(sql);
+            return ResultDataTable;
+        }
+
+        public JObject GetSingleJObject(string sql)
+        {
+            DataTable ResultDataTable = ExecuteQuery(sql);
+            JArray JResult = DataTableService.GetJArray(ResultDataTable);
+            JToken token = JResult.FirstOrDefault();
+            return token != null ? (JObject)token : null;
+        }
+
+
+
+        public void InsertBlob(string sql, string v, byte[] data)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            var res = new List<ValidationResult>(base.Validate(validationContext));
+            if (!canConnect())
+            {
+                res.Add(new ValidationResult("body", new List<string>() { $"Не удалось установить соединение: {ToString()}" }));
+            }
+            return res;
+        }
+
+        public Dictionary<string, List<string>> ValidateOptional()
+        {
+            var res = new Dictionary<string, List<string>>();
+            if (!canConnect())
+            {
+                res["body"] = new List<string>() { $"Не удалось установить соединение: {ToString()}" };
+            }
+            return res;
+        }
+    }
+}

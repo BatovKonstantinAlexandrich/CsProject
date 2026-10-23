@@ -1,0 +1,15 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+public class ActiveItemTest: TestingElement
+{
+    public override void OnTest()
+    {
+        var item = new ActiveItem();
+        item.OnInit();
+        item.OnDestroy();
+    }
+}
