@@ -21,8 +21,8 @@ using Console_CommonModel.CommonLib.LibViews.AppViews.MediaModule;
 using Console_CommonModel.CommonLib.LibViews.AppViewModules.ComboboxModule;
 using Console_CommonModel.CommonLib.LibViews.AppViewModules.TextBoxModule;
 using Console_CommonModel.CommonLib.LibViews.ViewEvents.List;
-using Console_CommonModel.CommonLib.LibAttributes;
 using WinFormsApp.Icons;
+using Console_CommonModel.CommonLib.LibAttributes.AttributesControls;
 
 namespace Console_CommonModel.CommonLib.LibViews
 {

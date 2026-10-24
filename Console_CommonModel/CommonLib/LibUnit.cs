@@ -18,14 +18,12 @@ namespace Console_CommonModel.CommonLib
     {
         public LibUnit(IServiceProvider parent) : base(parent)
         {
-            
-            Append(new LibDataUnit(parent));
             Append(new LibAttrbiutesUnit(parent));
-            Append(new LibAttrbiutesUnit(parent));
-            Append(new AuthorizationUnit(parent));
+            Append(new LibDataUnit(parent));            
+            Append(new LibAuthUnit(parent));
             Append(new DataModuleUnit(parent));
             Append(new DesignerUnit(parent));
-            Append(new AuthorizationUnit(parent));
+            Append(new LibAuthUnit(parent));
             //Append(new ModelsUnit(parent));
             Append(new ViewsUnit(parent));
         }

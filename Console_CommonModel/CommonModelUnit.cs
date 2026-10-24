@@ -9,8 +9,8 @@ namespace Console_CommonModel
         public CommonModelUnit() : base(AppProviderService.GetInstance())
         {
             Append(new LibUnit(provider));
-            //Append(new TypeDocumentationTest(provider));
-            //
+            Append(new LibUnit(provider));
+            Append(new TypeDocumentationTest(provider));            
             Append(new LibExtensionsUnit(provider));
         }
 

@@ -417,9 +417,7 @@ namespace Console_CommonModel.CommonLib.LibData.Console_DataModule.DataADO.ADODb
                 {
                     var schemaNames = GetSchemasNames();
                     if (Schema is not null && !schemaNames.Select(s => s.ToLower()).Contains(Schema.ToLower()))
-                    {
-                        this.Warn(nameof(Schema), $"В базе данных не существует указанной схемы: {Schema}: {ToString()}");
-                        this.Debug(schemaNames.ToJson());
+                    {                                                
                         return new Dictionary<string, ProcedureMetadata>();
                     }
                     if (ProceduresMetadata is null || ProceduresMetadata.Count() == 0)

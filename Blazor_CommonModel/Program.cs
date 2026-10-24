@@ -23,7 +23,7 @@ namespace Blazor_CommonModel
             AppProviderService.GetInstance().AddServiceImplementation<IClientAPI, BlazorClientAPI>();
             AppProviderService.GetInstance().AddServiceImplementation<IComponentsFactory<IControlBase>, WebComponentsFactory>();
 
-            CommonProgram.Run<Program>(new string[] {  "--no-force"});
+            CommonProgram.RunTests<Program>(new string[] {  "--no-force"});
 
             var unit = new AppUnit();
             unit.DoTest(false, false).PrintDocument();

@@ -225,17 +225,11 @@ public class SignupUser<TDbContext> : BaseSignup<TDbContext, UserContext, UserAc
         return "localhost";
     }
 
-    public async Task<SigninResult> PasswordSignInAsync(string email, string password, bool rememberMe, bool lockoutOnFailure)
-    {
-        await Task.CompletedTask;
-        throw new NotImplementedException();
-    }
+   
 
     public MethodResult<UserContext> SignupRoles(UserAccount account, UserPerson person, string[] roles)
     {
         var result = Signup(account, person);
-
-
         foreach(var name in roles)
         {
             var role = _model.BusinessResources.FirstOrDefault(r => r.Code.ToLower() == name);
@@ -252,11 +246,9 @@ public class SignupUser<TDbContext> : BaseSignup<TDbContext, UserContext, UserAc
         
         if (result.Succeeded)
         {
-
             result.Result.BusinessResources = new();
             result.Result.BusinessResources = roles.Select(name =>
             {
-                this.Info(_model.BusinessResources.ToList());
                 var role = _model.BusinessResources.FirstOrDefault(r => r.Name== name);
                 UsersResource p = null;
                 _model.UsersResources.Add(p = new()
@@ -289,7 +281,6 @@ public class SignupUser<TDbContext> : BaseSignup<TDbContext, UserContext, UserAc
                 }
             }*/
             result.Result.UsersResources = _model.UsersResources.Where(ur => ur.UserId == result.Result.Id).ToList();
-
         }
         return result;
     }

@@ -10,7 +10,27 @@ using Console_CommonModel.CommonLib.LibAuth.AppAuth.AuthorizationModel.ServiceMo
 using System.Xml.Serialization;
 using Console_CommonModel.CommonLib.LibModels.Console_InputModule.Console_FileModule;
 using Console_CommonModel.CommonLib.LibData.Console_DataModule.DataADO;
+using Console_CommonModel.CommonLib.Others;
 
+public class A
+{
+    public void ToDo_A()
+    {
+        var b = new B();
+        b.ToDo_B();
+    }
+}
+
+public class B
+{
+    public void ToDo_B()
+    {
+        var stack = this.GetInvokeInfo();
+        this.Info(stack);
+        //var actionInfo = this.GetActionInfo();
+        //this.Info(actionInfo);
+    }
+}
 
 namespace Console_CommonModel
 {
@@ -22,7 +42,9 @@ namespace Console_CommonModel
     {
 
         static void Main(string[] args)
-        {            
+        {      
+            
+            
             RunTests<CommonProgram>(args);
         }
 
@@ -49,8 +71,10 @@ namespace Console_CommonModel
             Load();
 
             ServiceFactory.Get().AddTypes(typeof(TProgram).Assembly);
-            ServiceFactory.Get().AddTypes(typeof(CommonProgram).Assembly); 
+            ServiceFactory.Get().AddTypes(typeof(CommonProgram).Assembly);
 
+
+            new A().ToDo_A();
             var tests = typeof(CommonProgram).Assembly.GetTestElements();
 
             bool interactive = args.Any(a =>

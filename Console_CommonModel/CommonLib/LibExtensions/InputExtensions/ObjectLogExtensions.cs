@@ -713,6 +713,8 @@ public static class StackTraceExtensions
             public int LineNumber { get; set; }
             public string FileName { get; set; }
             public string TextMessage { get; set; }
+
+            [JsonIgnore]
             public string CsCode { get; set; }
 
 

@@ -158,8 +158,7 @@ public class UserContext : ActiveObject
     public virtual List<BusinessResource> BusinessResources { get; set; } = new List<BusinessResource>();
 
     public UserContext(): base()
-    {
-        this.Info(this);
+    {        
     }
 
     public string GetHomeUrl()

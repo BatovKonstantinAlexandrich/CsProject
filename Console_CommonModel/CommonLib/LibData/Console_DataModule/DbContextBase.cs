@@ -31,7 +31,7 @@ namespace Console_CommonModel.CommonLib.LibData.Console_DataModule
     public partial class DbContextBase : DbContext, ISqlExecutor, IDbMetadata, IDbMigBuilder, IDDLFactory, IDMLFactory,
         IDbConnectionsService, IDbInterface, IDataModelService, ITreeService, IDbContextBase
     {
-        public bool EnableDataChangedAttributes = true;
+        public bool EnableDataChangedAttributes = false;
         public string connectionString = null;
 
         public Dictionary<string, int> InitDb<TDbContext>()
@@ -541,7 +541,8 @@ namespace Console_CommonModel.CommonLib.LibData.Console_DataModule
             try
             {
                 base.OnModelCreating(modelBuilder);
-
+                
+                
                 var message = $"{GetType().GetTypeName()}.{nameof(OnModelCreating)}";
                 this.Debug(message);
                 
@@ -550,33 +551,33 @@ namespace Console_CommonModel.CommonLib.LibData.Console_DataModule
                 // Обход всех классов сущностей, зарегистрированных в контексте
                 foreach (var entityType in this.GetEntitiesTypes())
                 {
-                    this.Debug($"{nameof(OnModelCreating)} {entityType.GetTypeName()}");
-                    var attributes = entityType.GetAttributes().Where(attr => attr.Key.ToType().IsExtends<EntityAttributeBase>());
-                    foreach(var kv in attributes)
-                    {
-                        var attributeType = kv.Key.ToType();
-                        var entityAttribute = attributeType.New<EntityAttributeBase>(new object[] { kv.Value });
-                        entityAttribute.OnModelCreating(modelBuilder, entityType, this);
-                    }
-
-                    foreach(var property in entityType.GetProperties())
-                    {
-                        this.Debug($"{nameof(OnModelCreating)} {entityType.GetTypeName()} {property.Name}");
-                        var propertyAttributes = entityType.GetPropertyAttributes(property.Name);
-                        var entityAttributes = propertyAttributes.Where(attr => attr.Key.ToType().IsExtends<EntityAttributeBase>());
-                        foreach(var kv in entityAttributes)
+                        this.Debug($"{nameof(OnModelCreating)} {entityType.GetTypeName()}");
+                        var attributes = entityType.GetAttributes().Where(attr => attr.Key.ToType().IsExtends<EntityAttributeBase>());
+                        foreach (var kv in attributes)
                         {
-                            this.Debug($"{nameof(OnModelCreating)} {entityType.GetTypeName()} {property.Name} {kv.Key}");
                             var attributeType = kv.Key.ToType();
-                            if(attributeType is not null)
-                            {
-                                var entityAttribute = attributeType.New<EntityAttributeBase>(new object[] { kv.Value });
-                                entityAttribute.OnModelCreating(modelBuilder, entityType, this, property.Name);
-                            }                                
+                            var entityAttribute = attributeType.New<EntityAttributeBase>(new object[] { kv.Value });
+                            entityAttribute.OnModelCreating(modelBuilder, entityType, this);
                         }
-                    }                   
+
+                        foreach (var property in entityType.GetProperties())
+                        {
+                            this.Debug($"{nameof(OnModelCreating)} {entityType.GetTypeName()} {property.Name}");
+                            var propertyAttributes = entityType.GetPropertyAttributes(property.Name);
+                            var entityAttributes = propertyAttributes.Where(attr => attr.Key.ToType().IsExtends<EntityAttributeBase>());
+                            foreach (var kv in entityAttributes)
+                            {
+                                this.Debug($"{nameof(OnModelCreating)} {entityType.GetTypeName()} {property.Name} {kv.Key}");
+                                var attributeType = kv.Key.ToType();
+                                if (attributeType is not null)
+                                {
+                                    var entityAttribute = attributeType.New<EntityAttributeBase>(new object[] { kv.Value });
+                                    entityAttribute.OnModelCreating(modelBuilder, entityType, this, property.Name);
+                                }
+                            }
+                        }
                 }
-                Task.WaitAll(tasks.ToArray());
+                this.Debug(this.Database.GenerateCreateScript());
             }
             catch( Exception ex )
             {

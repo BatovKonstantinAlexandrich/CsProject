@@ -2,7 +2,7 @@
 using Console_CommonModel.CommonLib.LibViews.AppViewModules.ComboboxModule;
 using Console_CommonModel.CommonLib.LibViews.AppViews.BaseComponent;
 
-namespace Console_CommonModel.CommonLib.LibAttributes
+namespace Console_CommonModel.CommonLib.LibAttributes.AttributesControls
 {
     /// <summary>
     /// Список выбора с возможностью создания нового объекта

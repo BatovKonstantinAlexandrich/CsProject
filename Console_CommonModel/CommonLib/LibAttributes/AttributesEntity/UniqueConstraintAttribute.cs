@@ -23,11 +23,13 @@ public class UniqueConstraintAttribute: EntityAttributeBase
         }
     }
 
+
+
     public override void OnModelCreating(ModelBuilder modelBuilder, Type entityType, DbContext messageDbContext, string property = null)
     {
         try
         {
-            this.Debug(nameof(OnModelCreating));
+            this.Debug($"{nameof(OnModelCreating)}");
             if (_columns.Length > 0)
             {
                 // Проверяем существование свойств в типе сущности

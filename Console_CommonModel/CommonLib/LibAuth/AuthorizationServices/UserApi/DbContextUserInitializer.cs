@@ -14,7 +14,7 @@ public class DbContextUserInitializer: DbContextInitiliazer<DbContextUser>
         {
             result["UserRoles"] = InitRoles(context, roles);
             result["UserGroups"] = InitGroups(context, roles);
-            result["UserContexts"] = InitUsers(context);
+            result[nameof(UserContext)] = InitUsers(context);
             result[nameof(UserGroupMessage)] = InitUserGroupMessages(context, roles);
             result[nameof(UserMessage)] = InitUserMessages(context);
         }
@@ -254,7 +254,6 @@ public class DbContextUserInitializer: DbContextInitiliazer<DbContextUser>
         int result = 0;
         if (context.BusinessResources.ToList().Count() == 0)
         {
-            
             foreach(var name in roles)
             {
                 context.Add(new BusinessResource()

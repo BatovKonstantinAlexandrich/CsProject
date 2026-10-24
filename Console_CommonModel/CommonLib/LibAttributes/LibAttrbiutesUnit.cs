@@ -2,8 +2,6 @@
 [Label("Тестирование атрибутов")]
 public class LibAttrbiutesUnit : TestingUnit
 {
-
-
     public LibAttrbiutesUnit(IServiceProvider parent) : base(parent)
     {
         Append(new AttributesEntityUnit(parent));
