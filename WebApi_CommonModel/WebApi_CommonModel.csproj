@@ -12,8 +12,4 @@
     <ProjectReference Include="..\Console_CommonModel\Console_CommonModel.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="WebApiHosting\" />
-  </ItemGroup>
-
 </Project>

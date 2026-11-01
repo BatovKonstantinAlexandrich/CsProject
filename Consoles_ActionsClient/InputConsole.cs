@@ -124,7 +124,9 @@ namespace ClassModelLib.ServicesModule
 
     public static class InputConsole
     {
-        public static IConsoleСontrol control = new ConsoleСontrol();
+        private static string[] args = new string[0];
+        //реализация
+        public static IConsoleСontrol control = new InputConsoleСontrol(ref args);
 
         public static bool DebugMode { get => control.DebugMode; set => control.DebugMode = value; }
         public static bool UserInteractive { get => control.UserInteractive; set => control.UserInteractive = value; }
@@ -249,11 +251,7 @@ namespace ClassModelLib.ServicesModule
             control.Info(args);
         }
 
-        public static object Input(object pObject)
-        {
-            return control.Input(pObject);
-        }
-
+     
         public static string Input(string name, ref string[] args)
         {
             return control.Input(name, ref args);
@@ -553,22 +551,17 @@ namespace ClassModelLib.ServicesModule
         {
             return control.ReadText(name, validate, ref args);
         }
-
-        public static void SelectAction1(string title, Dictionary<Action, string> actions)
-        {
-            control.SelectAction(title, actions);
-        }
+ 
 
         public static void SelectActions2(string title, Dictionary<Action, string> options, ref string[] args)
         {
             control.SelectAction(title, options, ref args);
         }
 
-        public static void SelectAction(string title, Dictionary<string, Action> actions)
+        public static void SelectAction(string title, Dictionary<string, Action> options )
         {
-            control.SelectAction(title, actions);
+            control.SelectAction(title, options, ref args);
         }
-
         public static void SelectAction(string title, Dictionary<string, Action> options, ref string[] args)
         {
             control.SelectAction(title, options, ref args);
@@ -589,29 +582,17 @@ namespace ClassModelLib.ServicesModule
             return control.SelectFile(title, ref args);
         }
 
-        public static void SelectList(string title, List<string> options, Action<string> onselect)
-        {
-            control.SelectList(title, options, onselect);
-        }
-
+       
         public static string Shift(ref string[] args)
         {
             return control.Shift(ref args);
         }
 
-        public static string SingleSelect(string title, IEnumerable<string> options)
-        {
-            return control.SingleSelect(title, options);
-        }
+     
 
         public static string SingleSelect(string title, IEnumerable<string> options, ref string[] args)
         {
             return control.SingleSelect(title, options, ref args);
-        }
-
-        public static string SingleSelect(string title, List<string> options)
-        {
-            return control.SingleSelect(title, options);
         }
 
         public static string SingleSelect(string title, List<string> options, ref string[] args)

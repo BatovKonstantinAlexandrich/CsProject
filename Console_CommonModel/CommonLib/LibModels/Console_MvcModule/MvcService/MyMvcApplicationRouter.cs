@@ -88,20 +88,21 @@ namespace Console_CommonModel.CommonLib.LibModels.Console_MvcModule.MvcService
 
         public async Task<Tuple<int, object>> OnRequest(HttpContext http)
         {
-            var request = GetRequestModel(http);
+            
+            var request = await GetRequestModel(http);
             var result = await OnRequest(request);
             await OnResponse(http, request, result);
             return result;
         }
 
-        public string ReadBody(HttpContext context)
+        public async Task<string> ReadBody(HttpContext context)
         {
             try
             {
                 // Проверяем, что тело запроса можно читать
                 if (context?.Request?.Body == null || !context.Request.Body.CanRead)
                     return string.Empty;
-
+ 
                 using var reader = new StreamReader(
                     context.Request.Body,
                     Encoding.UTF8,
@@ -110,10 +111,11 @@ namespace Console_CommonModel.CommonLib.LibModels.Console_MvcModule.MvcService
                     leaveOpen: true
                 );
 
-                var body = reader.ReadToEnd();
+                var body = await reader.ReadToEndAsync();
 
                 // Сбрасываем позицию потока для возможного повторного чтения
-                context.Request.Body.Position = 0;
+                //context.Request.Body.Position = 0;
+                
 
                 return body;
             }
@@ -125,7 +127,7 @@ namespace Console_CommonModel.CommonLib.LibModels.Console_MvcModule.MvcService
             }
         }
 
-        private RequestModel GetRequestModel(HttpContext http)
+        private async Task<RequestModel> GetRequestModel(HttpContext http)
         {
             var requestModel = new RequestModel();
             requestModel.url = http.Request.Path.ToString();
@@ -137,7 +139,7 @@ namespace Console_CommonModel.CommonLib.LibModels.Console_MvcModule.MvcService
                     h => h.Key,
                     h => string.Join(", ", h.Value)
             );
-            requestModel.body = ReadBody(http);
+            requestModel.body = await ReadBody(http);
             return requestModel;
         }
 

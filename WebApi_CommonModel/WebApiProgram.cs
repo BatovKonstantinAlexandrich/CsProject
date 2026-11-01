@@ -1,34 +1,37 @@
 using Console_CommonModel;
-using Console_CommonModel.CommonLib.LibData.Console_DataModule.Data.ADOWebApiService;
 using Console_CommonModel.CommonLib.LibModels.Console_MvcModule.MvcService;
+
+using Microsoft.Extensions.Logging;
+
+using System.Threading.RateLimiting;
 
 using WebApi_CommonModel.BackgroundWorkers;
 using WebApi_CommonModel.BackgroungHosting;
+using WebApi_CommonModel.MiddlewareComponents;
 
 
 namespace WebApi_CommonModel.WebApiModule
 {
-
 
     [Label("Программа запуска приложения WebApi")]
     public class WebApiProgram:  IBackgroundServiceContext
     {        
         private ILogger<WebApiProgram> logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<WebApiProgram>();
 
+        [HelpMessage("Отключается когда не нужен повторный рестарт")]
         private bool active { get; set; } = true;
+
         private CancellationTokenSource _cts;
         private string[] started;
+
         private BackgroundServiceContext backgroundContext;
         private MyMvcApplicationRouter applicationRouter = new();
-
         private Predicate<HttpContext> filters = p => true;
-
 
         public WebApiProgram(string[] started)
         {
             this.started = started;
         }
-
 
         [Label("Остановить")]
         public void StopProcess( )
@@ -39,7 +42,6 @@ namespace WebApi_CommonModel.WebApiModule
             }
         }
 
-
         [Label("Запустить")]
         public void StartProcess()
         {          
@@ -48,23 +50,22 @@ namespace WebApi_CommonModel.WebApiModule
                 try
                 {
                     logger.LogInformation("StartProcess()");
-
                     this._cts = new();
-
                     var builder = WebApplication.CreateBuilder(started);
-                    
+
                     ConfigureServices(builder.Services, builder.Configuration);
+                    builder.Services.AddSingleton<IpFilterMiddleware>();
 
                     var app = builder.Build();
-                    //app.UseAuthentication();
-                    //app.UseAuthorization();
-
                     app.Use((http, next) => {
-
-
+                        logger.LogInformation(http.Connection.RemoteIpAddress.ToString());
                         return next.Invoke(http);
                     });
+                    app.UseMiddleware<IpFilterMiddleware>();
+
                     
+
+                    //app.UseMiddleware<IpFilterMiddleware>();
                     //app.Use((HttpContext http, RequestDelegate next) =>
                     //{
                     //    if (!http.Response.HasStarted)
@@ -80,23 +81,19 @@ namespace WebApi_CommonModel.WebApiModule
 
                             await applicationRouter.InvokeAsync(http, next);
                         }
-                    });
+                    }); 
                     app.UseRouting();
-
                     app.MapControllerRoute(
                       name: "default",
                       pattern: "{controller=Mvc}/{action=Index}/{id?}");
-                    app.MapHub<ActionsHub>($"/hubs/{nameof(ActionsHub)}");
-                    
-
+                    //app.MapHub<ActionsHub>($"/hubs/{nameof(ActionsHub)}");                    
                     app.RunAsync(_cts.Token).Wait();
                 }
                 catch (Exception ex)
                 {
                     this.Error(ex);
                 }
-            }
-            
+            }            
         }
 
         [NotInput]
@@ -111,12 +108,8 @@ namespace WebApi_CommonModel.WebApiModule
 
         [NotInput]
         public static void Main(string[] args)
-        {
-    
-            CommonProgram.Run<WebApiProgram>(args);
-
-             
-            
+        {    
+            CommonProgram.Run<WebApiProgram>(args);                         
 
             //var program = new ActionsHubProgram();
             //program.StartProcess(args);
@@ -136,8 +129,6 @@ namespace WebApi_CommonModel.WebApiModule
                 program.RunConsoleControl<WebApiProgram>(ref pargs);
                 
             });
-
-
             program.StartProcess();                                    
         }
 

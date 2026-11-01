@@ -1,5 +1,4 @@
-﻿
-using WebApi_CommonModel.BackgroungHosting;
+﻿using WebApi_CommonModel.BackgroungHosting;
 
 namespace WebApi_CommonModel.BackgroundWorkers
 {

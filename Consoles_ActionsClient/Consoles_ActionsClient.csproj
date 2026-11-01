@@ -11,6 +11,7 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\Console_CommonModel\Console_CommonModel.csproj" />
+	  <ProjectReference Include="..\Console_InputControl\Console_InputControl.csproj" />
 	</ItemGroup>
 	<ItemGroup>
 	  <None Update="MicroserviceConnector.db">
