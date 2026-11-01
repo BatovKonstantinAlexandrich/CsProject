@@ -1,0 +1,113 @@
+@inject ICatalogService Catalog
+@inject IStationService Stations
+@inject CityState CityState
+@inject IAppointmentService Appointments
+
+<EditForm Model="model" OnValidSubmit="Submit" class="form-card">
+    <DataAnnotationsValidator />
+    <h2>Рассчитать стоимость</h2>
+    <FormField Label="Услуга">
+        <ChildContent>
+            <InputSelect @bind-Value="model.ServiceSlug">
+                <option value="">Выберите услугу</option>
+                @foreach (var service in services)
+                {
+                    <option value="@service.Slug">@service.Title</option>
+                }
+            </InputSelect>
+        </ChildContent>
+        <Validation>
+            <ValidationMessage For="() => model.ServiceSlug" />
+        </Validation>
+    </FormField>
+    <FormField Label="Класс автомобиля">
+        <InputSelect @bind-Value="model.CarClass">
+            <option value="1">Легковой</option>
+            <option value="1.15">Кроссовер</option>
+            <option value="1.35">Коммерческий</option>
+        </InputSelect>
+    </FormField>
+    <FormField Label="@($"Станция, {CityState.Current}")">
+        <InputSelect @bind-Value="model.Station">
+            <option value="">Любая в городе</option>
+            @foreach (var station in Stations.GetByCity(CityState.Current))
+            {
+                <option value="@station.Address">@station.Address</option>
+            }
+        </InputSelect>
+    </FormField>
+
+    @if (selected is not null)
+    {
+        <div class="estimate">
+            <span>@PriceText.Hours(selected.Minutes) · коэффициент @model.CarClass</span>
+            <strong>@PriceText.Format(Estimate)</strong>
+        </div>
+    }
+
+    <div class="form-grid">
+        <FormField Label="Имя">
+            <ChildContent>
+                <InputText @bind-Value="model.Name" />
+            </ChildContent>
+            <Validation>
+                <ValidationMessage For="() => model.Name" />
+            </Validation>
+        </FormField>
+        <FormField Label="Телефон">
+            <ChildContent>
+                <InputText @bind-Value="model.Phone" placeholder="+7 900 000-00-00" />
+            </ChildContent>
+            <Validation>
+                <ValidationMessage For="() => model.Phone" />
+            </Validation>
+        </FormField>
+    </div>
+    <button class="btn-pill" type="submit">Сохранить расчёт</button>
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <p class="success">@message</p>
+    }
+</EditForm>
+
+@code {
+    private readonly EstimateFormModel model = new();
+    private string? message;
+    private bool serviceApplied;
+    private IReadOnlyList<ServiceItem> services = [];
+
+    [Parameter] public string? ServiceSlug { get; set; }
+    [Parameter] public EventCallback OnSaved { get; set; }
+
+    private ServiceItem? selected => services.FirstOrDefault(service => service.Slug == model.ServiceSlug);
+
+    private decimal Estimate => selected is null ? 0 : decimal.Round(selected.PriceFrom * model.Multiplier, 0);
+
+    protected override void OnInitialized() =>
+        services = Catalog.GetCategories().SelectMany(category => category.Items).DistinctBy(service => service.Slug).OrderBy(service => service.Title).ToList();
+
+    protected override void OnParametersSet()
+    {
+        if (!serviceApplied && !string.IsNullOrWhiteSpace(ServiceSlug))
+        {
+            model.ServiceSlug = ServiceSlug;
+            serviceApplied = true;
+        }
+    }
+
+    private async Task Submit()
+    {
+        Appointments.Add(new AppointmentRequest
+        {
+            Kind = "Расчёт",
+            Name = model.Name.Trim(),
+            Phone = model.Phone.Trim(),
+            ServiceTitle = selected?.Title,
+            Station = string.IsNullOrWhiteSpace(model.Station) ? CityState.Current : $"{CityState.Current}, {model.Station}",
+            Estimate = Estimate,
+            Comment = $"Класс {model.CarClass}"
+        });
+        message = "Расчёт сохранён.";
+        await OnSaved.InvokeAsync();
+    }
+}

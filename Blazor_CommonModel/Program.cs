@@ -7,6 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
 using MudBlazor.Services;
 using System.Text;
+using Microsoft.AspNetCore.Components.Authorization;
+using MarketerWeb.Authorization;
 
 
 namespace Blazor_CommonModel
@@ -41,7 +43,19 @@ namespace Blazor_CommonModel
 
             builder.Services.AddMudServices();
             builder.Services.AddNavMenu();
-            
+
+            // Authorization
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddCascadingAuthenticationState();
+            builder.Services.AddScoped<UserService>();
+            builder.Services.AddScoped<AuthStateProvider>();
+            builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<AuthStateProvider>());
+            builder.Services.AddAuthorizationCore(config =>
+            {
+                //todo configure authorization
+                
+            });
+
             builder.Services.AddScoped<IClientAPI, BlazorClientAPI>();
             builder.Services.AddScoped<IAppModalService, AppModalService>();
             builder.Services.AddScoped<IContextMenuService, ContextMenuService>();

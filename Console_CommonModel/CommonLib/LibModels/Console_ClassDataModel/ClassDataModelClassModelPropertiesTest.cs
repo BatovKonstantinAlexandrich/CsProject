@@ -4,7 +4,13 @@ namespace Console_CommonModel.CommonLib.LibModels.Console_ClassDataModel;
 [Description("Создание ClassModel и проверка инициализации коллекций Properties и Methods.")]
 public class ClassDataModelClassModelPropertiesTest : TestingElement
 {
+    public ClassDataModelClassModelPropertiesTest()
+    {
+    }
+
     public ClassDataModelClassModelPropertiesTest(IServiceProvider provider) : base(provider) { }
+
+
 
     public override void OnTest()
     {

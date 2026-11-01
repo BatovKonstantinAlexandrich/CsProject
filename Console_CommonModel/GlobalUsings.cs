@@ -12,7 +12,7 @@ global using Console_CommonModel.CommonLib.LibViews.ViewModels.HighCharts;
 global using Console_CommonModel.CommonLib.LibViews.AppViewModules.HighchartsModule;
 global using Console_CommonModel.CommonLib.LibViews.AppViewModules.TreeModule;
 global using ActionModels;
-
+global using static IConsole—ontrol;
 global using pickpoint_delivery_service;
 
 global using Console_CommonModel.CommonLib.LibViews.DataComponents;

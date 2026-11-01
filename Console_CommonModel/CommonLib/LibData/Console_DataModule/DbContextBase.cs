@@ -59,9 +59,9 @@ namespace Console_CommonModel.CommonLib.LibData.Console_DataModule
         public void EnsureHasData()
         {
             var stat = GetDataInTables();
-            if (!stat.All(kv => kv.Value == 0))
+            if (stat.All(kv => kv.Value == 0))
             {
-                throw new DataMisalignedException($"Отсутствуют какие либо данные в таблицах {GetType().GetTypeName()} {stat.Where(kv => kv.Value > 0).ToJsonOnScreen()}");
+                 throw new DataMisalignedException($"Отсутствуют какие либо данные в таблицах {GetType().GetTypeName()} {stat.Where(kv => kv.Value == 0).Select(kv => kv.Key).ToJson()}");
             }
         }
 
@@ -568,6 +568,10 @@ namespace Console_CommonModel.CommonLib.LibData.Console_DataModule
                             foreach (var kv in entityAttributes)
                             {
                                 this.Debug($"{nameof(OnModelCreating)} {entityType.GetTypeName()} {property.Name} {kv.Key}");
+                                if(property.Name == "ValidationSuccess")
+                                {
+                                    this.Debug(1);
+                                }
                                 var attributeType = kv.Key.ToType();
                                 if (attributeType is not null)
                                 {
@@ -576,8 +580,7 @@ namespace Console_CommonModel.CommonLib.LibData.Console_DataModule
                                 }
                             }
                         }
-                }
-                this.Debug(this.Database.GenerateCreateScript());
+                }                
             }
             catch( Exception ex )
             {
@@ -586,7 +589,9 @@ namespace Console_CommonModel.CommonLib.LibData.Console_DataModule
                 throw new Exception(message);
             }
         }
-        public class InjectionInterceptor : IMaterializationInterceptor { }
+
+         
+         
         public class BaseDbCommandInterceptor : DbCommandInterceptor { }
 
         public static void OnConfiguring<TDbContextBase>(DbContextOptionsBuilder optionsBuilder)

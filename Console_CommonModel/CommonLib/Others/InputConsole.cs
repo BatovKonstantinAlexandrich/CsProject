@@ -4,6 +4,8 @@ using System.Collections.Generic;
 
 using Console_CommonModel.API;
 
+using static IConsoleСontrol;
+
 
 namespace Console_CommonModel.CommonLib.Others
 {
@@ -12,9 +14,9 @@ namespace Console_CommonModel.CommonLib.Others
     public static class InputConsole
     {
 
-
+        private static string[] args = new string[0];
         //реализация
-        public static IConsoleСontrol control = new ConsoleСontrol();
+        public static IConsoleСontrol control = new InputConsoleСontrol(ref args);
 
 
 
@@ -141,10 +143,7 @@ namespace Console_CommonModel.CommonLib.Others
             control.Info(args);
         }
 
-        public static object Input(object pObject)
-        {
-            return control.Input(pObject);
-        }
+        
 
         public static string Input(string name, ref string[] args)
         {
@@ -454,20 +453,14 @@ namespace Console_CommonModel.CommonLib.Others
             return control.ReadText(name, validate, ref args);
         }
 
-        public static void SelectAction1(string title, Dictionary<Action, string> actions)
-        {
-            control.SelectAction(title, actions);
-        }
+    
 
         public static void SelectActions2(string title, Dictionary<Action, string> options, ref string[] args)
         {
             control.SelectAction(title, options, ref args);
         }
 
-        public static void SelectAction(string title, Dictionary<string, Action> actions)
-        {
-            control.SelectAction(title, actions);
-        }
+      
 
         public static void SelectAction(string title, Dictionary<string, Action> options, ref string[] args)
         {
@@ -489,41 +482,34 @@ namespace Console_CommonModel.CommonLib.Others
             return control.SelectFile(title, ref args);
         }
 
-        public static void SelectList(string title, List<string> options, Action<string> onselect)
+        public static void SelectList(string title, List<string> options, Action<string> onselect, ref string[] args)
         {
-            control.SelectList(title, options, onselect);
+            control.SelectList(title, options, onselect, ref args);
         }
 
-        public static void SelectListWithExcape(string title, List<string> options, Action<string> onselect)
+        public static void SelectListWithExcape(string title, List<string> options, Action<string> onselect, ref string[] args)
         {
             options.Add("Назад");
-            control.SelectList(title, options, onselect);
+            control.SelectList(title, options, onselect, ref args);
         }
-        public static void SelectListWithExit(string title, List<string> options, Action<string> onselect)
+        public static void SelectListWithExit(string title, List<string> options, Action<string> onselect, ref string[] args)
         {
             options.Add("Выход");
-            control.SelectList(title, options, onselect);
+            control.SelectList(title, options, onselect, ref args);
         }
 
         public static string Shift(ref string[] args)
         {
             return control.Shift(ref args);
         }
-
-        public static string SingleSelect(string title, IEnumerable<string> options)
-        {
-            return control.SingleSelect(title, options);
-        }
+ 
 
         public static string SingleSelect(string title, IEnumerable<string> options, ref string[] args)
         {
             return control.SingleSelect(title, options, ref args);
         }
 
-        public static string SingleSelect(string title, List<string> options)
-        {
-            return control.SingleSelect(title, options);
-        }
+   
 
         public static string SingleSelect(string title, List<string> options, ref string[] args)
         {
@@ -564,29 +550,26 @@ namespace Console_CommonModel.CommonLib.Others
         {
             clientAPI.SubmitDialog(title,control,value);  
         }
+
+        internal static string SelectOption(string[] strings)
+        {
+            string[] args = new string[0];
+            return SingleSelect("", strings, ref args);
+        }
     }
 
 
 
-
-}
-
-
-public class PortInfo
-{
-    public PortInfo(int PortNumber, string Local, string Remote, string State)
+    public sealed class CompleteException : Exception
     {
-        this.PortNumber = PortNumber;
-        this.Local = Local;
-        this.Remote = Remote;
-        this.State = State;
     }
 
-    public int PortNumber { get; }
-
-
-
-    public string Local { get; }
-    public string Remote { get; }
-    public string State { get; }
+    public sealed class CancelException : Exception
+    {
+        public CancelException(string message) : base(message)
+        {
+        }
+    }
 }
+
+

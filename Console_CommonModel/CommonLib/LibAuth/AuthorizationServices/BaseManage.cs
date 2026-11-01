@@ -11,14 +11,15 @@ using Console_CommonModel.CommonLib.LibData.AbstractionModel;
 /// Методы управления данными
 /// </summary>
 //[Route("/api/[controller]/[action]")]
-public class BaseManager<TItem>  where TItem: BaseEntity
+public class BaseManager<TDbContext, TItem>  where TItem: BaseEntity
+    where TDbContext : DbContext
 {
     private DbSet<TItem> _dbSet;
     private DbContext _context;
 
-    public BaseManager(DbSet<TItem> dbSet, DbContext dbContext)
+    public BaseManager(  TDbContext dbContext)
     {
-        this._dbSet = dbSet;
+        this._dbSet = dbContext.Set<TItem>();
         this._context = dbContext;
     }
 

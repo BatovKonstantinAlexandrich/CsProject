@@ -14,15 +14,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Components\Pages\Customer\**" />
     <Compile Remove="Services\DesignerControls\**" />
     <Compile Remove="Services\DesignerServices\**" />
     <Compile Remove="TestingReports\**" />
+    <Content Remove="Components\Pages\Customer\**" />
     <Content Remove="Services\DesignerControls\**" />
     <Content Remove="Services\DesignerServices\**" />
     <Content Remove="TestingReports\**" />
+    <EmbeddedResource Remove="Components\Pages\Customer\**" />
     <EmbeddedResource Remove="Services\DesignerControls\**" />
     <EmbeddedResource Remove="Services\DesignerServices\**" />
     <EmbeddedResource Remove="TestingReports\**" />
+    <None Remove="Components\Pages\Customer\**" />
     <None Remove="Services\DesignerControls\**" />
     <None Remove="Services\DesignerServices\**" />
     <None Remove="TestingReports\**" />
@@ -32,7 +36,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="8.0.31" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="8.0.31" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
-    <PackageReference Include="MudBlazor" Version="8.15.0" />
+	  <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="6.0.29" />
+	  <PackageReference Include="MudBlazor" Version="8.15.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -43,10 +48,6 @@
     <Content Update="Shared\Components\TextControl.razor">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Components\Pages\Customer\" />
   </ItemGroup>
 
   <ItemGroup>

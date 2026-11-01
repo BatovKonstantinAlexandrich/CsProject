@@ -1,0 +1,24 @@
+@page "/parts/{Slug}"
+@inject ICatalogService Catalog
+
+<PageTitle>@(part?.Title ?? "Запчасти")</PageTitle>
+
+@if (part is null)
+{
+    <PageHeading Title="Раздел не найден" />
+}
+else
+{
+    <PageHeading Title="@part.Title" Lead="@part.Text" />
+    <section class="wrap section prose">
+        <p>На станции эту группу подбирают по VIN или по уже открытому заказ-наряду. Если деталь есть на складе города, её резервируют к времени записи.</p>
+        <a class="btn-pill" href="@($"/callback?comment={Uri.EscapeDataString(part.Title)}")">Уточнить наличие</a>
+    </section>
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+    private PartCategory? part;
+
+    protected override void OnParametersSet() => part = Catalog.FindPart(Slug);
+}

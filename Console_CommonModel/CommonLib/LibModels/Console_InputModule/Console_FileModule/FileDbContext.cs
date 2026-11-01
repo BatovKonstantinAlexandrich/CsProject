@@ -21,8 +21,7 @@ public class FileDbContext: DbContextBase, IFileDbService
     private IFileDbService fileDbService;
 
 
-    public FileDbContext() {
-        this.Database.EnsureCreated();
+    public FileDbContext() {        
         this.fileDbService = new FileDbService(this);        
     }
 

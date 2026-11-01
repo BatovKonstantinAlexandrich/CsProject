@@ -49,6 +49,7 @@ public static class ProgAgent
 
     public static void Run()
     {
+        var args = new string[0];
         InputConsole.Write("ProgAgent — консольные интерфейсы LibModels");
         var exit = false;
         while (!exit)
@@ -60,7 +61,7 @@ public static class ProgAgent
                     exit = true;
                 else
                     Modules.First(m => m.Title == choice).Run();
-            });
+            }, ref args);
         }
     }
 }

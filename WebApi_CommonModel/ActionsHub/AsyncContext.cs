@@ -6,7 +6,7 @@ public class AsyncContext
     /// <summary>
     /// Динамическая область памяти для регистрации ссылок на функции обрабатывающии ответное сообщение
     /// </summary>
-    private ConcurrentDictionary<string, ActionClientHandler> Pool = new ConcurrentDictionary<string, ActionClientHandler>();
+    private ConcurrentDictionary<string, ActionHandler> Pool = new ConcurrentDictionary<string, ActionHandler>();
 
     /// <summary>
     /// Длина ключа доступа к функции обрабатывающей ответное сообщение
@@ -20,7 +20,7 @@ public class AsyncContext
     /// </summary>
     /// <param name="Handle">ссылка на функцию</param>
     /// <returns>ключ доступа</returns>
-    public string Put(ActionClientHandler Handle)
+    public string Put(ActionHandler Handle)
     {
         lock (this.Pool)
         {
@@ -36,11 +36,11 @@ public class AsyncContext
     /// </summary>
     /// <param name="SerialKey"> ключ доступа</param>
     /// <returns>функция обработчика</returns>
-    public ActionClientHandler Take(string SerialKey)
+    public ActionHandler Take(string SerialKey)
     {
         lock (this.Pool)
         {
-            ActionClientHandler Handle = null;
+            ActionHandler Handle = null;
             Pool.TryRemove(SerialKey, out Handle);
             return Handle;
         }

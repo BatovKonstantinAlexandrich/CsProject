@@ -1,5 +1,6 @@
-﻿
-using Console_CommonModel.CommonLib.LibModels.Console_ClassDataModel;
+﻿using Console_CommonModel.CommonLib.LibModels.Console_ClassDataModel;
+
+using Namotion.Reflection;
 
 using System;
 using System.Collections.Generic;
@@ -54,7 +55,7 @@ public class ActionContextService
                     if (methodResult is Task t)
                         t.Wait();
                     
-                    onsuccess(methodResult is null? null: methodResult.GetType().GetProperties().Any(p=>p.Name=="Result")? ((dynamic)methodResult).Result : null);
+                    onsuccess(methodResult.HasProperty("Result")? ((dynamic)methodResult).Result : null);
                 }
                 catch(Exception ex)
                 {

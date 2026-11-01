@@ -1,0 +1,18 @@
+@page "/parts"
+@inject ICatalogService Catalog
+
+<PageTitle>Запчасти</PageTitle>
+<PageHeading Title="Запчасти и расходники" Lead="Подбор для ремонта и ТО. Карточки приходят из каталога." />
+
+<section class="wrap section part-list">
+    @foreach (var part in Catalog.GetParts())
+    {
+        <a class="info-tile" href="@($"/parts/{part.Slug}")">
+            <EaIcon Name="@part.Icon" />
+            <span>
+                <strong>@part.Title</strong>
+                <small>@part.Text</small>
+            </span>
+        </a>
+    }
+</section>

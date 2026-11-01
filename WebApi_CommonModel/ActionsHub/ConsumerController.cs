@@ -5,8 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-using static ActionsContext;
-
 /// <summary>
 /// Объект реализует управление клиентом ассоциированным с соединением
 /// </summary>
@@ -39,7 +37,7 @@ public class ConsumerController
     /// <summary>
     /// Зарегистрированные операции
     /// </summary>
-    public Dictionary<string, ActionsContext.ActionModel> Actions { get; set; } = new Dictionary<string, ActionsContext.ActionModel>();
+    public Dictionary<string, ActionModel> Actions { get; set; } = new Dictionary<string, ActionModel>();
     
     /// <summary>
     /// Операции для отмены изменений
@@ -70,7 +68,7 @@ public class ConsumerController
     {
         if (_Logging)
             System.Console.WriteLine($"Service: {Name}. Requesting: \n" + JObject.FromObject(Args).ToString());
-        string SerialKey = this.AsyncContext.Put(new ActionClientHandler()
+        string SerialKey = this.AsyncContext.Put(new ActionHandler()
         {
             OnSuccess = OnSuccess,
             OnError = OnError == null ? (evt) => {
@@ -95,7 +93,7 @@ public class ConsumerController
     /// </summary>
     public Action AddAction(string action, MethodModel methodModel)
     {
-        Actions[action] = new ActionsContext.ActionModel(action, (args,onsuccess,onerror) =>
+        Actions[action] = new ActionModel(action, (args,onsuccess,onerror) =>
         {
             Request(action, args,
                 (resp) => {

@@ -1,0 +1,15 @@
+@page "/blog"
+@inject IContentService Content
+
+<PageTitle>Блог</PageTitle>
+<PageHeading Title="Блог сервиса" Lead="Короткие материалы о регламенте и сроке службы автомобиля." />
+<section class="wrap section blog-grid">
+    @foreach (var article in Content.GetArticles())
+    {
+        <a class="blog-card" href="@($"/blog/{article.Slug}")">
+            <span>@article.Category · @article.Date.ToString("d MMMM yyyy", CultureInfo.GetCultureInfo("ru-RU"))</span>
+            <h3>@article.Title</h3>
+            <p>@article.Excerpt</p>
+        </a>
+    }
+</section>

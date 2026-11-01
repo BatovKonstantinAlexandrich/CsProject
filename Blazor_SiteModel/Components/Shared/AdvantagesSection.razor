@@ -1,0 +1,15 @@
+@inject IContentService Content
+
+<section class="wrap section">
+    <h2 class="blue-title">Почему выбирают ЕвроАвто</h2>
+    <div class="advantage-grid">
+        @foreach (var item in Content.GetAdvantages())
+        {
+            <article>
+                <EaIcon Name="@item.Icon" />
+                <h3>@item.Title</h3>
+                <p>@item.Text</p>
+            </article>
+        }
+    </div>
+</section>

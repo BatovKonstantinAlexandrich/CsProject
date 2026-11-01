@@ -1,0 +1,18 @@
+@page "/calculate"
+
+<PageTitle>Рассчитать стоимость</PageTitle>
+<PageHeading Title="Рассчитать стоимость" Lead="Смета строится по нормо-часам выбранной услуги и классу автомобиля. Запчасти в сумму не входят." />
+
+<section class="wrap section form-stack">
+    <EstimateForm ServiceSlug="@Service" OnSaved="Refresh" />
+    <RequestList Kind="Расчёт" Revision="_revision" />
+</section>
+
+@code {
+    private int _revision;
+
+    [SupplyParameterFromQuery(Name = "service")]
+    public string? Service { get; set; }
+
+    private void Refresh() => _revision++;
+}

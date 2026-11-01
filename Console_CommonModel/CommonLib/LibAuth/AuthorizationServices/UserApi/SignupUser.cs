@@ -162,6 +162,8 @@ public class SignupUser<TDbContext> : BaseSignup<TDbContext, UserContext, UserAc
             //    return MethodResult<UserContext>.OnError(new Exception("Пользователь с таким именем уже зарегистрирован"));
             try
             {
+
+                
                 var context = new UserContext()
                 {
                     Ip4 = "192.168.0.1",

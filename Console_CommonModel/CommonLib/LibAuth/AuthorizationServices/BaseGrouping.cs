@@ -1,11 +1,4 @@
-
 using Console_CommonModel.CommonLib.LibData.AbstractionModel;
-
-using System.Collections.Generic;
-using System.Linq;
-
-using Console_CommonModel.CommonLib.LibViews;
-
 
 public abstract class BaseGrouping<TItem, TParent, TGroup>: BaseEntity
     where TGroup: BaseEntity 

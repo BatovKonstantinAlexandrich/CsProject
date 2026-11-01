@@ -1,37 +1,40 @@
 ﻿using Console_CommonModel.CommonLib.LibData.Console_DataModule.DataCommon.DatabaseMetadata;
 
-
-/// <summary>
-/// Класс для формирования TableMetaData
-/// </summary>
+[Label("Класс для формирования TableMetaData")]
 public class TableMetadataBuilder
 {
-    private TableInfo model = new();
+    [Label("Редактируемый объект")]
+    public TableInfo model { get; set; } = new();
 
-
+    [NotInput]
+    [Label("Завершить редактирование")]
     public TableInfo Build() => model;
+
+    [NotInput]
+    [Label("Завершить редактирование")]
     public TableInfo Build(string schema) {
         model.schema = schema;
         return model;
     }
 
 
-    /// <summary>
-    /// добавление первичного ключа
-    /// </summary>
-    public void AddPrimaryKey()
+    [Label("Добавить первичный ключ")]
+    public ColumnMetaData AddPrimaryKey()
     {
         model.columns["Id"] = new();
         model.columns["Id"].name = "Id";
         model.columns["Id"].type = "int";        
         model.columns["Id"].incremental = true;
+        return model.columns["Id"];
     }
 
 
     /// <summary>
-    /// Добавление статистических показателей
+    /// 
     /// </summary>
     /// <param name="indicators">список наименований</param>
+    [Label("Добавление статистических показателей")]
+    
     public void AddIndicators(params string[] indicators )
     {
         foreach (var indicator in indicators)
@@ -44,11 +47,12 @@ public class TableMetadataBuilder
 
 
     /// <summary>
-    /// Добавляет в описание таблицы сведения о ссылки из другой таблице
+    /// 
     /// </summary>
     /// <param name="schema"></param>
     /// <param name="table"></param>
-    public void AddReferenceOneToOne(string schema, string table, string column)
+    [Label("Добавляет в описание таблицы сведения о ссылки из другой таблице")]
+    public void AddReferenceOneToOne([Label("Схема")][NotNullNotEmpty()]string schema, [Label("Схема")] string table, [Label("Схема")] string column)
     {
         model.columns[column] = new();
         model.columns[column].name = column;

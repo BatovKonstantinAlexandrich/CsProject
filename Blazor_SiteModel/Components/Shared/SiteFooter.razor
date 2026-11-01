@@ -1,0 +1,50 @@
+@inject IMenuService Menu
+@inject IContentService Content
+
+<footer class="site-footer">
+    <div class="wrap footer-top">
+        <div>
+            <p class="footer-kicker">Принимаем к оплате</p>
+            <div class="pay-row">
+                <span>Карты</span>
+                <span>QR</span>
+                <span>Онлайн</span>
+            </div>
+        </div>
+        <div>
+            <p class="footer-kicker">Мобильное приложение</p>
+            <a class="text-link" href="/garage">История работ и запись</a>
+        </div>
+        <div>
+            <p class="footer-kicker">Телефон</p>
+            <a class="footer-phone" href="@Content.PhoneHref">@Content.PhoneDisplay</a>
+        </div>
+    </div>
+    <div class="wrap footer-grid">
+        <div>
+            <h2>Клиентам</h2>
+            @foreach (var link in Menu.GetFooterClients())
+            {
+                <a href="@link.Href">@link.Title</a>
+            }
+        </div>
+        <div>
+            <h2>Компания</h2>
+            @foreach (var link in Menu.GetFooterCompany())
+            {
+                <a href="@link.Href">@link.Title</a>
+            }
+        </div>
+        <div>
+            <h2>Документы</h2>
+            @foreach (var link in Menu.GetLegalLinks())
+            {
+                <a href="@link.Href">@link.Title</a>
+            }
+        </div>
+    </div>
+    <div class="wrap footer-bottom">
+        <a href="/about">© ЕвроАвто 1994–2026</a>
+        <a class="to-top" href="#top">Вверх</a>
+    </div>
+</footer>

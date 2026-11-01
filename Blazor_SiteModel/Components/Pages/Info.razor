@@ -1,0 +1,28 @@
+@page "/info/{Slug}"
+@inject IContentService Content
+
+<PageTitle>@(info?.Title ?? "Страница")</PageTitle>
+
+@if (info is null)
+{
+    <PageHeading Title="Страница не найдена" />
+}
+else
+{
+    <PageHeading Title="@info.Title" />
+    <section class="wrap section prose">
+        <p>@info.Body</p>
+        @if (info.Slug == "kontakty")
+        {
+            <p><a class="footer-phone" href="@Content.PhoneHref">@Content.PhoneDisplay</a></p>
+            <a class="btn-pill" href="/stations">Адреса СТО</a>
+        }
+    </section>
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+    private InfoPage? info;
+
+    protected override void OnParametersSet() => info = Content.GetInfo(Slug);
+}

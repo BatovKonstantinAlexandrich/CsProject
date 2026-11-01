@@ -1,0 +1,28 @@
+@inject IContentService Content
+
+<section class="wrap section">
+    <h2>Остались вопросы?</h2>
+    <div class="faq-list">
+        @foreach (var item in Content.GetFaq())
+        {
+            var open = opened == item.Question;
+            <article class="faq-item @(open ? "open" : null)">
+                <button type="button" @onclick="() => Toggle(item.Question)" aria-expanded="@open">
+                    <span>@item.Question</span>
+                    <i></i>
+                </button>
+                @if (open)
+                {
+                    <p>@item.Answer</p>
+                }
+            </article>
+        }
+    </div>
+</section>
+
+@code {
+    private string? opened;
+
+    private void Toggle(string question) =>
+        opened = opened == question ? null : question;
+}

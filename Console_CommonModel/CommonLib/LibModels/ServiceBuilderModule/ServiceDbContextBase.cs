@@ -15,14 +15,21 @@ namespace Console_CommonModel.CommonLib.LibModels.ServiceBuilderModule
     [Label("База сетевых служб")]
     public class ServiceDbContext : ServiceDbContextBase<ServiceResource>
     {
+        public ServiceDbContext()
+        {
+        }
+
         [ServiceModelIntegrationService()]
         public override DbSet<ServiceResource> ServiceModels { get; set; }
+
+
     }
     public class ServiceDbContextBase<TServiceModel> : FileDbContext
         where TServiceModel : ServiceModel
     {
         public ServiceDbContextBase() { }
-        public ServiceDbContextBase(DbContextOptions options) : base() { }
+        public ServiceDbContextBase(DbContextOptions options) : base() {            
+        }
 
         [ServiceModelIntegrationService()]
         public virtual DbSet<TServiceModel> ServiceModels { get; set; }

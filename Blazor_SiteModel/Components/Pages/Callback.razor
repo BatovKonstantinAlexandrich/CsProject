@@ -1,0 +1,31 @@
+@page "/callback"
+@inject CityState CityState
+
+<PageTitle>Запись на СТО</PageTitle>
+<PageHeading Title="Записаться на СТО" Lead="Станция, дата и свободные окна берутся из сервисов расписания и адресов." />
+
+<section class="wrap section form-stack">
+    <BookingForm ServiceSlug="@Service" InitialComment="@Comment" OnBooked="Refresh" />
+    <RequestList Kind="Запись" Revision="_revision" />
+</section>
+
+@code {
+    private int _revision;
+
+    [SupplyParameterFromQuery(Name = "service")]
+    public string? Service { get; set; }
+
+    [SupplyParameterFromQuery(Name = "comment")]
+    public string? Comment { get; set; }
+
+    [SupplyParameterFromQuery(Name = "city")]
+    public string? City { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (!string.IsNullOrWhiteSpace(City))
+            CityState.Select(City);
+    }
+
+    private void Refresh() => _revision++;
+}

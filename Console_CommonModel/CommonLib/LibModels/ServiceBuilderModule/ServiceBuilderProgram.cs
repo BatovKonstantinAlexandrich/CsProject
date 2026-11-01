@@ -159,7 +159,8 @@ public class ServiceBuilderProgram
             options.Add("Завершить тестирование");
             string selected = null;
             object result = new object();
-            switch((selected = InputConsole.SingleSelect("Выберите метод", options)))
+            var argss = new string[0];
+            switch((selected = InputConsole.SingleSelect("Выберите метод", options, ref argss)))
             {
                 case "Завершить тестирование": break;
                 default:

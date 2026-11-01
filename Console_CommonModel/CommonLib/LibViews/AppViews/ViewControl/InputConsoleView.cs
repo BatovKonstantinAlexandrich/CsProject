@@ -140,5 +140,20 @@ namespace Console_CommonModel.CommonLib.LibViews.AppViews.ViewControl
         public void Write(object[] args) => _impl.Write(args);
         public void WriteLine(params object[] args) => _impl.WriteLine(args);
         public void WriteYellow(params object[] args) => _impl.WriteYellow(args);
+
+        public ConsoleKeyInfo ReadKey()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void SelectAction(string title, object target, ref string[] args)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void SelectList(string title, List<string> options, Action<string> onselect, ref string[] args)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

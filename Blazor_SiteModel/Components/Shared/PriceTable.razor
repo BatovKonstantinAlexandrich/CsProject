@@ -1,0 +1,73 @@
+@inject ICatalogService Catalog
+
+<section class="table-block">
+    @if (!HideTools)
+    {
+        <div class="table-tools">
+            <FormField Label="Категория">
+                <InputSelect @bind-Value="category">
+                    <option value="">Все категории</option>
+                    @foreach (var item in Catalog.GetCategories())
+                    {
+                        <option value="@item.Slug">@item.Title</option>
+                    }
+                </InputSelect>
+            </FormField>
+            <FormField Label="Поиск по услуге">
+                <input value="@query" @oninput="OnSearch" placeholder="Например, масло" />
+            </FormField>
+        </div>
+    }
+    <DataTable Caption="@Caption" IsEmpty="rows.Count == 0" ColumnCount="5" EmptyText="По этому фильтру услуг нет">
+        <Header>
+            <th>Услуга</th>
+            <th>Категория</th>
+            <th>Длительность</th>
+            <th>Стоимость от</th>
+            <th></th>
+        </Header>
+        <ChildContent>
+            @foreach (var row in rows)
+            {
+                <tr>
+                    <td>@row.Item.Title</td>
+                    <td>@row.Category.Title</td>
+                    <td>@PriceText.Hours(row.Item.Minutes)</td>
+                    <td>@PriceText.Format(row.Item.PriceFrom)</td>
+                    <td><a class="text-link" href="@($"/services/{row.Item.Slug}")">Записаться</a></td>
+                </tr>
+            }
+        </ChildContent>
+    </DataTable>
+    <p class="table-note">Конечная цена может отличаться от указанной в зависимости от модели и характеристик автомобиля. В таблице только работа, без запчастей.</p>
+</section>
+
+@code {
+    private string category = "";
+    private string query = "";
+    private bool categoryApplied;
+
+    [Parameter] public string? CategorySlug { get; set; }
+    [Parameter] public bool HideTools { get; set; }
+    [Parameter] public string Caption { get; set; } = "Прайс работ";
+
+    protected override void OnParametersSet()
+    {
+        if (!categoryApplied && !string.IsNullOrWhiteSpace(CategorySlug))
+        {
+            category = CategorySlug;
+            categoryApplied = true;
+        }
+    }
+
+    private IReadOnlyList<(ServiceCategory Category, ServiceItem Item)> rows =>
+        Catalog.GetCategories()
+            .Where(item => string.IsNullOrWhiteSpace(category) || item.Slug == category)
+            .SelectMany(item => item.Items.Select(service => (Category: item, Item: service)))
+            .Where(row => string.IsNullOrWhiteSpace(query) || row.Item.Title.Contains(query, StringComparison.OrdinalIgnoreCase))
+            .DistinctBy(row => row.Item.Slug)
+            .OrderBy(row => row.Item.Title)
+            .ToList();
+
+    private void OnSearch(ChangeEventArgs args) => query = args.Value?.ToString() ?? "";
+}

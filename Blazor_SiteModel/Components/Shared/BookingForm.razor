@@ -1,0 +1,209 @@
+@implements IDisposable
+@inject ICatalogService Catalog
+@inject IStationService Stations
+@inject IScheduleService Schedule
+@inject IAppointmentService Appointments
+@inject CityState CityState
+
+<EditForm Model="model" OnValidSubmit="Submit" class="form-card booking-form">
+    <DataAnnotationsValidator />
+    <h2>Поможем выбрать, запишем на СТО прямо сейчас</h2>
+
+    <div class="form-grid">
+        <FormField Label="Услуга">
+            <InputSelect @bind-Value="model.ServiceSlug" @bind-Value:after="OnServiceChanged">
+                <option value="">Выберите услугу</option>
+                @foreach (var service in services)
+                {
+                    <option value="@service.Slug">@service.Title</option>
+                }
+            </InputSelect>
+        </FormField>
+        <FormField Label="@($"Станция в городе {CityState.Current}")">
+            <ChildContent>
+                <InputSelect @bind-Value="model.Station" @bind-Value:after="ClearTime">
+                    @foreach (var station in cityStations)
+                    {
+                        <option value="@station.Address">@station.Address</option>
+                    }
+                </InputSelect>
+            </ChildContent>
+            <Validation>
+                <ValidationMessage For="() => model.Station" />
+            </Validation>
+        </FormField>
+    </div>
+
+    @if (selected is not null)
+    {
+        <div class="facts">
+            <div>
+                <span>Стоимость от</span>
+                <strong>@PriceText.Format(selected.PriceFrom)</strong>
+            </div>
+            <div>
+                <span>Длительность</span>
+                <strong>@PriceText.Hours(selected.Minutes)</strong>
+            </div>
+            <div>
+                <span>Где проведут</span>
+                <strong>@cityStations.Count ст.</strong>
+            </div>
+        </div>
+        <p class="table-note">Конечная цена может отличаться от указанной в зависимости от модели и характеристик автомобиля.</p>
+    }
+
+    <p class="slot-label">Дата и время записи</p>
+    <div class="date-row">
+        @foreach (var day in dates)
+        {
+            <button type="button" class="date-chip @(day == model.Date ? "active" : null)" @onclick="() => SelectDate(day)">
+                <span>@day.ToString("ddd", CultureInfo.GetCultureInfo("ru-RU"))</span>
+                <strong>@day.ToString("dd.MM")</strong>
+            </button>
+        }
+    </div>
+    <div class="slot-grid">
+        @foreach (var slot in slots)
+        {
+            var busy = slot.FreePlaces == 0;
+            <button type="button" class="slot @(model.Time == slot.Time ? "active" : null)" disabled="@busy" @onclick="() => model.Time = slot.Time">
+                <strong>@slot.Time</strong>
+                <span>@(busy ? "Занято" : Places(slot.FreePlaces))</span>
+            </button>
+        }
+    </div>
+    <ValidationMessage For="() => model.Time" />
+
+    <div class="form-grid">
+        <FormField Label="Имя">
+            <ChildContent>
+                <InputText @bind-Value="model.Name" />
+            </ChildContent>
+            <Validation>
+                <ValidationMessage For="() => model.Name" />
+            </Validation>
+        </FormField>
+        <FormField Label="Телефон">
+            <ChildContent>
+                <InputText @bind-Value="model.Phone" placeholder="+7 900 000-00-00" />
+            </ChildContent>
+            <Validation>
+                <ValidationMessage For="() => model.Phone" />
+            </Validation>
+        </FormField>
+    </div>
+    <FormField Label="Комментарий">
+        <InputTextArea @bind-Value="model.Comment" />
+    </FormField>
+    <label class="consent">
+        <InputCheckbox @bind-Value="model.Consent" />
+        <span>Даю согласие на обработку персональных данных и ознакомлен с политикой конфиденциальности.</span>
+    </label>
+    <ValidationMessage For="() => model.Consent" />
+
+    <button class="btn-pill" type="submit">Записаться</button>
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <p class="success">@message</p>
+    }
+</EditForm>
+
+@code {
+    private readonly VisitFormModel model = new();
+    private string? message;
+    private bool serviceApplied;
+    private IReadOnlyList<ServiceItem> services = [];
+    private IReadOnlyList<DateOnly> dates = [];
+    private IReadOnlyList<TimeSlot> slots = [];
+    private IReadOnlyList<Station> cityStations = [];
+
+    [Parameter] public string? ServiceSlug { get; set; }
+    [Parameter] public string? InitialComment { get; set; }
+    [Parameter] public EventCallback OnBooked { get; set; }
+
+    private ServiceItem? selected => services.FirstOrDefault(service => service.Slug == model.ServiceSlug);
+
+    protected override void OnInitialized()
+    {
+        services = Catalog.GetCategories().SelectMany(category => category.Items).DistinctBy(service => service.Slug).OrderBy(service => service.Title).ToList();
+        dates = Schedule.GetDates();
+        model.Date = dates.FirstOrDefault();
+        CityState.Changed += OnCityChanged;
+        ReloadStations();
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (!serviceApplied && !string.IsNullOrWhiteSpace(ServiceSlug))
+        {
+            model.ServiceSlug = ServiceSlug;
+            serviceApplied = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(model.Comment) && !string.IsNullOrWhiteSpace(InitialComment))
+            model.Comment = InitialComment;
+    }
+
+    private void OnCityChanged() => InvokeAsync(() =>
+    {
+        ReloadStations();
+        StateHasChanged();
+    });
+
+    private void ReloadStations()
+    {
+        cityStations = Stations.GetByCity(CityState.Current);
+        if (cityStations.All(station => station.Address != model.Station))
+        {
+            model.Station = cityStations.FirstOrDefault()?.Address ?? "";
+            model.Time = "";
+        }
+
+        slots = string.IsNullOrWhiteSpace(model.Station)
+            ? []
+            : Schedule.GetSlots(model.Date, model.Station);
+    }
+
+    private void SelectDate(DateOnly day)
+    {
+        model.Date = day;
+        model.Time = "";
+        slots = Schedule.GetSlots(day, model.Station);
+    }
+
+    private void ClearTime() => model.Time = "";
+
+    private void OnServiceChanged() => message = null;
+
+    private async Task Submit()
+    {
+        Appointments.Add(new AppointmentRequest
+        {
+            Kind = "Запись",
+            Name = model.Name.Trim(),
+            Phone = model.Phone.Trim(),
+            ServiceTitle = selected?.Title,
+            Station = $"{CityState.Current}, {model.Station}",
+            Date = model.Date,
+            Comment = string.IsNullOrWhiteSpace(model.Comment) ? model.Time : $"{model.Time}. {model.Comment}",
+            Estimate = selected?.PriceFrom
+        });
+        message = $"Заявка на {model.Date:dd.MM.yyyy} в {model.Time} сохранена.";
+        model.Name = "";
+        model.Phone = "";
+        model.Comment = "";
+        model.Consent = false;
+        model.Time = "";
+        await OnBooked.InvokeAsync();
+    }
+
+    private static string Places(int count) => count switch
+    {
+        1 => "1 место",
+        2 or 3 or 4 => $"{count} места",
+        _ => $"{count} мест"
+    };
+
+    public void Dispose() => CityState.Changed -= OnCityChanged;
+}

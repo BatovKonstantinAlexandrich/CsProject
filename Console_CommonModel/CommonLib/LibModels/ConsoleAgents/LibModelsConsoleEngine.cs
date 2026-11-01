@@ -12,6 +12,7 @@ namespace Console_CommonModel.CommonLib.LibModels.ConsoleAgents;
 /// </summary>
 public static class LibModelsConsoleEngine
 {
+    public static string[] args = new string[0];
     public static void RunModule(string moduleFolderName, Type anchorType, Action? dedicatedProgram = null)
     {
         var moduleTypes = DiscoverModuleTypes(moduleFolderName, anchorType).ToList();
@@ -35,7 +36,7 @@ public static class LibModelsConsoleEngine
                 menu.Add("Специальная программа модуля");
             menu.Add("Назад");
 
-            var choice = InputConsole.SingleSelect($"Модуль {moduleFolderName}", menu);
+            var choice = InputConsole.SingleSelect($"Модуль {moduleFolderName}", menu, ref args);
             if (choice == "Назад")
                 return;
 
@@ -109,7 +110,7 @@ public static class LibModelsConsoleEngine
         {
             var names = dbContextTypes.Select(t => t.Name).ToList();
             names.Add("Назад");
-            var picked = InputConsole.SingleSelect("Контексты данных", names);
+            var picked = InputConsole.SingleSelect("Контексты данных", names, ref args);
             if (picked == "Назад")
                 return;
 
@@ -144,7 +145,7 @@ public static class LibModelsConsoleEngine
         {
             var entityNames = entitySets.Select(p => p.Name).ToList();
             entityNames.Add("Назад");
-            var entityName = InputConsole.SingleSelect($"Сущности ({dbContextType.Name})", entityNames);
+            var entityName = InputConsole.SingleSelect($"Сущности ({dbContextType.Name})", entityNames, ref args);
             if (entityName == "Назад")
                 return;
 
@@ -166,7 +167,7 @@ public static class LibModelsConsoleEngine
                 "Удалить запись",
                 "Назад"
             };
-            var action = InputConsole.SingleSelect($"Сущность {entityType.Name}", actions);
+            var action = InputConsole.SingleSelect($"Сущность {entityType.Name}", actions, ref args);
             if (action == "Назад")
                 return;
 
@@ -234,7 +235,7 @@ public static class LibModelsConsoleEngine
         foreach (object item in list)
             labels.Add(DescribeEntity(item));
         labels.Add("Отмена");
-        var picked = InputConsole.SingleSelect($"Выбор {entityType.Name}", labels);
+        var picked = InputConsole.SingleSelect($"Выбор {entityType.Name}", labels, ref args);
         if (picked == "Отмена")
             return null;
 
@@ -338,7 +339,7 @@ public static class LibModelsConsoleEngine
         if (underlying.IsEnum)
         {
             var names = Enum.GetNames(underlying).ToList();
-            var picked = InputConsole.SingleSelect(label, names);
+            var picked = InputConsole.SingleSelect(label, names, ref args);
             return Enum.Parse(underlying, picked);
         }
 
@@ -354,7 +355,7 @@ public static class LibModelsConsoleEngine
         {
             var names = serviceTypes.Select(t => t.Name).ToList();
             names.Add("Назад");
-            var picked = InputConsole.SingleSelect("Сервисы", names);
+            var picked = InputConsole.SingleSelect("Сервисы", names, ref args);
             if (picked == "Назад")
                 return;
 
@@ -374,7 +375,7 @@ public static class LibModelsConsoleEngine
             entries.AddRange(instanceMethods.Select(m => m.Name));
             entries.Add("Назад");
 
-            var picked = InputConsole.SingleSelect($"Методы {serviceType.Name}", entries);
+            var picked = InputConsole.SingleSelect($"Методы {serviceType.Name}", entries, ref args);
             if (picked == "Назад")
                 return;
 

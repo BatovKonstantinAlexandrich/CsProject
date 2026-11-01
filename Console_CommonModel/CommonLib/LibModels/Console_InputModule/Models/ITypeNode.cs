@@ -9,4 +9,5 @@ public interface ITypeNode<T> : TreeWalker<T>
     int GetLevel();
     List<string> GetPath();
     T FindPath(List<string> path);
+    void ForEach(Action<TypeNode<T>> value);
 }

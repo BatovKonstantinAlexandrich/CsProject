@@ -1,0 +1,57 @@
+@page "/login"
+@using pickpoint_delivery_service
+@implements IDisposable
+@inject UserSession Session
+
+
+<PageTitle>Войти</PageTitle>
+<PageHeading Title="@(Session.IsAuthenticated ? "Кабинет" : "Войти")" Lead="Вход сохраняется только в текущем сеансе страницы." />
+
+<section class="wrap section">
+    @if (Session.IsAuthenticated)
+    {
+        <div class="form-card">
+            <p><strong>@Session.Name</strong></p>
+            <p>@Session.Phone</p>
+            <button class="btn-pill" type="button" @onclick="Session.SignOut">Выйти</button>
+        </div>
+    }
+    else
+    {
+        <EditForm Model="model" OnValidSubmit="Submit" class="form-card">
+            <DataAnnotationsValidator />
+            <label>
+                Имя
+                <InputText @bind-Value="model.Name" />
+            </label>
+            <ValidationMessage For="() => model.Name" />
+            <label>
+                Телефон
+                <InputText @bind-Value="model.Phone" />
+            </label>
+            <ValidationMessage For="() => model.Phone" />
+            <button class="btn-pill" type="submit">Войти</button>
+        </EditForm>
+    }
+</section>
+
+@code {
+    private readonly LoginModel model = new();
+
+    protected override void OnInitialized() => Session.Changed += OnChanged;
+
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    private void Submit() => Session.SignIn(model.Name, model.Phone);
+
+    public void Dispose() => Session.Changed -= OnChanged;
+
+    private sealed class LoginModel
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Укажите имя")]
+        public string Name { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Укажите телефон")]
+        public string Phone { get; set; } = "";
+    }
+}

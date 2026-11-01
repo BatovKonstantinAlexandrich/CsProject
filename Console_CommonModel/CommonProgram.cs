@@ -8,46 +8,21 @@ using System.Data;
 using Console_CommonModel.CommonLib.LibModels.ServiceBuilderModule;
 using Console_CommonModel.CommonLib.LibAuth.AppAuth.AuthorizationModel.ServiceModel;
 using System.Xml.Serialization;
-using Console_CommonModel.CommonLib.LibModels.Console_InputModule.Console_FileModule;
-using Console_CommonModel.CommonLib.LibData.Console_DataModule.DataADO;
-using Console_CommonModel.CommonLib.Others;
+using Console_CommonModel.CommonLib.LibModels.Console_InputModule.Console_FileModule; 
+using Console_CommonModel.CommonLib.LibModels.Console_ClassDataModel;
+using System.Reflection;
+using Console_CommonModel.CommonLib.LibData.Console_DataModule.DataCommon.DatabaseMetadata;
+using Org.BouncyCastle.Asn1.X509;
 
-public class A
-{
-    public void ToDo_A()
-    {
-        var b = new B();
-        b.ToDo_B();
-    }
-}
-
-public class B
-{
-    public void ToDo_B()
-    {
-        var stack = this.GetInvokeInfo();
-        this.Info(stack);
-        //var actionInfo = this.GetActionInfo();
-        //this.Info(actionInfo);
-    }
-}
 
 namespace Console_CommonModel
 {
-
     /// <summary>
     /// Главный класс. Точка входа.
     /// </summary>
     public class CommonProgram
     {
-
-        static void Main(string[] args)
-        {      
-            
-            
-            RunTests<CommonProgram>(args);
-        }
-
+        static void Main(string[] args) => RunTests<CommonProgram>(args);
 
         public static void Run<TProgram>(string[] args)
         {
@@ -57,10 +32,6 @@ namespace Console_CommonModel
             ServiceFactory.Get().AddTypes(typeof(CommonProgram).Assembly);
         }
 
-
-
-
-
         /// <summary>
         /// 
         /// </summary>
@@ -68,14 +39,39 @@ namespace Console_CommonModel
         /// <param name="args"></param>
         public static void RunTests<TProgram>(string[] args)
         {
+            var commonProgram = new CommonProgram();
+            commonProgram.Trace();
+
             Load();
+
+            TestGetIntegrationServices();
 
             ServiceFactory.Get().AddTypes(typeof(TProgram).Assembly);
             ServiceFactory.Get().AddTypes(typeof(CommonProgram).Assembly);
 
+            var builder = new TableMetadataBuilder();
+            builder.InvokeMethodWithInput<ColumnMetaData>(
+                nameof(builder.AddIndicators),
+                target => {
+                    builder.Info(target);
+                },
+                error => {
+                    builder.Info(error);
+                }
+            );
 
-            new A().ToDo_A();
+
+
+            //Console_ClassDataModelConsoleProgram.Run( );
+            InteractiveInvokeProgram.UserInvokeInteractive(new TableMetadataBuilder());
+            //ConsoleProgram.RunInteractive<TableMetadataBuilder>();
+
+           
             var tests = typeof(CommonProgram).Assembly.GetTestElements();
+            foreach (var test in tests)
+            {                
+                var instance = test.New<TestingElement>();
+            }
 
             bool interactive = args.Any(a =>
                 string.Equals(a, "--interactive", StringComparison.OrdinalIgnoreCase)
@@ -120,6 +116,15 @@ namespace Console_CommonModel
 
         static void Install()
         {
+        }
+
+        public void Trace()
+        {
+            Console.WriteLine(new { 
+                calling = Assembly.GetCallingAssembly().FullName,
+                executing = Assembly.GetExecutingAssembly().FullName,
+                entry = Assembly.GetEntryAssembly().FullName
+            }.ToJson());
         }
 
         static void Load()

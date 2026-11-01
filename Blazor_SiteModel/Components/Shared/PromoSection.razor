@@ -1,0 +1,53 @@
+@inject IPromotionService Promotions
+
+<section class="band">
+    <div class="wrap">
+        <div class="section-head">
+            <h2>Акции месяца</h2>
+            <a class="text-link" href="/promotions">Смотреть все</a>
+        </div>
+        @if (featured is not null)
+        {
+            <div class="promo-layout">
+                <a class="promo-feature" href="@($"/promotions/{featured.Slug}")">
+                    <div class="promo-visual">
+                        <span class="ad">Реклама</span>
+                        <strong>Дарим замену масла при покупке</strong>
+                    </div>
+                    <div class="promo-copy">
+                        <h3>@featured.Title</h3>
+                        <p>@Format(featured)</p>
+                        <span class="btn-pill ghost">Подробнее</span>
+                    </div>
+                </a>
+                <div class="promo-side">
+                    @foreach (var item in rest)
+                    {
+                        <a href="@($"/promotions/{item.Slug}")">
+                            <span class="dot"></span>
+                            <span>
+                                <strong>@item.Title</strong>
+                                <small>@item.City · @Format(item)</small>
+                            </span>
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    private Promotion? featured;
+    private IReadOnlyList<Promotion> rest = [];
+
+    protected override void OnInitialized()
+    {
+        var all = Promotions.GetAll();
+        featured = all.FirstOrDefault();
+        rest = all.Skip(1).ToList();
+    }
+
+    private static string Format(Promotion item) =>
+        $"{item.From:dd.MM.yy} – {item.To:dd.MM.yy}";
+}

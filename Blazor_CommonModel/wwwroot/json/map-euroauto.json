@@ -1,0 +1,13 @@
+{
+  "mapLayer": "https://api.maptiler.com/maps/pastel/{z}/{x}/{y}.png?key=2XJN1rUImRvbUdjUyTiZ",
+  "coordinates": [52.53, 13.405],
+  "zoom": 12,
+  "markers": [
+    {
+      "coordinates": [52.52, 13.407],
+      "iconUrl": "https://kazan.euroauto.ru/static/images/delivery_points_map/ea.svg",
+      "className": "custom-marker-icon",
+      "popup": "<div class='card-body'><div class='card-text mt-1 fs-base'>Москва, ул. Беломорская, д. 40, с2</div><div class='card-text mt-1 fw-bold'>+7 (812) 389 49 49</div><div class='card-text'>График работы СТО: Пн-Вс 8-22</div><button class='btn btn-outline-secondary fw-lighter rounded-pill mt-1 d-block mx-auto'>Выбрать СТО</button></div>"
+    }
+  ]
+}

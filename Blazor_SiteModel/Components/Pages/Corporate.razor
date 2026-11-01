@@ -1,0 +1,9 @@
+@page "/corporate"
+@inject IContentService Content
+
+<PageTitle>Корпоративным клиентам</PageTitle>
+<PageHeading Title="Корпоративным клиентам" Lead="Единый договор, приоритетные окна и сводка по парку." />
+<section class="wrap section prose">
+    <p>@Content.GetCorporate()</p>
+    <a class="btn-pill" href="/callback?comment=Корпоративный%20парк">Оставить заявку</a>
+</section>

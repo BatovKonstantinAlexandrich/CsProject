@@ -196,24 +196,12 @@ public static class StackTraceExtensions
             arguments = new Dictionary<string, object>();
         CallInfo info = null;
         var stack = target.GetInvokeInfo();
-        if (stack.Count >= 4)
-        {
-            info = stack[3];
-            info.CallArguments = arguments;
-            info.ActionCompleted = completed;
-
-
-        }
-        else
-        {
-            if(stack.Count() > 0)
-            {
-                info = stack.Last();
-                info.CallArguments = arguments;
-                info.ActionCompleted = completed;
-            }
-            
-        }
+        stack = stack.Where(p => p.ClassName != nameof(StackTraceExtensions)).ToList();
+         
+        info = stack.Last();
+        info.CallArguments = arguments;
+        info.ActionCompleted = completed;
+         
         if (ex != null)
         {
             info.TextMessage = ex.Message;
@@ -905,7 +893,7 @@ public static class ObjectLogExtensions
         }
         foreach(var message in messages)
         {
-            System.Console.WriteLine($"{DateTime.Now.ToString("dd.MM.yy hh:mm:ss")} => {message}");
+            System.Console.WriteLine($"{DateTime.Now.ToString("dd.MM.yy hh:mm:ss")} => {message}".Replace(@"\r\n","\n"));
         }
     }
 

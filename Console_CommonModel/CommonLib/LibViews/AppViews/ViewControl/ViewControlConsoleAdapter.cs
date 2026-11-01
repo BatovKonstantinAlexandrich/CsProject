@@ -1,12 +1,8 @@
 using Console_CommonModel.CommonLib.LibViews.AppViews.BaseComponent;
 
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
-using System.IO;
-using System.Linq;
 using System.Net.NetworkInformation;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
@@ -14,6 +10,7 @@ using System.Xml.Linq;
 
 namespace Console_CommonModel.CommonLib.LibViews.AppViews.ViewControl
 {
+
     internal sealed class ViewControlConsoleAdapter : IViewControl
     {
         private readonly AppViewBase _host;
@@ -228,7 +225,7 @@ namespace Console_CommonModel.CommonLib.LibViews.AppViews.ViewControl
         {
             Clear();
             var shellArgs = Array.Empty<string>();
-            switch (SingleSelect("\nРазрешите выполнить операцию: " + name, new[] { "Разрешаю", "Не разрешаю" }, ref shellArgs))
+            switch (SingleSelect("\nРазрешите выполнить: " + name, new[] { "Разрешаю", "Не разрешаю" }, ref shellArgs))
             {
                 case "Разрешаю": return true;
                 case "Не разрешаю": return false;
@@ -877,16 +874,24 @@ namespace Console_CommonModel.CommonLib.LibViews.AppViews.ViewControl
         {
             throw new NotImplementedException();
         }
-    }
 
-    public sealed class CompleteException : Exception
-    {
-    }
+        public string[] args { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-    public sealed class CancelException : Exception
-    {
-        public CancelException(string message) : base(message)
+        public ConsoleKeyInfo ReadKey()
         {
+            throw new NotImplementedException();
+        }
+
+        public void SelectAction(string title, object target, ref string[] args)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void SelectList(string title, List<string> options, Action<string> onselect, ref string[] args)
+        {
+            throw new NotImplementedException();
         }
     }
+
+   
 }

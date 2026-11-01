@@ -1,0 +1,16 @@
+@page "/garage"
+@inject IContentService Content
+
+<PageTitle>Гараж</PageTitle>
+<PageHeading Title="Гараж" Lead="Фото и видео с автосервиса, выполненные работы и установленные запчасти." />
+<section class="wrap section station-grid">
+    @foreach (var entry in Content.GetGarage())
+    {
+        <article>
+            <h2>@entry.Car</h2>
+            <p>@entry.Work</p>
+            <p>@entry.Place · @entry.Date.ToString("d MMMM yyyy", CultureInfo.GetCultureInfo("ru-RU"))</p>
+            <p>@entry.Result</p>
+        </article>
+    }
+</section>

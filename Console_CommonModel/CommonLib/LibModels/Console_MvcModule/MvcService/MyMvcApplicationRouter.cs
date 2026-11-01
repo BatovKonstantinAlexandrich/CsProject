@@ -12,10 +12,11 @@ using System.Threading.Tasks;
 
 namespace Console_CommonModel.CommonLib.LibModels.Console_MvcModule.MvcService
 {
-    public class MyMvcApplicationRouter : IHttpRouter<BusinessDatasourceService>
-    {
-        private IWebApi webApi;
 
+
+    [Label("Маршрутизатор")]
+    public class MyMvcApplicationRouter : IHttpRouter<BusinessDatasourceService>, IMiddleware
+    {
 
 
         [NotNullNotEmpty]
@@ -25,13 +26,15 @@ namespace Console_CommonModel.CommonLib.LibModels.Console_MvcModule.MvcService
         private BusinessDatasourceService BusinessService;
 
 
-
-
         public BusinessDatasourceService GetMiddlewareComponent()
         {
+            
             if (BusinessDatasource is null)
             {
-                throw new ArgumentNullException(nameof(BusinessDatasource));
+                using (var db = new DeliveryDbContext())
+                {
+                    BusinessDatasource = db.GetBusinessDatasource();
+                }
             }
             if (BusinessService is null)
             {
@@ -57,11 +60,12 @@ namespace Console_CommonModel.CommonLib.LibModels.Console_MvcModule.MvcService
             }
         }
 
-        public async Task OnRequest(HttpContext http)
+        public async Task<Tuple<int, object>> OnRequest(HttpContext http)
         {
             var request = GetRequestModel(http);
             var result = await OnRequest(request);
             await OnResponse(http, request, result);
+            return result;
         }
 
         public string ReadBody(HttpContext context)
@@ -118,6 +122,7 @@ namespace Console_CommonModel.CommonLib.LibModels.Console_MvcModule.MvcService
         }
 
 
+      
         private async Task<Tuple<int, object>> OnRequest(RequestModel requestModel)
         {
             Tuple<int, object> methodResult = null;
@@ -150,9 +155,12 @@ namespace Console_CommonModel.CommonLib.LibModels.Console_MvcModule.MvcService
             });
         }
 
-        Task<Tuple<int, object>> IHttpRouter<BusinessDatasourceService>.OnRequest(HttpContext http)
+       
+
+        public async Task InvokeAsync(HttpContext context, RequestDelegate next)
         {
-            throw new NotImplementedException();
+            await OnRequest(context);
+            await next.Invoke(context);
         }
     }
 }

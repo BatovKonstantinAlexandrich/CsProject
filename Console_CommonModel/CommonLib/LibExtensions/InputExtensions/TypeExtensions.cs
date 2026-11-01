@@ -366,6 +366,20 @@ public static class TypeExtensions2
         return methodInfo.GetParameters();
     }
 
+    public static Func<object, Dictionary<string, Func<IDictionary<string, object>, object>>> GetActions(this Type type)
+    {
+        return p => {
+            var methods = type.GetOwnMethodNames();
+            Dictionary<string, Func<IDictionary<string, object>, object>> results = new();
+            foreach(var method in methods)
+            {                
+                results[method] = type.GetAction(method)(p);
+            }
+            return results;
+        };
+    }
+
+
     /// <summary>
     /// Возвращает функцию связывания объекта с функцией для вызова метода этого объекта полученную в результате связывания
     /// </summary>    
@@ -595,6 +609,12 @@ public static class TypeExtensions2
     {
         Type type = target is Type ? (Type)target : target.GetType();
         return type.GetMethods().Where(m => m.Name.StartsWith("get_") == false && m.Name.StartsWith("set_") == false && (type.BaseType is not null && type.BaseType.GetMethods().Select(m2 => m2.Name).Contains(m.Name) == false)).Select(m => m.Name).ToList();        
+    }
+
+    public static List<string> GetOwnMethodNotStaticNames(this object target)
+    {
+        Type type = target is Type ? (Type)target : target.GetType();
+        return type.GetMethods().Where(m => !m.IsStatic && m.Name.StartsWith("get_") == false && m.Name.StartsWith("set_") == false && (type.BaseType is not null && type.BaseType.GetMethods().Select(m2 => m2.Name).Contains(m.Name) == false)).Select(m => m.Name).ToList();
     }
 
     public static PropertyInfo GetOwnProperty(this Type type, string name)

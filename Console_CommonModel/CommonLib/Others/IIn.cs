@@ -1,4 +1,6 @@
-﻿namespace Console_CommonModel.CommonLib.Others
+﻿using static IConsoleСontrol;
+
+namespace Console_CommonModel.CommonLib.Others
 {
     public interface IIn
     {

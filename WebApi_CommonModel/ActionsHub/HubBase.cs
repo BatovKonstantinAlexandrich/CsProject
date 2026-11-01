@@ -6,10 +6,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 using System;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
-
-using static ActionsContext;
 /// <summary>
 /// Обеспечивает выполнение операций RPC/
 /// </summary>
@@ -37,19 +34,13 @@ public class HubBase: Hub
     public override async Task OnConnectedAsync()
     {
         _logger.LogInformation($"OnConnectedAsync({Context.ConnectionId})");
-
         var caller = Clients.Caller;
         var connectionId = Context.ConnectionId;
         var connectionContext = connectionsContext.AddClientConnection(Context.ConnectionId, (requestText) => {
             this._logger.LogInformation(connectionId);
             caller.SendAsync("Request", requestText).Wait();
-        });
+        });        
         await base.OnConnectedAsync();
-    }
-
-    private bool IsValidCertificate(X509Certificate2 clientCertificate)
-    {
-        return true;
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
@@ -177,7 +168,7 @@ public class HubBase: Hub
     {
         try
         {
-            return JsonConvert.DeserializeObject<ActionRequest>(json);
+            //return JsonConvert.DeserializeObject<ActionRequest>(json);
         }
         catch (Exception ex)
         {
@@ -190,7 +181,7 @@ public class HubBase: Hub
     {
         try
         {
-            return JsonConvert.DeserializeObject<ActionResponse>(json);
+            //return JsonConvert.DeserializeObject<ActionResponse>(json);
         }
         catch (Exception ex)
         {

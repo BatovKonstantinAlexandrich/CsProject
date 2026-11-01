@@ -1,0 +1,39 @@
+@page "/stations"
+@implements IDisposable
+@inject IStationService StationData
+@inject CityState CityState
+
+<PageTitle>Адреса СТО — @CityState.Current</PageTitle>
+<PageHeading Title="@($"Станции в городе {CityState.Current}")" Lead="Список фильтруется по городу из верхнего меню." />
+
+<section class="wrap section">
+    <div class="city-switch">
+        @foreach (var city in StationData.GetCities())
+        {
+            <button type="button" class="@(city == CityState.Current ? "active" : null)" @onclick="() => CityState.Select(city)">@city</button>
+        }
+    </div>
+    <StationTable Stations="@StationData.GetByCity(CityState.Current)" Caption="@($"Станции: {CityState.Current}")" />
+</section>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string? City { get; set; }
+
+    private string? appliedQuery;
+
+    protected override void OnInitialized() => CityState.Changed += OnChanged;
+
+    protected override void OnParametersSet()
+    {
+        if (string.IsNullOrWhiteSpace(City) || City == appliedQuery)
+            return;
+
+        appliedQuery = City;
+        CityState.Select(City);
+    }
+
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => CityState.Changed -= OnChanged;
+}

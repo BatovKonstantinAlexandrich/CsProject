@@ -1,0 +1,32 @@
+<div class="table-scroll">
+    <table class="data-table">
+        @if (!string.IsNullOrWhiteSpace(Caption))
+        {
+            <caption>@Caption</caption>
+        }
+        <thead>
+            <tr>@Header</tr>
+        </thead>
+        <tbody>
+            @if (IsEmpty)
+            {
+                <tr>
+                    <td class="table-empty" colspan="@ColumnCount">@EmptyText</td>
+                </tr>
+            }
+            else
+            {
+                @ChildContent
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter] public string? Caption { get; set; }
+    [Parameter] public RenderFragment? Header { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public bool IsEmpty { get; set; }
+    [Parameter] public int ColumnCount { get; set; } = 1;
+    [Parameter] public string EmptyText { get; set; } = "Нет строк";
+}

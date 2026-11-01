@@ -537,6 +537,37 @@ public static List<MyMessageProperty> ParseActions(Type type)
     /// </summary>    
     public static HashSet<Type> GetTestElements(this Assembly assembly)
         => assembly.GetTypes().Where(t => IsExtendedFrom(t, typeof(TestingElement)) && t.IsAbstract == false).ToHashSet();
+    public static TestingReport RunTests(this Assembly assembly, IServiceProvider provider)
+    {
+        var unit = assembly.GetTestUnit(provider);
+        return unit.DoTest();
+    }
+    public static string GetTestingReport(this Assembly assembly, IServiceProvider provider)
+    {
+        var unit = assembly.GetTestUnit(provider);
+        return unit.DoTest().ToDocument();
+    }
+    public static TestingUnit GetTestUnit(this Assembly assembly, IServiceProvider provider)
+    {
+        var unit = new TestingUnit();
+        unit.Name = assembly.FullName;
+        var elements = assembly.GetTestElements();
+        foreach (var item in elements)
+        {
+            TestingElement test = null;
+            if (item.GetConstructors().Any(c => c.GetParameters().Count() == 1 && (c.GetParameters()[0].ParameterType.IsImplements(typeof(IServiceProvider)) || c.GetParameters()[0].ParameterType.IsExtends(typeof(IServiceProvider)))))
+            {
+                test = item.New<TestingElement>(provider);
+            }
+            else
+            {
+                test = item.New<TestingElement>();
+            }
+            unit.Append(test);
+        }
+        return unit;
+    } 
+
 
     /// <summary>
     /// Метод получения типов тестовых классов

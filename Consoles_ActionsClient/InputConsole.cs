@@ -3,7 +3,9 @@
 using System;
 using System.Collections.Generic;
 
- 
+using static IConsoleСontrol;
+
+
 
 namespace ClassModelLib.ServicesModule
 { 

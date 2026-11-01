@@ -34,7 +34,7 @@ namespace Console_CommonModel.CommonLib.LibModels.Console_DeliveryModule.Busines
                 LogMessage("DeliveryDbContext создан, signup/signin…");
 
                 var signup = provider.Get<SignupUser<DeliveryDbContext>>();
-                var signin = new SigninUser<DeliveryDbContext>();
+                var signin = new SigninUser<DeliveryDbContext>(new(),new FileTokenProvider<UserContext>());
                 if (!signup.HasWith(new() { Email = "eckumoc@gmail.com" }))
                 {
                     signup.Signup(new("eckumoc@gmail.com", "eckumoc@gmail.com"), new());

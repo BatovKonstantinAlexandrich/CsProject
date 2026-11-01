@@ -1,8 +1,6 @@
 ﻿using Console_CommonModel.CommonLib.LibModels.Console_ClassDataModel;
 
 using Microsoft.AspNetCore.SignalR;
-
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 using System;
@@ -11,103 +9,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+
 /// <summary>
 /// Контекст регистрации служебных функций
 /// </summary>
 public class ActionsContext
 {
-    public class ActionResponse
-    {
-        public string SerialKey { get; set; }
-        public object MessageObject { get; set; }
-        public string ActionStatus { get; set; }
-        public string StatusText { get; set; }
-        public ActionRequest RequestMessage { get; set; }
-        public bool Confirmed { get; set; }
-    }
-
-
-    /// <summary>
-    /// Модель запроса "Удалённый вызов процедуры"
-    /// </summary>
-    public class ActionRequest
-    {
-
-
-        /// <summary>
-        /// Ключ доступа клиента
-        /// </summary>
-        //[JsonProperty("token")]
-        public string AccessToken { get; set; }
-
-
-        /// <summary>
-        /// Идентификатор сообщения
-        /// </summary>
-        //[JsonProperty("mid")]
-        public string SerialKey { get; set; }
-
-
-        /// <summary>
-        /// Имя процедуры
-        /// </summary>
-        //[JsonProperty("request.path")]
-        public string ActionName { get; set; }
-
-
-        /// <summary>
-        /// Параметры выполнения
-        /// </summary>
-        //[JsonProperty("request.pars")]
-        public Dictionary<string, string> MessageObject { get; set; }
-
-
-    }
-    public class ActionModel : MethodModel
-    {
-
-        [System.Text.Json.Serialization.JsonIgnore]
-        [JsonIgnore]
-        public Action<Dictionary<string, string>, Action<object>, Action<string>> Todo;
-
-        public ActionModel(string name, Action<Dictionary<string, string>, Action<object>, Action<string>> todo)
-        {
-            Name = name;
-            Todo = todo;
-        }
-
-        public object Exec(Dictionary<string, string> args)
-        {
-            bool completed = false;
-            object result = null;
-            Todo(args,
-                resp => {
-                    result = resp;
-                    completed = true;
-                },
-                err => {
-                    result = err;
-                    completed = true;
-                });
-            while (!completed)
-                Thread.Sleep(100);
-            return result;
-        }
-
-        public void Exec(Dictionary<string, string> args, Action<object> onsuccess, Action<string> onerror)
-        {
-            Todo(args,
-                resp => {
-                    onsuccess(resp);
-                },
-                err => {
-                    onerror(err);
-                });
-
-        }
-    }
-
-
     /// <summary>
     /// Операции по наименованиям
     /// </summary>
@@ -116,7 +23,7 @@ public class ActionsContext
 
     public List<MethodModel> GetActions() => Actions.Values.Select(a => (MethodModel)a).ToList();
 
-    public ActionsContext.ActionModel GetActionModel(string name) => Actions[name];
+    public ActionModel GetActionModel(string name) => Actions[name];
 
     public ActionsContext()
     {        

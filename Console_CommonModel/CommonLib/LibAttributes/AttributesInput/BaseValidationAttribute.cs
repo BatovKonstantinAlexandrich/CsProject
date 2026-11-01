@@ -14,7 +14,7 @@ public class BaseValidationAttribute: ValidationAttribute, MyValidation
     }
 
 
-    public virtual string ValidateValue(object value) => throw new NotImplementedException();
+    public virtual string ValidateValue(object value) => Validate(null,null,value);
 
     public virtual string Validate(object model, string property, object value) => throw new NotImplementedException(GetType().GetTypeName());
     public virtual string GetMessage(object model, string property, object value) => throw new NotImplementedException();

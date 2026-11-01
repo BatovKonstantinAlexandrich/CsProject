@@ -1,17 +1,13 @@
 ﻿using Console_CommonModel.CommonLib.LibData.AbstractionModel;
 using Console_CommonModel.CommonLib.LibData.Console_DataModule;
-
 using Microsoft.EntityFrameworkCore;
-
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
 
 /// <summary>
 /// Расширения по сущностям
 /// </summary>
 public static class EntityExtensions
 {
-
 
     /// <summary>
     /// Создание экземпляра сервиса интерфейса IControlService<ТИП ВЫЗЫВАЮЩЕГО ОБЪЕКТА> 

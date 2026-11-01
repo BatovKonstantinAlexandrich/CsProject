@@ -1,0 +1,15 @@
+@page "/vacancies"
+@inject IContentService Content
+
+<PageTitle>Вакансии</PageTitle>
+<PageHeading Title="Вакансии" Lead="Открытые роли на станциях сети." />
+<section class="wrap section station-grid">
+    @foreach (var vacancy in Content.GetVacancies())
+    {
+        <article>
+            <h2>@vacancy.Title</h2>
+            <p>@vacancy.City · @vacancy.Schedule</p>
+            <p>@vacancy.Summary</p>
+        </article>
+    }
+</section>

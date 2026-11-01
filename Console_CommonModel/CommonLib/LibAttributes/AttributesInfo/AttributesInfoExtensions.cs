@@ -320,7 +320,7 @@ public static bool IsPropertyInput(this Type type, string property)
         var res = new Dictionary<string, string>(par.GetCustomAttributesData().Select(data => new KeyValuePair<string, string>(
 
             TypeExtensions2.GetTypeName(data.AttributeType),
-            data.ConstructorArguments.First().Value.ToString()
+            data.ConstructorArguments.Count()>0?data.ConstructorArguments.FirstOrDefault().Value.ToString(): null
         )));
 
         return res;

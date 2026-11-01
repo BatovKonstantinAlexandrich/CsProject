@@ -1,5 +1,5 @@
-﻿
-using Console_CommonModel.CommonLib.LibModels.Console_ClassDataModel;
+﻿using Console_CommonModel.CommonLib.LibModels.Console_ClassDataModel;
+
 
 /// <summary>
 /// Обмен описаниями методов действий
@@ -33,7 +33,7 @@ public class ActionsHub: HubBase
     }
 
 
-    public ActionsContext.ActionModel GetActionModel(string action) => actionsContext.GetActionModel(action);
+    public ActionModel GetActionModel(string action) => actionsContext.GetActionModel(action);
 
 
     public string Login(string name)

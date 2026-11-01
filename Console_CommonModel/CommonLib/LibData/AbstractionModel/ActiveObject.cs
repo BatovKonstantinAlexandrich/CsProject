@@ -1,5 +1,4 @@
 ﻿using Console_CommonModel.CommonLib.LibData.AbstractionModel;
-
 using System.ComponentModel;
 
 /// <summary>

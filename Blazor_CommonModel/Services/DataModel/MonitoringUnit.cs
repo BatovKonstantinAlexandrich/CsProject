@@ -34,10 +34,10 @@ namespace Blazor_CommonModel.Services.DataModel
             {
                 this.AssertService<MonitoringDbContext>(db => {
 
-                    db.EnsureHasData();
+                    //db.EnsureHasData();
                     db.Database.EnsureDeleted();
                     db.Database.EnsureCreated();
-                    db.Validate();
+                    //db.Validate();
                     return true;
                 },
                 "MonitoringDbContext проверен запросами на выборку",

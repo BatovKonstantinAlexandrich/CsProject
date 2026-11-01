@@ -7,19 +7,17 @@ using System.Linq;
 /// <summary>
 /// Реализовация управления группами пользователя
 /// </summary>
-public class GroupingUser : BaseGrouping<UserContext, UserGroup, UserGroupBinding>
+public class GroupingUser<TUserContext> : BaseGrouping<UserContext, UserGroup, UserGroupBinding>
+    where TUserContext : DbContextUser    
 {
-    private readonly DbContextUser _model;
+    private readonly TUserContext _model;
 
-    public GroupingUser(DbContextUser model)
+    public GroupingUser(TUserContext model)
     {
         this._model = model;
     }
 
-    public GroupingUser()
-    {
-        this._model = new DbContextUser();
-    }
+    
 
     public int GetUsersCountInGroup(int groupId)
     {
