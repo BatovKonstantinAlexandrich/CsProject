@@ -157,10 +157,9 @@ public static class DbContextExtensions
                     var entityType = prop.PropertyType.GetGenericArguments()[0];
                     
                     // Проверяем, что это действительно класс сущности
-                    if (IsValidEntityType(entityType))
-                    {
-                        entities.Add(entityType);
-                    }
+                 
+                    entities.Add(entityType);
+                    
                 }
             }
         }

@@ -44,10 +44,11 @@ namespace Console_CommonModel
 
             Load();
 
-            TestGetIntegrationServices();
-
             ServiceFactory.Get().AddTypes(typeof(TProgram).Assembly);
             ServiceFactory.Get().AddTypes(typeof(CommonProgram).Assembly);
+
+            TestGetIntegrationServices();
+
 
             var builder = new TableMetadataBuilder();
             builder.InvokeMethodWithInput<ColumnMetaData>(

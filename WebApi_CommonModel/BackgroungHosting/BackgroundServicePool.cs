@@ -4,7 +4,7 @@
 namespace WebApi_CommonModel.BackgroungHosting
 {
 
-    [Label("Управление фоновыми процессами")]
+    [Label("Управление фоновыми процессами")]    
     public class BackgroundServicePool(
         ILogger<BackgroundServicePool> logger,
         BackgroundServiceContext context
@@ -56,7 +56,7 @@ namespace WebApi_CommonModel.BackgroungHosting
                 context.BackgroundServiceTypes.OnChanged += OnBackgroundServicesChanged;
                 while (!stoppingToken.IsCancellationRequested)
                 {
-                    logger.LogInformation("Next");
+                    //logger.LogInformation("Next");
                     Thread.Sleep(500);
                 }
             }

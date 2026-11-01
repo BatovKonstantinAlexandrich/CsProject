@@ -9,6 +9,8 @@ using MudBlazor.Services;
 using System.Text;
 using Microsoft.AspNetCore.Components.Authorization;
 using MarketerWeb.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Components.Server.Circuits;
 
 
 namespace Blazor_CommonModel
@@ -43,7 +45,13 @@ namespace Blazor_CommonModel
 
             builder.Services.AddMudServices();
             builder.Services.AddNavMenu();
-
+            // Program.cs
+            builder.Services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+                // Если используется известный прокси, можно очистить KnownNetworks/Proxies для безопасности
+            });
+         
             // Authorization
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddCascadingAuthenticationState();
@@ -59,7 +67,9 @@ namespace Blazor_CommonModel
             builder.Services.AddScoped<IClientAPI, BlazorClientAPI>();
             builder.Services.AddScoped<IAppModalService, AppModalService>();
             builder.Services.AddScoped<IContextMenuService, ContextMenuService>();
-
+            builder.Services.AddScoped<CircuitHandler, TrackingCircuitHandler>();
+            // Также нужен AddHttpContextAccessor
+            builder.Services.AddHttpContextAccessor();
             // 4. Добавляем каскадное состояние аутентификации
             // Это критично для работы AuthorizeView. В .NET 8+ используем AddCascadingAuthenticationState.
             //builder.Services.AddCascadingAuthenticationState();
@@ -69,7 +79,7 @@ namespace Blazor_CommonModel
 
             ModuleUser.ConfigureServices(builder.Configuration, builder.Services);
             var app = builder.Build();
-            
+            app.UseForwardedHeaders();
             app.UseHttpsRedirection();            
 
             app.UseStaticFiles();

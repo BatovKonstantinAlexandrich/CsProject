@@ -86,8 +86,8 @@ public class OdbcController
                 case "List":
                     result = fasade.SelectAll();
                     break;
-                case "Keywords":
 
+                case "Keywords":
                     string keywordsQuery = dictionary["query"].ToString();
                     List<string> keywords = fasade.GetKeywords(entity, keywordsQuery);
                     result = new

@@ -1,4 +1,5 @@
 using Console_CommonModel;
+using Console_CommonModel.CommonLib.LibData.Console_DataModule.Data.ADOWebApiService;
 using Console_CommonModel.CommonLib.LibModels.Console_MvcModule.MvcService;
 
 using WebApi_CommonModel.BackgroundWorkers;
@@ -10,7 +11,7 @@ namespace WebApi_CommonModel.WebApiModule
 
 
     [Label("Программа запуска приложения WebApi")]
-    public class WebApiProgram: IMiddleware, IBackgroundServiceContext
+    public class WebApiProgram:  IBackgroundServiceContext
     {        
         private ILogger<WebApiProgram> logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<WebApiProgram>();
 
@@ -18,11 +19,16 @@ namespace WebApi_CommonModel.WebApiModule
         private CancellationTokenSource _cts;
         private string[] started;
         private BackgroundServiceContext backgroundContext;
+        private MyMvcApplicationRouter applicationRouter = new();
+
+        private Predicate<HttpContext> filters = p => true;
+
 
         public WebApiProgram(string[] started)
         {
             this.started = started;
         }
+
 
         [Label("Остановить")]
         public void StopProcess( )
@@ -36,8 +42,7 @@ namespace WebApi_CommonModel.WebApiModule
 
         [Label("Запустить")]
         public void StartProcess()
-        {
-          
+        {          
             while (active)
             {
                 try
@@ -51,11 +56,39 @@ namespace WebApi_CommonModel.WebApiModule
                     ConfigureServices(builder.Services, builder.Configuration);
 
                     var app = builder.Build();
-                    
+                    //app.UseAuthentication();
+                    //app.UseAuthorization();
+
                     app.Use((http, next) => {
-                        logger.LogDebug("http => ");
-                        return this.InvokeAsync(http, next);
+
+
+                        return next.Invoke(http);
                     });
+                    
+                    //app.Use((HttpContext http, RequestDelegate next) =>
+                    //{
+                    //    if (!http.Response.HasStarted)
+                    //    {
+                    //        var odbc = new OdbcMiddleware();
+                    //        return odbc.OnHttpRequest(http);
+                    //    }
+                    //    return Task.CompletedTask;
+                    //});
+                    app.Use(async (http, next) => {
+                        if (!http.Response.HasStarted)
+                        {
+
+                            await applicationRouter.InvokeAsync(http, next);
+                        }
+                    });
+                    app.UseRouting();
+
+                    app.MapControllerRoute(
+                      name: "default",
+                      pattern: "{controller=Mvc}/{action=Index}/{id?}");
+                    app.MapHub<ActionsHub>($"/hubs/{nameof(ActionsHub)}");
+                    
+
                     app.RunAsync(_cts.Token).Wait();
                 }
                 catch (Exception ex)
@@ -69,7 +102,9 @@ namespace WebApi_CommonModel.WebApiModule
         [NotInput]
         private void ConfigureServices(IServiceCollection services, ConfigurationManager configuration)
         {
-            this.backgroundContext = BackgroungHostingStartup.ConfigureServices(services);
+            //this.backgroundContext = BackgroungHostingStartup.ConfigureServices(services);
+            services.AddSignalR();
+            services.AddControllersWithViews();
         }
 
 
@@ -77,17 +112,28 @@ namespace WebApi_CommonModel.WebApiModule
         [NotInput]
         public static void Main(string[] args)
         {
+    
             CommonProgram.Run<WebApiProgram>(args);
+
+             
+            
+
             //var program = new ActionsHubProgram();
             //program.StartProcess(args);
-            
+
             var program = new WebApiProgram(args);
 
             Task.Run(() => {
 
-                Thread.Sleep( 1);
-                string[] iargs = new string[0];
-                program.RunConsoleControl<WebApiProgram>(ref iargs);
+                var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), typeof(WebApiProgram)+".json");
+                 
+                string[] pargs = (System.IO.File.Exists(path))?
+                    (System.IO.File.ReadAllLines(path)) : new string[0];
+                if(pargs.Length >0)
+                {
+                    
+                }
+                program.RunConsoleControl<WebApiProgram>(ref pargs);
                 
             });
 
@@ -95,23 +141,17 @@ namespace WebApi_CommonModel.WebApiModule
             program.StartProcess();                                    
         }
 
-
-        [NotInput]
-        public Task InvokeAsync(HttpContext context, RequestDelegate next)
-        {
-            throw new NotImplementedException();
-        }
+ 
 
         public void TestAdd()
-        {
-            
+        {            
             this.AddBackgroundServiceTypes<BackgroundService<Worker1>>();
         }
+
         public void TestRemove()
         {
             this.RemoveBackgroundServiceTypes<BackgroundService<Worker1>>();
         }
-
 
         public void AddBackgroundServiceTypes<TBackgroundServiceType>() where TBackgroundServiceType : IWorkerService
         {
@@ -122,7 +162,6 @@ namespace WebApi_CommonModel.WebApiModule
                     ((IBackgroundServiceContext)backgroundContext).AddBackgroundServiceTypes<TBackgroundServiceType>();
                 }
             }
-            
         }
 
         public void RemoveBackgroundServiceTypes<TBackgroundServiceType>() where TBackgroundServiceType : IWorkerService

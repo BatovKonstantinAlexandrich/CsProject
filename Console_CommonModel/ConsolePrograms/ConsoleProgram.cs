@@ -588,8 +588,6 @@ public class ConsoleProgram: ProgressProgram
         }
     }
 
-
-
     public static void RunInteractive<TypeOfPogram>()
         => RunInteractive<TypeOfPogram>((TypeOfPogram)typeof(TypeOfPogram).New());
 
@@ -600,9 +598,6 @@ public class ConsoleProgram: ProgressProgram
     public static void RunInteractive<TypeOfPogram>(TypeOfPogram instance)
     {
         var args = new string[0];
-        
-        
-
         RunInteractive<TypeOfPogram>(instance,ref args);
     }
 
@@ -610,7 +605,10 @@ public class ConsoleProgram: ProgressProgram
 
     public static void RunInteractive<TypeOfPogram>(TypeOfPogram instance, ref string[] args)
     {
-        InputConsole.Interactive();
+        if (args.Length == 0)
+        {
+            InputConsole.Interactive();
+        }
         Type ProgramType = typeof(TypeOfPogram);
         using (var route = new RoutingProgram($"Конфигурация {ProgramType.GetTypeName()}"))
         {

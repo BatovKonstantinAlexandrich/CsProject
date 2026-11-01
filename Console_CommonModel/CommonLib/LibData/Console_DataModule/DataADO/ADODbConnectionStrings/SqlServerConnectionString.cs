@@ -7,12 +7,13 @@ using System;
 using System.ComponentModel.DataAnnotations;
 
 using Console_CommonModel.CommonLib.LibModels.Console_LocationModule;
+using Console_CommonModel.CommonLib.LibData.AbstractionModel;
 
 namespace Console_CommonModel.CommonLib.LibData.Console_DataModule.DataADO.ADODbConnectionStrings
 {
 
     [Label("Модуль проверки соединений с БД")]
-    public class SqlServerConnectionString : AppViewBase, IDisposable
+    public class SqlServerConnectionString : StateSupport, IDisposable
     {
 
 

@@ -28,14 +28,21 @@ public class TableMetadataBuilder
         return model.columns["Id"];
     }
 
+    public void AddIndicators(string indicator)
+    {
 
+        model.columns[indicator] = new();
+        model.columns[indicator].name = indicator;
+        model.columns[indicator].type = "int";
+
+    }
     /// <summary>
     /// 
     /// </summary>
     /// <param name="indicators">список наименований</param>
     [Label("Добавление статистических показателей")]
     
-    public void AddIndicators(params string[] indicators )
+    public void AddIndicators(IEnumerable<string> indicators )
     {
         foreach (var indicator in indicators)
         {

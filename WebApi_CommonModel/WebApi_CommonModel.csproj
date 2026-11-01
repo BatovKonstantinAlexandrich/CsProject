@@ -2,14 +2,18 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
+    <Nullable>disable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <InvariantGlobalization>true</InvariantGlobalization>
+    <InvariantGlobalization>false</InvariantGlobalization>
     <PublishAot>false</PublishAot>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Console_CommonModel\Console_CommonModel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="WebApiHosting\" />
   </ItemGroup>
 
 </Project>

@@ -86,13 +86,13 @@ namespace Console_CommonModel.CommonLib.LibData.Console_DataModule.Data.ADOWebAp
 
         }
 
-        public override void OnDatasourceChanged(PropertyChangedMessage message)
-        {
-        }
+        //public override void OnDatasourceChanged(PropertyChangedMessage message)
+        //{
+        //}
 
-        public override void OnDatasourceIdChanged(PropertyChangedMessage message)
-        {
-        }
+        //public override void OnDatasourceIdChanged(PropertyChangedMessage message)
+        //{
+        //}
 
 
         public void Init()

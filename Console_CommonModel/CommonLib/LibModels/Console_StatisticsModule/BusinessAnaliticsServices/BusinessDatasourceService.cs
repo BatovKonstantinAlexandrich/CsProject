@@ -38,10 +38,11 @@ namespace Console_CommonModel.CommonLib.LibModels.Console_StatisticsModule.Busin
         public void Setup(BusinessDatasource datasource)
         {
             this.datasource = datasource;
+            this.api = CreateWebApi();
             executor = CreateProcedureExecuter();
             metadata = CreateDbMetadata();
             migbuilder = CreateDbMigBuilder();
-            api = CreateWebApi();
+            
         }
 
         public IWebApi CreateWebApi()

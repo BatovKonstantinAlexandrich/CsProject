@@ -217,9 +217,7 @@ namespace Console_CommonModel.CommonLib.LibData.Console_DataModule
             return results;
         }
 
-
-        public AppViewBase ToView()
-            => GetSqlServerWebApi();
+ 
 
 
         public int Create(BaseEntity p)
@@ -242,19 +240,21 @@ namespace Console_CommonModel.CommonLib.LibData.Console_DataModule
         public BusinessDatasource GetBusinessDatasource()
         {
 
-            var fasade = typeof(BusinessDatasource).GetEntityFasade<DeliveryDbContext, BusinessDatasource>();
-            var bds = fasade.GetDbSet();
-            var ds = bds.FirstOrDefault(ds => ds.ConnectionString == Database.GetConnectionString());
-            if (ds is null)
+            using (var db = new DeliveryDbContext())
             {
-                fasade.Create(ds = new BusinessDatasource()
+                var ds = db.BusinessDatasources.FirstOrDefault(ds => ds.ConnectionString == this.GetConnectionString());
+                if (ds is null)
                 {
-                    Name = GetType().GetTypeName(),
-                    Description = GetType().GetDescription(),
-                    ConnectionString = Database.GetConnectionString()
-                });
+                    db.Add(ds = new BusinessDatasource()
+                    {
+                        Name = GetType().GetTypeName(),
+                        Description = GetType().GetDescription(),
+                        ConnectionString = Database.GetConnectionString()
+                    });
+                    db.SaveChanges();
+                }
+                return ds;
             }
-            return ds;
         }
 
         private SqlServerWebApi api;
@@ -1678,5 +1678,10 @@ namespace Console_CommonModel.CommonLib.LibData.Console_DataModule
         }
 
         public ChangingList<Type> EntityTypes { get => ((IdbModel)api).EntityTypes; }
+
+        public AppViewBase ToView()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

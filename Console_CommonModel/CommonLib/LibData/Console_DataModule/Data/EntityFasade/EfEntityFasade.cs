@@ -139,9 +139,8 @@ public class EfEntityFasade<TEntity> : IEfEntityFasade<TEntity> where TEntity : 
         {            
             if(!_context.GetEntitiesTypes().Contains(typeof(TEntity)))
             {
-                throw new Exception();
-            }
-            _context.Database.EnsureCreated();
+                throw new Exception($"В контексте данных не зарегистрирована сущность {typeof(TEntity).GetTypeName()}");
+            }            
             return _context.Set<TEntity>(); ;
         }
         catch

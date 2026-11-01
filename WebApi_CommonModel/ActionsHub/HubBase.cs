@@ -168,11 +168,11 @@ public class HubBase: Hub
     {
         try
         {
-            //return JsonConvert.DeserializeObject<ActionRequest>(json);
+            return JsonConvert.DeserializeObject<ActionRequest>(json);
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Не удалось сериализовать сообщение с параметрами запроса: " + ex.Message);
+            Console.WriteLine("Не удалось сериаллизовать сообщение с параметрами запроса: " + ex.Message);
             throw;
         }
     }
@@ -181,11 +181,11 @@ public class HubBase: Hub
     {
         try
         {
-            //return JsonConvert.DeserializeObject<ActionResponse>(json);
+            return JsonConvert.DeserializeObject<ActionResponse>(json);
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Не удалось сериализовать сообщение с параметрами запроса: " + ex.Message);
+            Console.WriteLine("Не удалось сериаллизовать сообщение с параметрами запроса: " + ex.Message);
             throw;
         }
     }

@@ -709,10 +709,7 @@ namespace Console_CommonModel.CommonLib.LibModels.Console_DbContextModule
         }
 
 
-
-        public AppViewBase ToView()
-           => GetSqlServerWebApi();
-
+         
 
         public Dictionary<string, List<string>> ValidateOptional()
         {

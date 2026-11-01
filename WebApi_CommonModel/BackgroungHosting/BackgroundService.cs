@@ -1,5 +1,7 @@
 ﻿namespace WebApi_CommonModel.BackgroungHosting
 {
+
+    [Label("Класс для динамической регистрации служб ")]
     public class BackgroundService<TWorker>(TWorker worker) : IWorkerService
         where TWorker : IWorker
     {

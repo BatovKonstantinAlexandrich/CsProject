@@ -17,12 +17,16 @@ namespace Console_CommonModel.CommonLib.LibModels.Console_MvcModule.MvcService
     [Label("Маршрутизатор")]
     public class MyMvcApplicationRouter : IHttpRouter<BusinessDatasourceService>, IMiddleware
     {
+        public MyMvcApplicationRouter()
+        {
 
+        }
 
         [NotNullNotEmpty]
         [InputDictionary($"{nameof(BusinessDatasource)},{nameof(BusinessDatasource.Name)}")]
         public int BusinessDatasourceId { get; set; }
         public BusinessDatasource BusinessDatasource { get; set; }
+
         private BusinessDatasourceService BusinessService;
 
 
@@ -33,7 +37,13 @@ namespace Console_CommonModel.CommonLib.LibModels.Console_MvcModule.MvcService
             {
                 using (var db = new DeliveryDbContext())
                 {
-                    BusinessDatasource = db.GetBusinessDatasource();
+                    db.BusinessDatasources.Add(BusinessDatasource=new()
+                    {
+                        Description = db.GetDescription(),
+                        Name = db.GetTypeName(),
+                        ConnectionString = db.GetConnectionString()
+                    });
+                    db.SaveChanges();
                 }
             }
             if (BusinessService is null)
@@ -49,9 +59,25 @@ namespace Console_CommonModel.CommonLib.LibModels.Console_MvcModule.MvcService
         {
             try
             {
-                http.Response.StatusCode = result.Item1;
-                var responseText = result.Item2.ToJsonOnScreen();
-                await http.Response.WriteAsync(responseText);
+                
+                if(result.Item1 != 200)
+                {
+                    http.Items["ErrorModel"] = result.Item2;
+
+                    // Внутренний rewrite — клиент остаётся на том же URL, 
+                    // но запрос пойдёт в MVC-контроллер
+                    http.Request.Path = "/Mvc/Error";
+                    http.Request.Method = "GET";
+                    http.Request.QueryString = new QueryString($"?model={result.Item2.ToJson()}");
+                }
+                else
+                {
+                    http.Response.ContentType = "text/html; charset=utf-8";
+                    http.Response.StatusCode = result.Item1;
+                    var responseText = result.Item2.ToJsonOnScreen();
+
+                    await http.Response.WriteAsync(responseText);
+                }
             }
             catch (Exception ex)
             {

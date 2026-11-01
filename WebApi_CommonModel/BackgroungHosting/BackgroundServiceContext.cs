@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 
 namespace WebApi_CommonModel.BackgroungHosting
 {
+    [Label("Операции со службами")]
     public interface IBackgroundServiceContext
     {
         public void AddBackgroundServiceTypes<TBackgroundServiceType>()
@@ -12,6 +13,7 @@ namespace WebApi_CommonModel.BackgroungHosting
     }
 
 
+    [Label("Контекст управления службами")]
     public class BackgroundServiceContext: IBackgroundServiceContext
     {
         public ChangingList<Type> BackgroundServiceTypes { get; set; } = new();

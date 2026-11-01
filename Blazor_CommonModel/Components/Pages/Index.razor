@@ -3,7 +3,11 @@
 @using Console_CommonModel.CommonLib.LibDesigner.DesignerServices
 @inherits BaseComponent
 @inject IJSRuntime JS
-
+@inject ConnectionTracker Tracker
+@foreach (var conn in Tracker.GetAll())
+{
+    <p>Circuit: @conn.CircuitId, IP: @conn.IpAddress, Connected: @conn.ConnectedAt</p>
+}
 @code 
 {
     public AppViewBase ViewRef { get; set; } = new();
