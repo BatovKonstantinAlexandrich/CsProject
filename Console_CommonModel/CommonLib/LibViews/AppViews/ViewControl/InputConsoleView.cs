@@ -155,5 +155,10 @@ namespace Console_CommonModel.CommonLib.LibViews.AppViews.ViewControl
         {
             throw new NotImplementedException();
         }
+
+        public void ConfirmExecute(string name, Action todo, ref string[] args)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

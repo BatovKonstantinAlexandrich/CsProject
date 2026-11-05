@@ -10,7 +10,7 @@ namespace RootHost.ActionsHub
     {
         public List<string> GetServiceNames();
         public List<string> GetServiceActionNames(string service);
-        public ActionModel GetServiceActionModel(string service, string action);
+        public HubActionModel GetServiceActionModel(string service, string action);
     }
 
 
@@ -39,7 +39,7 @@ namespace RootHost.ActionsHub
             return consumer.Actions.Values.Select(val => val.Name).ToList();
         }
 
-        public ActionModel GetServiceActionModel(string service, string action)
+        public HubActionModel GetServiceActionModel(string service, string action)
         {
             var consumer = connectionsContext.Connections.Values.FirstOrDefault(val => val.Name == service);
             var model = consumer.Actions.Values.FirstOrDefault(val => val.Name== action);

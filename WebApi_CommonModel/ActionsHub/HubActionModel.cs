@@ -5,14 +5,14 @@ using Newtonsoft.Json;
 using System.Threading;
 using Console_CommonModel.CommonLib.LibModels.Console_ClassDataModel;
 
-public class ActionModel: MethodModel
+public class HubActionModel: MethodModel
 {
 
     [System.Text.Json.Serialization.JsonIgnore]
     [JsonIgnore]
     public Action<Dictionary<string, string>, Action<object>, Action<string>> Todo;
 
-    public ActionModel(string name, Action<Dictionary<string, string>, Action<object>, Action<string>> todo)
+    public HubActionModel(string name, Action<Dictionary<string, string>, Action<object>, Action<string>> todo)
     {
         Name = name;
         Todo = todo;

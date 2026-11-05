@@ -480,7 +480,8 @@ public class ServiceFactory
     public IEnumerable<Type> GetTypesExtended<T>()
         => ByShortNames.Values.Where(v => v.IsAbstract == false && v != typeof(T) && !v.IsGenericTypeDefinition && v.IsExtends(typeof(T))).OrderByDescending(p => p.Name);
     public IEnumerable<Type> GetTypesExtended(Type p)
-        => ByShortNames.Values.ToHashSet().Where(v => v != p && v.IsExtends(p) && !v.IsGenericTypeDefinition).ToList();
+        => p==typeof(Object)? ByShortNames.Values.ToHashSet().Where(v => !v.IsGenericTypeDefinition && v.IsClass) :
+        ByShortNames.Values.ToHashSet().Where(v => v != p && v.IsExtends(p) && !v.IsGenericTypeDefinition).ToList();
     public IEnumerable<Type> GetTypesImplemented(Type p)
         => ByShortNames.Values.Where(v => v.IsAbstract == false && v != p && !v.IsGenericTypeDefinition && v.IsImplements(p)).OrderByDescending(p => p.Name);
     public IEnumerable<Type> GetGenericTypes(Type p)

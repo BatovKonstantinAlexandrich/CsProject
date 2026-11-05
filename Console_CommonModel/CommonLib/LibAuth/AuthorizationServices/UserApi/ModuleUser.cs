@@ -39,8 +39,9 @@ public class ModuleUser
 
     }
 
-    public static void ConfigureServices<TDbContext>(IConfiguration configure, IServiceCollection services)
+    public static void ConfigureServices<TDbContext, TTokenProvider>(IConfiguration configure, IServiceCollection services)
         where TDbContext : DeliveryDbContext
+        where TTokenProvider : class, ITokenProvider
     {
         //InputConsole.GetLogger<ModuleUser>().LogInformation("Регистрация служб ... ");
         //services.AddHttpContextAccessor();
@@ -53,7 +54,7 @@ public class ModuleUser
         services.AddScoped<UserGroupsService<TDbContext>>();
         //services.AddScoped<IJSInvoke, JSInvoke>();
         //services.AddScoped<ILocalStorage, LocalStorage>();
-        services.AddScoped<ITokenProvider, MemoryTokenProvider>();
+        services.AddScoped<ITokenProvider, TTokenProvider>();
         services.AddSingleton<AuthorizationUsers>();
         services.AddSingleton(typeof(APIActiveCollection<UserContext>), sp => sp.GetRequiredService<AuthorizationUsers>());
         services.AddSingleton(typeof(APIUsers), sp => sp.GetRequiredService<AuthorizationUsers>());

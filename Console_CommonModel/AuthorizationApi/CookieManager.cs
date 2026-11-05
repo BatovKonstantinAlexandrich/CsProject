@@ -2,7 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Concurrent;
 
-public class CookieManager
+public class CookieManager: ITokenProvider
 {
     //public static int Counter = StartupApplication.Add((services)=> {
     //    services.AddHttpContextAccessor();
@@ -48,5 +48,21 @@ public class CookieManager
     {
         _cookies.TryRemove(cookies, out _);
         _accessor.HttpContext?.Response?.Cookies.Delete(cookies);
+    }
+
+    public string Get()
+    {
+        return GetCookie(GetType().Name);
+
+    }
+
+    public async Task Set(string token)
+    {
+        SetCookie(GetType().Name,token);
+        await Task.CompletedTask;
+    }
+
+    public void SetDirectory(string name)
+    {
     }
 }

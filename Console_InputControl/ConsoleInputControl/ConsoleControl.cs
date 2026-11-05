@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Net.NetworkInformation;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -102,22 +103,20 @@ public class InputConsoleСontrol(ref string[] args) : IConsoleСontrol
         ConsoleKeyInfo key;
         do
         {
-            key = Console.ReadKey();
+            if(UserInteractive)
+            {
+                key = Console.ReadKey();
+            }
+            else
+            {
+                Thread.Sleep(1000);
+                break;
+            }
         } while (key.Key != ConsoleKey.Enter);
         return true;
     }
 
-    public string Shift(ref string[] args)
-    {
-        if (args == null || args.Length == 0)
-            throw new InvalidOperationException("Не достаточно аргументов");
-        string value = args[0];
-        var argsOut = new string[args.Length - 1];
-        for (int i = 1; i < args.Length; i++)
-            argsOut[i - 1] = args[i];
-        args = argsOut;
-        return value;
-    }
+    
 
     public string ReadText(string name, Func<string, List<string>> validate, ref string[] args)
     {
@@ -172,7 +171,7 @@ public class InputConsoleСontrol(ref string[] args) : IConsoleСontrol
             return result;
         }
 
-        string value = Shift(ref args);
+        string value = this.Shift(ref args);
         Console.WriteLine(value);
         return value;
     }
@@ -242,11 +241,39 @@ public class InputConsoleСontrol(ref string[] args) : IConsoleСontrol
         }
     }
 
-    public void ConfirmExecute(string name, Action todo)
+    public void ConfirmExecute(string Name, Action Todo, ref string[] args)
     {
+        Clear();
+      
+        string selected = null;
+
+        if (ConfirmContinue("\nПодтвердите выполнение операции: " + Name ))
+        {
+            try
+            {
+                Todo();
+            }
+            catch (TargetInvocationException ex)
+            {
+                var message = $"Исключение {ex.InnerException.GetType().Name} при выполнении {Name}: {ex.InnerException.Message}";
+                this.Error(message);
+                throw new Exception(message);
+            }
+            catch (Exception ex)
+            {
+                var message = $"Исключение {ex.GetType().Name} при выполнении {Name}: {ex.Message}";
+                this.Error(message);
+                throw new Exception(message);
+            }
+        }
+    }
+    public void ConfirmExecute(string name, Action todo)
+    { 
         if (Confirm(name))
             todo?.Invoke();
     }
+
+
 
     public ConsoleKeyInfo ReadKey() => Console.ReadKey();
 
@@ -518,7 +545,8 @@ public class InputConsoleСontrol(ref string[] args) : IConsoleСontrol
     {
         if (!UserInteractive)
         {
-            var value = Shift(ref args);
+            Thread.Sleep(1000);
+            var value = this.Shift(ref args);
             var errors = validate != null ? validate(value) : null;
             if (errors != null && errors.Count != 0)
                 throw new InvalidOperationException(string.Join("; ", errors));
@@ -538,6 +566,7 @@ public class InputConsoleСontrol(ref string[] args) : IConsoleСontrol
                     Console.WriteLine(error);
             }
         } while (errorsI != null && errorsI.Count != 0);
+        this.Push(ref args, valueI);
         return valueI;
     }
 
@@ -740,7 +769,7 @@ public class InputConsoleСontrol(ref string[] args) : IConsoleСontrol
     public string SelectFile(string title, Func<string, List<string>> validate, ref string[] args)
     {
         if (!UserInteractive)
-            return Shift(ref args);
+            return this.Shift(ref args);
 
         return InputFile(title, o =>
         {
@@ -756,12 +785,13 @@ public class InputConsoleСontrol(ref string[] args) : IConsoleСontrol
     }
     public void SelectAction(string title, Dictionary<string, Action> options, ref string[] args)
     {
-        options[SingleSelect(title, options.Keys, ref args)]();
+        var action = SingleSelect(title, options.Keys, ref args);
+        if(action is not null)
+            options[action]();
     }
     public string SingleSelect(string title, IEnumerable<string> options, ref string[] args)
     {
         var list = options?.ToList() ?? new List<string>();
-
 
         if (!UserInteractive)
         {
@@ -771,13 +801,10 @@ public class InputConsoleСontrol(ref string[] args) : IConsoleСontrol
             }
             else
             {
-                var v = Shift(ref args);
-                if (int.TryParse(v, out var idx) && idx >= 1 && idx <= list.Count)
-                    return list[idx - 1];
-                var byValue = list.FirstOrDefault(x => string.Equals(x, v, StringComparison.Ordinal));
-                if (byValue != null)
-                    return byValue;
-                throw new Exception("Неверный выбор: " + v);
+                Thread.Sleep(1000);
+                var v = this.Shift(ref args);
+                int.TryParse(v, out var idx);
+                return list[idx];                
             }            
         }
 
@@ -797,7 +824,10 @@ public class InputConsoleСontrol(ref string[] args) : IConsoleСontrol
             Console.ResetColor();
             var read = Console.ReadLine();
             if (int.TryParse(read, out var n) && n >= 1 && n <= list.Count)
-                return list[n - 1];
+            {
+                this.Push(ref args, (n - 1).ToString());
+                return list[n-1];
+            }
             Error("Неверный номер, повторите.");
             ConfirmContinue();
         }
@@ -892,6 +922,8 @@ public class InputConsoleСontrol(ref string[] args) : IConsoleСontrol
             }] = method.Name;
         }
     }
+
+    
 }
 
 internal static class Extensions

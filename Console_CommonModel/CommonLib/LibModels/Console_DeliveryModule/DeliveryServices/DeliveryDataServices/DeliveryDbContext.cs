@@ -16,6 +16,7 @@ using Console_CommonModel.CommonLib.LibModels.Console_DeliveryModule.DeliverySer
 using Console_CommonModel.CommonLib.LibModels.Console_DeliveryModule.DeliveryServices.Deps;
 using Console_CommonModel.CommonLib.LibData.AbstractionModel;
 using Console_CommonModel.CommonLib.LibData.Console_DataModule;
+using ClassModelLib.ActionsClient;
 
 
 namespace Console_CommonModel.CommonLib.LibModels.Console_DeliveryModule.DeliveryServices.DeliveryDataServices
@@ -227,7 +228,7 @@ namespace pickpoint_delivery_service
 
 
     [Label("Продажа и доставка")]
-    public partial class DeliveryDbContext : BusinessDbBehaviour
+    public partial class DeliveryDbContext : ActionDbContext
     {
         public virtual DbSet<Transport> Transports { get; set; }
 
@@ -507,8 +508,7 @@ namespace pickpoint_delivery_service
         public static void ConfigureDeliveryServices(IServiceCollection services, IConfiguration config)
         {
             services.AddDbContext<DeliveryDbContext>(OnConfiguringDbContext);
-
-
+            services.AddScoped<DbContextUser>(sp => sp.Get<DeliveryDbContext>());
 
             services.AddScoped<SigninUser<DeliveryDbContext>>();
             services.AddScoped<IKeywordsParserService, StupidKeywordsParserService>();

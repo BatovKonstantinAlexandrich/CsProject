@@ -1,7 +1,8 @@
 ﻿namespace WebApi_CommonModel.BackgroungHosting
 {
 
-    [Label("Класс для динамической регистрации служб ")]
+    [Label("Класс для динамической регистрации служб работающих в фоновом режиме.")]
+    [Description($"Используется {nameof(BackgroundServicePool)} в для запуска и остановки")]
     public class BackgroundService<TWorker>(TWorker worker) : IWorkerService
         where TWorker : IWorker
     {
@@ -34,6 +35,7 @@
         public async Task Stop()
         {
             _cts.Cancel();
+            await Task.CompletedTask;
         }
     }
 }

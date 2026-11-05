@@ -33,7 +33,7 @@ public class ActionsHub: HubBase
     }
 
 
-    public ActionModel GetActionModel(string action) => actionsContext.GetActionModel(action);
+    public HubActionModel GetActionModel(string action) => actionsContext.GetActionModel(action);
 
 
     public string Login(string name)

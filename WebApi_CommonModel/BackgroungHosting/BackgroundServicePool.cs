@@ -24,7 +24,6 @@ namespace WebApi_CommonModel.BackgroungHosting
         {
             try
             {
-
                 var backgroundService = (IWorkerService)AppProviderService.GetInstance().GetService(item);
                 context.BackgroundServices[item] = backgroundService;
                 backgroundService.Start();
@@ -59,6 +58,11 @@ namespace WebApi_CommonModel.BackgroungHosting
                     //logger.LogInformation("Next");
                     Thread.Sleep(500);
                 }
+            }
+            
+            catch (TaskCanceledException ex)
+            {
+                
             }
             catch (Exception ex)
             {

@@ -37,7 +37,7 @@ public class ConsumerController
     /// <summary>
     /// Зарегистрированные операции
     /// </summary>
-    public Dictionary<string, ActionModel> Actions { get; set; } = new Dictionary<string, ActionModel>();
+    public Dictionary<string, HubActionModel> Actions { get; set; } = new Dictionary<string, HubActionModel>();
     
     /// <summary>
     /// Операции для отмены изменений
@@ -93,7 +93,7 @@ public class ConsumerController
     /// </summary>
     public Action AddAction(string action, MethodModel methodModel)
     {
-        Actions[action] = new ActionModel(action, (args,onsuccess,onerror) =>
+        Actions[action] = new HubActionModel(action, (args,onsuccess,onerror) =>
         {
             Request(action, args,
                 (resp) => {

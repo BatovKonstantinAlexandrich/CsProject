@@ -18,12 +18,12 @@ public class ActionsContext
     /// <summary>
     /// Операции по наименованиям
     /// </summary>
-    private ConcurrentDictionary<string, ActionModel> Actions = new ConcurrentDictionary<string, ActionModel>();
+    private ConcurrentDictionary<string, HubActionModel> Actions = new ConcurrentDictionary<string, HubActionModel>();
     
 
     public List<MethodModel> GetActions() => Actions.Values.Select(a => (MethodModel)a).ToList();
 
-    public ActionModel GetActionModel(string name) => Actions[name];
+    public HubActionModel GetActionModel(string name) => Actions[name];
 
     public ActionsContext()
     {        
@@ -61,7 +61,7 @@ public class ActionsContext
     public Action AddAction(string Name, MethodModel method, 
         Action<Dictionary<string,string>,Action<object>,Action<string>> Todo)
     {
-        var action = new ActionModel(Name, Todo)
+        var action = new HubActionModel(Name, Todo)
         {
             Label = method.Label,
             Name = method.Name,
@@ -93,6 +93,7 @@ public class ActionsContext
         }
         return result;
     }
+ 
 
     public void DoAction(string Action, Dictionary<string, string> args, Action<object> onsuccess, Action<string> onerror)
     {

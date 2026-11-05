@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-
+﻿using Console_CommonModel.CommonLib.LibData.Console_DataModule;
+using Microsoft.EntityFrameworkCore;
 
 namespace ClassModelLib.ActionsClient
 {
@@ -8,13 +8,14 @@ namespace ClassModelLib.ActionsClient
     /// ActionProgram при выполнении Load, считывает все ActionServiceModels 
     /// загружает сборки, находит тип данных и подключает сервис.
     /// </summary>
-    public class ActionDbContext: DbContext
+    [Label("Динамические сборки")]
+    public class ActionDbContext: BusinessDbBehaviour
     {
         public DbSet<ActionServiceModel> ActionServiceModels { get; set; }
 
 
         public ActionDbContext() { }
-        public ActionDbContext(DbContextOptions<ActionDbContext> options) : base(options) { }
+        public ActionDbContext(DbContextOptions<DbContextBase> options) : base(options) { }
 
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

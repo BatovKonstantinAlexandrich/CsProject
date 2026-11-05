@@ -1,67 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-using Console_CommonModel.CommonLib.LibData.AbstractionModel;
-
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Console_CommonModel.CommonLib.LibAuth.AppAuth.AuthorizationServices.ServiceApi
 {
-    public class EntityGroupingService<TDbContext, TEntity, TEntityGroup, TManyToMany> : BaseGrouping<TEntity, TEntityGroup, TManyToMany>
-        where TManyToMany : BaseEntity
-        where TEntityGroup : NamedObject
-    {
-        public EntityGroupingService()
-        {
-        }
-
-        public override MethodResult<TManyToMany> RemoveFromGroup(TEntity item, TEntityGroup parent)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override MethodResult<TManyToMany> AddToGroup(TEntity item, TEntityGroup parent)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override MethodResult<TManyToMany> SendToGroup(TEntity item, UserGroupMessage Message, TEntityGroup parent)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override IEnumerable<TEntityGroup> GetSelectedOptions(TEntity item)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override IEnumerable<TEntityGroup> GetAvailableOptions(TEntity item)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override string[] GetGroups()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override string[] GetGroupsForItem(TEntity item)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override MethodResult<UserGroupBinding> AddToGroup(UserContext item, string name)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override bool RemoveFromGroup(TEntity item, string name)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
+     
     public class GroupingService : BaseGrouping<UserContext, UserGroup, UserGroupBinding>
     {
         private readonly DbContextUser _model;

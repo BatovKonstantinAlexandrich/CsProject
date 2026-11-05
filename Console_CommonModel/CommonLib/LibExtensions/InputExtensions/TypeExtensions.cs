@@ -608,8 +608,127 @@ public static class TypeExtensions2
     public static List<string> GetOwnMethodNames(this object target)
     {
         Type type = target is Type ? (Type)target : target.GetType();
-        return type.GetMethods().Where(m => m.Name.StartsWith("get_") == false && m.Name.StartsWith("set_") == false && (type.BaseType is not null && type.BaseType.GetMethods().Select(m2 => m2.Name).Contains(m.Name) == false)).Select(m => m.Name).ToList();        
+        return type.GetMethods().Where(m => m.Name.StartsWith("get_") == false && !m.IsStatic && m.Name.StartsWith("set_") == false && (type.BaseType is not null && type.BaseType.GetMethods().Select(m2 => m2.Name).Contains(m.Name) == false)).Select(m => m.Name).ToList();        
     }
+
+    public static List<string> GetMethodNames(this object target)
+    {
+        Type type = target is Type ? (Type)target : target.GetType();
+        return type.GetMethods().Where(m => !m.Name.StartsWith("get_") == false && !m.Name.StartsWith("set_") == false).Select(m => m.Name).ToList();
+    }
+
+
+
+    public static List<string> GetGenericMethodNames(this object target, string name)
+    {
+        Type type = target is Type ? (Type)target : target.GetType();
+        List<List<Type>> genericArguments = new();
+        var list = target.GetGenericMethodGenericOptions(name);
+        bool first = true;
+        foreach (var options in list)
+        {
+            
+            List<List<Type>> p = genericArguments.ToList();
+            genericArguments.Clear();
+            foreach (var arg in options)
+            {
+                if(first)
+                {
+                    genericArguments.Add(new() { arg });
+                }
+                else
+                {
+                    foreach(var ptype in p)
+                    {
+                        var newList = ptype.ToList();
+                        newList.Add(arg);
+                        genericArguments.Add(newList);
+                    }
+                }
+            }
+            first = false;
+        }
+        List<string> results = new();
+        var methodInfo = type.GetMethodByName(name);
+        foreach (var args in genericArguments)
+        {
+            string ga = methodInfo.Name+"<";
+            foreach (var arg in args)
+            {
+                ga += arg.GetTypeName() + ",";
+            }
+            if(ga.EndsWith(","))
+                ga=ga.Substring(0, ga.Length -1);
+            ga += ">";
+            results.Add(ga);
+        }
+        return results;
+    }
+
+    public static Dictionary<string, MethodInfo> GetGenericMethodMap(this object target, string name)
+    {
+        Type type = target is Type ? (Type)target : target.GetType();
+        List<List<Type>> genericArguments = new();
+        var list = target.GetGenericMethodGenericOptions(name);
+        bool first = true;
+        foreach (var options in list)
+        {
+
+            List<List<Type>> p = genericArguments.ToList();
+            genericArguments.Clear();
+            foreach (var arg in options)
+            {
+                if (first)
+                {
+                    genericArguments.Add(new() { arg });
+                }
+                else
+                {
+                    foreach (var ptype in p)
+                    {
+                        var newList = ptype.ToList();
+                        newList.Add(arg);
+                        genericArguments.Add(newList);
+                    }
+                }
+            }
+            first = false;
+        }
+        Dictionary<string, MethodInfo> results = new();
+        var methodInfo = type.GetMethodByName(name);
+        foreach (var args in genericArguments)
+        {
+            string ga = methodInfo.Name + "<";
+            foreach (var arg in args)
+            {
+                ga += arg.GetTypeName() + ",";
+            }
+            if (ga.EndsWith(","))
+                ga = ga.Substring(0, ga.Length - 1);
+            ga += ">";
+            results[ga] = methodInfo.MakeGenericMethod(args.ToArray());
+        }
+        return results;
+    }
+
+    public static List<List<Type>> GetGenericMethodGenericOptions(this object target, string name)
+    {
+        Type type = target is Type ? (Type)target : target.GetType();
+        var methodInfo = type.GetMethodByName(name);
+        if (!methodInfo.IsGenericMethod)
+            throw new ArgumentException($"Метод {name} не является обобщённым");
+        List<List<Type>> results = new();
+        foreach (var genericArgument in methodInfo.GetGenericArguments())
+        {
+            var types = ServiceFactory.Get().GetTypesExtended(genericArgument.BaseType);
+            types = types.Where(type => genericArgument.GetInterfaces().All(type.IsImplements));
+            results.Add(types.ToList());
+        }
+        return results;
+    }
+
+    public static MethodInfo GetMethodByName(this Type type, string name)
+        => type.GetMethods().FirstOrDefault(t => t.Name == name);
 
     public static List<string> GetOwnMethodNotStaticNames(this object target)
     {

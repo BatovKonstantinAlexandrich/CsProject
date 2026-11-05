@@ -104,7 +104,7 @@ public static class InteractiveInvokeProgram
         string[] args = new string[0];
         try
         {
-            var action  = SingleSelect(instance.GetType().GetLabel(), instance.GetOwnPropertyNames());
+            var action  = SingleSelect(instance.GetType().GetLabel(), instance.GetOwnPropertyNames(), ref args);
             var selected = instance.GetType().GetMethods().Where(m => m.Name == action).FirstOrDefault();
             if (selected != null)
                 WriteLine(selected.GetType().GetMethodLabel(selected.Name));

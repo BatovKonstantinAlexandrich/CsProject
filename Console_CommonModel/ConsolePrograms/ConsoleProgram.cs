@@ -92,7 +92,11 @@ public class ConsoleProgram: ProgressProgram
     /// </summary>
     public void ShowExecuteActionResults(ref string[] args)
     { 
-        ConfirmContinue(new object[] { "Результаты выполнения", ActionResult }.ToJsonOnScreen());
+        if(ActionResult is not null)
+        {
+            ConfirmContinue(new object[] { "Результаты выполнения", ActionResult }.ToJsonOnScreen());
+        }
+        
     }
 
 
@@ -101,12 +105,15 @@ public class ConsoleProgram: ProgressProgram
     /// </summary>
     public void InputActionParameters(ref string[] args)
     {
+        UserInteractive = InputConsole.UserInteractive;
+
         Clear();
         PrintProgramData(ref args);
         WriteLine($"\n{(ProgramAction != null ? ProgramData.GetType().GetMethodLabel(ProgramAction.Name) : "")+$" [{ProgramAction.Name}]"}");
         
         int n = 1;
         var invokeParams = new List<object>();
+        
         ProgramArguments = new Dictionary<string, object>();
         if (ProgramAction == null)
         {
@@ -164,7 +171,10 @@ public class ConsoleProgram: ProgressProgram
             ConfirmExecute($"Выполнить: {ProgramAction.Name}({invokeParams.ToJson()})", () =>
             {
                 Info(ActionResult = ProgramAction.Invoke(ProgramData, invokeParams.ToArray()));
-                InputConsole.ConfirmContinue();
+                if(ActionResult is not null)
+                {
+                    InputConsole.ConfirmContinue();
+                }                
             });
             
 
@@ -437,9 +447,17 @@ public class ConsoleProgram: ProgressProgram
             {
                 Todo();
             }
+            catch(TargetInvocationException ex)
+            {
+                var message = $"Исключение {ex.InnerException.GetType().GetTypeName()} при выполнении {Name}: {ex.InnerException.Message}";
+                this.Error(message);
+                throw new Exception(message);
+            }
             catch(Exception ex)
             {
-                this.Error($"Исключение при выполнении {Name}: {ex.Message}");
+                var message = $"Исключение {ex.GetType().GetTypeName()} при выполнении {Name}: {ex.Message}";
+                this.Error(message);
+                throw new Exception(message);
             }
         }
         
@@ -476,24 +494,34 @@ public class ConsoleProgram: ProgressProgram
     }
 
 
-    public static string SingleSelect(string title, IDictionary<string, string> items)
+    public static string SingleSelect(string title, IDictionary<string, string> items, ref string[] args)
     {
-        var selectedKey = SingleSelect<string>(title, items.Keys);
-        return items[selectedKey];
+        var selectedKey = SingleSelect<string>(title, items.Keys, ref args);
+        return selectedKey is null? null: items[selectedKey];
     }
 
 
-    public static T SingleSelect<T>(string title, IDictionary<string, T> items)
+    public static T SingleSelect<T>(string title, IDictionary<string, T> items, ref string[] args)
     {
-        return items[SingleSelect<string>(title, items.Keys)];
+        return items[SingleSelect<string>(title, items.Keys, ref args)];
     }
 
-    public static T SingleSelect<T>(string title, IEnumerable<T> items) where T : class
+    public static T SingleSelect<T>(string title, IEnumerable<T> items, ref string[] args) where T : class
     {
         try
         {
             int i = 1;
-
+            if(!InputConsole.UserInteractive)
+            {
+                Thread.Sleep(1000);
+                var value = args.Shift(ref args);
+                int pindex = int.Parse(value)+1;
+                if (pindex == 0)
+                {
+                    return null;
+                }
+                return items.ToArray()[pindex-1];
+            }
             ConsoleKeyInfo key;
             do
             {
@@ -510,11 +538,11 @@ public class ConsoleProgram: ProgressProgram
                 Thread.Sleep(100);
             } while (key.KeyChar < '0' || key.KeyChar > items.Count().ToString().ToCharArray()[0]);
             int index = int.Parse(key.KeyChar.ToString()) - 1;
+            args.Push(ref args, index.ToString());
             if (index == -1)
             {
-                throw new CancelException();
+                return null;
             }
-
             return items.ToArray()[index];
         }
         catch (Exception ex)
@@ -537,18 +565,44 @@ public class ConsoleProgram: ProgressProgram
             foreach (var method in methodNames)
             {
                 var pmethod = pType.GetMethods().FirstOrDefault(m => m.Name == method);
-                methods[pType.GetMethodLabel(method)] = method;
+                if(pmethod.IsGenericMethod)
+                {
+                    try
+                    {
+                        this.Info(pmethod.Name);
+                        foreach (var kv in pType.GetGenericMethodMap(method))
+                        {
+                            methods[pType.GetMethodLabel(method) + " " + kv.Value.GetGenericArguments().Select(a => a.GetLabel()).ToJson()] = method;
+                        }
+                    }
+                    catch(Exception ex)
+                    {
+                        this.Error(ex);
+                        throw;
+                    }
+                }
+                else
+                {
+                    methods[pType.GetMethodLabel(method)] = method;
+                }
+                
             }
             this.Debug(methods);
             this.Debug(UserInteractive);
 
             string action = SingleSelect(
                 GetHeaderText() +
-                $"\n\n\nВыберите действие:", methods); //, ref args
-            ProgramAction = ProgramData.GetType().GetMethods().Where(m => m.Name == action).FirstOrDefault();
-            if (ProgramAction == null)
-                throw new Exception("Неправильно выполнена функция выбора из коллекции");
-
+                $"\n\n\nВыберите действие:", methods, ref args);
+            if(action is not null)
+            {
+                ProgramAction = ProgramData.GetType().GetMethods().Where(m => m.Name == action).FirstOrDefault();
+                if (ProgramAction == null)
+                    throw new Exception("Неправильно выполнена функция выбора из коллекции");
+            }
+            else
+            {
+                throw new CancelException();
+            }            
         }
         catch (CancelException)
         {
@@ -578,13 +632,20 @@ public class ConsoleProgram: ProgressProgram
         Type ProgramType = target.GetType();
         var console = new ConsoleProgram();
         console.ProgramData = target == null ? ProgramType.New() : target;
-        while (true)
+        try
         {
-            console.PrintProgramData(ref args);
-            console.SelectNextAction(ref args);
-            Console.Clear();
-            console.InputActionParameters(ref args);
-            console.ShowExecuteActionResults(ref args);
+            while (true)
+            {
+                console.PrintProgramData(ref args);
+                console.SelectNextAction(ref args);
+                Console.Clear();
+                console.InputActionParameters(ref args);
+                console.ShowExecuteActionResults(ref args);
+            }
+        }
+        catch(CancelException)
+        {
+            return args;
         }
     }
 
@@ -610,22 +671,28 @@ public class ConsoleProgram: ProgressProgram
             InputConsole.Interactive();
         }
         Type ProgramType = typeof(TypeOfPogram);
-        using (var route = new RoutingProgram($"Конфигурация {ProgramType.GetTypeName()}"))
+        var console = new ConsoleProgram();
+        try
         {
-
-            var console = new ConsoleProgram();
-            console.Interactive(); 
-            console.ProgramData = instance == null ? ProgramType.New() : instance;
-            while (true)
-            {
-                Console.Clear();
-                console.PrintProgramData(ref args);
-                console.SelectNextAction(ref args);
-                Console.Clear();
-                console.InputActionParameters(ref args);
-                console.ShowExecuteActionResults(ref args);
+            using (var route = new RoutingProgram($"Конфигурация {ProgramType.GetTypeName()}"))
+            {                                
+                console.ProgramData = instance == null ? ProgramType.New() : instance;
+                while (true)
+                {
+                    Console.Clear();
+                    console.PrintProgramData(ref args);
+                    console.SelectNextAction(ref args);
+                    Console.Clear();
+                    console.InputActionParameters(ref args);
+                    console.ShowExecuteActionResults(ref args);
+                }
             }
         }
+        catch(CancelException)
+        {
+            return;
+        }
+
 
 
 

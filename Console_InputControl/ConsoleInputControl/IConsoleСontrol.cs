@@ -38,6 +38,8 @@ public interface IConsoleСontrol
     int ConfirmContinue(string title, Func<object, bool> value, ref string[] args);
     bool ConfirmContinue(string message, Func<object, List<string>> validate, ref string[] args);
     void ConfirmExecute(string name, Action todo);
+    void ConfirmExecute(string name, Action todo, ref string[] args);
+
     void CreateTreeModel(string title, ref string[] args);
     void Error(params object[] args);
     void Exit();
@@ -142,7 +144,7 @@ public interface IConsoleСontrol
     string SelectFile(string title, Func<string, List<string>> validate, ref string[] args);
     string SelectFile(string title, ref string[] args);
     void SelectList(string title, List<string> options, Action<string> onselect, ref string[] args);
-    string Shift(ref string[] args);
+    //string Shift(ref string[] args);
     string SingleSelect(string title, IEnumerable<string> options, ref string[] args);
     string SingleSelect(string title, List<string> options, ref string[] args);
     T Wait<T>(string title, Func<T> todo);

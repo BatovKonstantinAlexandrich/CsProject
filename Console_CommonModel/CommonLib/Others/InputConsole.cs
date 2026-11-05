@@ -83,6 +83,11 @@ namespace Console_CommonModel.CommonLib.Others
             control.ConfirmExecute(name, todo);
         }
 
+        public static void ConfirmExecute(string name, Action todo, ref string[] args)
+        {
+            control.ConfirmExecute(name, todo, ref args);
+        }
+
         public static void CreateTreeModel(string title, ref string[] args)
         {
             control.CreateTreeModel(title, ref args);
@@ -463,7 +468,7 @@ namespace Console_CommonModel.CommonLib.Others
       
 
         public static void SelectAction(string title, Dictionary<string, Action> options, ref string[] args)
-        {
+        {            
             control.SelectAction(title, options, ref args);
         }
 

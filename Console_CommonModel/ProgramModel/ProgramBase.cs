@@ -530,4 +530,9 @@ public abstract class ProgramBase : IConsoleСontrol
     {
         Control.WriteYellow(args);
     }
+
+    public void ConfirmExecute(string name, Action todo, ref string[] args)
+    {
+        Control.ConfirmExecute(name, todo, ref args);
+    }
 }

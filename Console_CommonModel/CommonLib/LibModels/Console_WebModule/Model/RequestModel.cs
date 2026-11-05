@@ -2,10 +2,10 @@
 {
     public class RequestModel
     {
-        public string url;
-        public Dictionary<string, string> args = null;
-        public Dictionary<string, string> headers = null;
-        public string body = null;
+        public string url { get; set; } = "/";
+        public Dictionary<string, string> args { get; set; } = new();
+        public Dictionary<string, string> headers { get; set; } = new();
+        public string body { get; set; } = "";
 
         public RequestModel()
         {
