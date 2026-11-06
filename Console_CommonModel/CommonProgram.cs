@@ -47,6 +47,8 @@ namespace Console_CommonModel
             ServiceFactory.Get().AddTypes(typeof(TProgram).Assembly);
             ServiceFactory.Get().AddTypes(typeof(CommonProgram).Assembly);
 
+ 
+
             TestGetIntegrationServices();
 
 
@@ -64,7 +66,7 @@ namespace Console_CommonModel
 
 
             //Console_ClassDataModelConsoleProgram.Run( );
-            InteractiveInvokeProgram.UserInvokeInteractive(new TableMetadataBuilder());
+            //InteractiveInvokeProgram.UserInvokeInteractive(new TableMetadataBuilder());
             //ConsoleProgram.RunInteractive<TableMetadataBuilder>();
 
            

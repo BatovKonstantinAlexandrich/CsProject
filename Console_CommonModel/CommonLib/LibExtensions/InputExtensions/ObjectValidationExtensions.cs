@@ -31,6 +31,7 @@ public static class ObjectValidationExtensions
         if (validationResults != null && validationResults.Count() > 0 && validationResults.Any(res => res.Value.Count() > 0))
         {
             
+            
             throw new ArgumentException(
                 $"Фактические аргументы метода {methodInfo.Name} " +
                 $"не валидны\n{validationResults.ToJsonOnScreen()}\n");

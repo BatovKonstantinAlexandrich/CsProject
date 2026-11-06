@@ -3,14 +3,18 @@
 @inherits WebControlBase<StatusView,IStatusControl>
 @implements IStatusControl
 
-@code{
+@code
+{
+    [Parameter]
     [Label("Text")]
     public string Text { get; set; } = "Ожидание";
 
+    [Parameter]
     [InputNumber]
     [Label("Value")]
     public int Value { get; set; } = 0;
 
+    [Parameter]
     [InputBool]
     [Label("Active")]
     public bool Active { get; set; } = false;
@@ -34,15 +38,15 @@
 
     protected override async Task OnInitializedAsync(){
         await base.OnInitializedAsync();
-        Model.control = this;
-        Model.AddPropertyChangeListener(nameof(Model.Active), evt => { this.Active = Model.Active;  });
-        Model.AddPropertyChangeListener(nameof(Model.Text), evt => { this.Text = Model.Text; });
-        this.component = new StatusComponent(Model, this);
+        // Model.control = this;
+        // Model.AddPropertyChangeListener(nameof(Model.Active), evt => { this.Active = Model.Active;  });
+        // Model.AddPropertyChangeListener(nameof(Model.Text), evt => { this.Text = Model.Text; });
+        // this.component = new StatusComponent(Model, this);
     }
 }
 
 <div style="@Model.GetCssText()">        
-    <MudProgressLinear Value="@Value" Style="@("width: 100%; z-order=1;")" Indeterminate="@Active">        
+    <MudProgressLinear  Style="@("width: 100%; z-order=1;")" Indeterminate="@Model.Active">        
     </MudProgressLinear>
     <MudText>@Text</MudText>
 </div>

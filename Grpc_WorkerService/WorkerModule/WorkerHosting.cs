@@ -17,7 +17,7 @@ namespace Grpc_WorkerService.WorkerModule
         {
             builder.Services.AddSingleton<WorkerContext>();
             builder.Services.AddSingleton<IQueueConsumer, TActionClient>();
-            builder.Services.AddHostedService<Worker<TActionClient>>();
+            //builder.Services.AddHostedService<Worker<TActionClient>>();
         }
     }
 }

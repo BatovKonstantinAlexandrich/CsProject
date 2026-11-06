@@ -216,7 +216,7 @@ else
     } else if (Type == nameof(StructuredCollectionView)){
         <StructuredCollectionControl ViewModel="@Model"></StructuredCollectionControl>
     } else if (Type == nameof(StatusView) && Model is StatusView statusView){
-        <StatusControl Model="@statusView"></StatusControl>
+        <StatusControl Model="@statusView" Active="@statusView.Active" Text="@statusView.Text" Value="@statusView.Value"></StatusControl>
     } else if (Type == nameof(SqlServerWebApi)){
         <SqlServerWebApi ViewModel="@Model"></SqlServerWebApi>
     } else if (Type == nameof(SqlServerMigBuilder)){

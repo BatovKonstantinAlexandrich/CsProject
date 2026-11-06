@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 public class ManyToManyAttributeTest : TestingElement
 {
+    public ManyToManyAttributeTest() : base() { }
     public ManyToManyAttributeTest(IServiceProvider provider) : base(provider)
     {
     }

@@ -11,8 +11,8 @@
 @code 
 {
     public AppViewBase ViewRef { get; set; } = new();
-    public AppViewRoot ViewRootRef { get; set; } = new();
-    public DesignerView DesignerViewRef { get; set; }
+    public AppViewRoot ViewRootRef { get; set; } = new ();
+    public AppViewRoot DesignerViewRef { get; set; }
     private DotNetObjectReference<Index>? _objRef;
 
 
@@ -103,9 +103,13 @@
 }
 <div style="position: fixed; width: 100%; height: 100%;" @oncontextmenu:stopPropagation @oncontextmenu:preventDefault>
     <div style="position: relative; width: 100%; height: 100%;">        
+        @* <StatusControl Model="@(new StatusView())" @ref="@StatusControlRef"></StatusControl> *@
         @* <div style="width: 100%; height: 100%;  display: flex;"> *@
              @* <div style="align-self: center; justify-self: center; margin: auto;">  *@
-        <ContainerControl FullSize="@true" ViewModel="@ViewRef"></ContainerControl>
+
+        <ContainerControl FullSize="@true" ViewModel="@DesignerViewRef"></ContainerControl>
+        
+
                 @* @CreateComponent() *@
             @* </div> *@
         @* </div> *@        
@@ -113,23 +117,13 @@
 </div>
 @code
 {
+    public StatusControl StatusControlRef { get; set; }
     protected override async Task OnInitializedAsync()
     {
-        DesignerViewRef = new DesignerView();
-        ButtonView buttonView = null;
-        // ViewRef.Append(buttonView = new ButtonView()
-        //     {
-        //         OnClick = (p,e)=> {
-        //             buttonView.PutAction("Wait",()=> {
-        //                 Thread.Sleep(1000);
-        //             }
-        //         );
-        //     }
-        // });
-        ViewRef.Top = new StatusView();
-        ViewRef.LayoutFill(new ButtonView() { Height = 66, HeightUnit = "%"});
-        ViewRef.Bottom = new StatusView();
+        DesignerViewRef = new AppViewRoot();
+
         await base.OnInitializedAsync();
+       
         var designer = DesignerViewRef;
 
 

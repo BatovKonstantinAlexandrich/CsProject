@@ -2,8 +2,6 @@
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 
-using WinFormsApp.Console.Console_ClassModule.ClassDataModel;
-using WinFormsApp.Console.Console_ClassModule.ClassServiceModel;
 
 /// <summary>
 /// Область регистрации функций обработки ответных сообщений

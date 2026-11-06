@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "Новый профиль",
+    "Projects": [
+      {
+        "Path": "Grpc_WorkerService\\Grpc_WorkerService.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "Console_CsDeveloper\\Console_CsDeveloper.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

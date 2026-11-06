@@ -780,14 +780,37 @@ public class InputConsoleСontrol(ref string[] args) : IConsoleСontrol
 
     public void SelectAction(string title, Dictionary<Action, string> options, ref string[] args)
     {
-        var selected = SingleSelect(title, options.Values, ref args);
-        options.First(o => o.Value == selected).Key();
+        while(true)
+        {
+            try
+            {
+                var selected = SingleSelect(title, options.Values, ref args);
+                options.First(o => o.Value == selected).Key();
+                break;
+            }
+            catch (CancelException ex)
+            {
+                continue;
+            }
+        }
     }
     public void SelectAction(string title, Dictionary<string, Action> options, ref string[] args)
     {
-        var action = SingleSelect(title, options.Keys, ref args);
-        if(action is not null)
-            options[action]();
+        
+        while (true)
+        {
+            try
+            {
+                var action = SingleSelect(title, options.Keys, ref args);
+                if (action is not null)
+                    options[action]();
+                break;
+            }
+            catch (CancelException ex)
+            {
+                continue;
+            }
+        }
     }
     public string SingleSelect(string title, IEnumerable<string> options, ref string[] args)
     {

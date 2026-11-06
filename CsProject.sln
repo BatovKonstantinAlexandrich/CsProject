@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blazor_CommonModel", "Blazo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApi_CommonModel", "WebApi_CommonModel\WebApi_CommonModel.csproj", "{E9366BAF-807C-4AE3-994F-C2E05D30AAF5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Consoles_ActionsClient", "Consoles_ActionsClient\Consoles_ActionsClient.csproj", "{482A5CE1-778D-4498-B759-ED45BBDAA887}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console_ActionsClient", "Consoles_ActionsClient\Console_ActionsClient.csproj", "{482A5CE1-778D-4498-B759-ED45BBDAA887}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blazor_FormsModel", "Blazor_FormsModel\Blazor_FormsModel.csproj", "{14020E38-94D2-45F1-B368-06E464318103}"
 EndProject

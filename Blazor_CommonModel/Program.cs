@@ -27,12 +27,12 @@ namespace Blazor_CommonModel
             AppProviderService.GetInstance().AddServiceImplementation<IClientAPI, BlazorClientAPI>();
             AppProviderService.GetInstance().AddServiceImplementation<IComponentsFactory<IControlBase>, WebComponentsFactory>();
 
-            CommonProgram.RunTests<Program>(new string[] {  "--no-force"});
+            CommonProgram.Run<Program>(new string[] {  "--no-force"});
 
-            var unit = new AppUnit();
-            unit.DoTest(false, false).PrintDocument();
+            //var unit = new AppUnit();
+            //unit.DoTest(false, false).PrintDocument();
 
-
+ 
             var builder = WebApplication.CreateBuilder(args);
         
             builder.Services.AddRazorComponents().AddInteractiveServerComponents();
@@ -40,7 +40,7 @@ namespace Blazor_CommonModel
             DeliveryDbContext.ConfigureDeliveryServices(builder.Services, builder.Configuration);
             MonitoringUnit.ConfigureServices(builder.Services);
 
-            ModuleUser.ConfigureServices<DeliveryDbContext>(builder.Configuration, builder.Services);
+            ModuleUser.ConfigureServices(builder.Configuration, builder.Services);
             ModuleService.ConfigureServices<DeliveryDbContext>(builder.Configuration, builder.Services);
 
             builder.Services.AddMudServices();
@@ -77,6 +77,8 @@ namespace Blazor_CommonModel
             // 5. Добавляем сервисы для работы с состоянием аутентификации в Blazor
             //builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider<SigninUser<DeliveryDbContext>, UserContext, UserAccount, UserPerson>>();
 
+            builder.Services.AddScoped<ConnectionTracker>();
+            builder.Services.AddScoped<ILocalStorage, LocalStorage>();
             ModuleUser.ConfigureServices(builder.Configuration, builder.Services);
             var app = builder.Build();
             app.UseForwardedHeaders();

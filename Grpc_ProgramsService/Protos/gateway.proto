@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+option csharp_namespace = "Grpc_ProgramsService";
+
+package greet;
+
+service GatewayService {
+  rpc Start (stream ActionResponse) returns (stream ActionRequest);
+}
+
+// The request message containing the user's name.
+message ActionRequest {
+  
+    string AccessToken = 1;
+    string SerialKey = 2;
+    string ActionName = 3;
+    string MessageObject = 4;
+}
+
+// The response message containing the greetings.
+message ActionResponse {
+    
+    string SerialKey = 1;
+    string MessageObject = 2;
+    string ActionStatus = 3;
+    string StatusText = 4;
+    bool Success = 5;
+    string RequestMessage = 6;
+    bool Confirmed = 7;
+    string AccessToken = 8;
+}

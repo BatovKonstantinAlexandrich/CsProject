@@ -7,7 +7,7 @@ namespace Grpc_WorkerService
         public static void Main(string[] args)
         {
             var builder = Host.CreateApplicationBuilder(args);
-            WorkerHosting.BuildHost<>(builder, builder.Configuration);
+            //WorkerHosting.BuildHost(builder, builder.Configuration);
 
             var host = builder.Build();
             host.Run();

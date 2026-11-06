@@ -93,7 +93,7 @@ namespace Blazor_CommonModel.Components.Shared
             GetControlRoot().Close();
         }
 
-        public void Invoke(Action todo)
+        public virtual void Invoke(Action todo)
         {
             //GetControlRoot().Invoke(showErr);
             try
@@ -130,7 +130,8 @@ namespace Blazor_CommonModel.Components.Shared
 
         public IControlBase RunAtForm(string title = "")
         {
-            return GetControlRoot().RunAtForm(title);
+            //return GetControlRoot().RunAtForm(title);
+            return null;
         }
 
         public IControlBase GetAppForm()

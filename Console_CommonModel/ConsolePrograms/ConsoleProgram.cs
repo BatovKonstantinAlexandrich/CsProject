@@ -608,10 +608,8 @@ public class ConsoleProgram: ProgressProgram
         {
             throw;
         
-        }catch (Exception ex)
-        {
-            WriteLine(ex);
         }
+        
     }
 
     private string GetHeaderText()

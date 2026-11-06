@@ -11,6 +11,8 @@ using WebApi_CommonModel.MiddlewareComponents;
 namespace WebApi_CommonModel.WebApiModule
 {
  
+
+
     [Label("Программа запуска приложения WebApi")]
     public class Program:  IBackgroundServiceContext
     {        
@@ -160,13 +162,19 @@ namespace WebApi_CommonModel.WebApiModule
                     app.MapHub<ActionsHub>($"/hubs/{nameof(ActionsHub)}");
                     app.RunAsync(_cts.Token).Wait();                    
                 }
+           
                 catch (TaskCanceledException ex)
                 {
-                    continue;
+                    break;
                 }
                 catch (Exception ex)
                 {
+                    if(ex is CancelException)
+                    {
+                        continue;
+                    }
                     this.Error(ex);
+                    InputConsole.ConfirmContinue("Продолжить выполнение?");
                 }
             }            
         }

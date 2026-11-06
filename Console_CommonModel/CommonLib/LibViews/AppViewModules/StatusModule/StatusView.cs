@@ -92,19 +92,39 @@ namespace Console_CommonModel.CommonLib.LibViews.AppViewModules.StatusModule
         /// </summary>
         public override void PutAction(string name, Action todo, int timeout)
         {
-            if (todo is null)
-                return;
-            IControlBase sync = null;
+            //this.Get<SigninUser<DeliveryDbContext>>()
             try
             {
-                var viewRoot = this.GetAppRootView();
-                sync = viewRoot.control;
+                this.Active = true;
+                todo();
+                this.Active = false;
             }
-            catch
+            catch(Exception ex)
             {
+                this.Error(ex);
             }
-            _actionQueue.Add((name, todo, sync));
-            DoAsync();
+                
+
+
+
+
+            //if (todo is null)
+            //    return;
+            //IControlBase sync = null;
+            //try
+            //{
+            //    var viewRoot = this.GetAppRootView();
+            //    if(viewRoot is null)
+            //    {
+            //        this.Debug(this.GetParentViews<AppViewBase>().Select(p => p.GetTypeName()));
+            //    }
+            //    sync = viewRoot.control;
+            //}
+            //catch
+            //{
+            //}
+            //_actionQueue.Add((name, todo, sync));
+            //DoAsync();
         }
 
         private void ProcessActionQueue()
@@ -175,7 +195,7 @@ namespace Console_CommonModel.CommonLib.LibViews.AppViewModules.StatusModule
             }));
         }
 
-        private void StartProgressAnimation(string name)
+        public void StartProgressAnimation(string name)
         {
             OnActionStarted(name);
             
@@ -197,7 +217,7 @@ namespace Console_CommonModel.CommonLib.LibViews.AppViewModules.StatusModule
             Value = v;
         }
 
-        private void StopProgressAnimation()
+        public void StopProgressAnimation()
         {
             //_progressTimer?.Stop();
         }

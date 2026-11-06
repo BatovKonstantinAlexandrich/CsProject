@@ -4,6 +4,7 @@
     "Аутентификация выполняет проверку пароля. Нужна возможность выхода пользователя из системы.")]
 public class AuthorizationUsersTest : TestingElement
 {
+    public AuthorizationUsersTest() : base() { }
     public AuthorizationUsersTest(IServiceProvider provider) : base(provider)
     {
     }

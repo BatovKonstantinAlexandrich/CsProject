@@ -12,7 +12,7 @@ namespace Grpc_WorkerService
         private HashSet<Func<TRequest, TResponrt>> _handlers = new();
         private readonly IQueueConsumer _consumer;
 
-        public Worker(ILogger<Worker<TRequest, TResponrt>> logger, WorkerContext context, IQueueConsumer<TRequest> consumer)
+        public Worker(ILogger<Worker<TRequest, TResponrt>> logger, WorkerContext context, IQueueConsumer  consumer)
         {
             _logger = logger;
             _context = context;            
@@ -28,7 +28,7 @@ namespace Grpc_WorkerService
                 {
                     if (_logger.IsEnabled(LogLevel.Information))                    
                         _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-                    _consumer.Take();
+                    //_consumer.Take();
                     await Task.Delay(100, stoppingToken);
                 }
             } 

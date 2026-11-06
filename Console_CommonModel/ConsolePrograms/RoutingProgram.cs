@@ -12,7 +12,7 @@ namespace Console_InputApplication.ConsolePrograms
     public class RoutingProgram : IDisposable
     {
 
-        private static ConcurrentBag<string> State = new ConcurrentBag<string>();
+        private static List<string> State = new List<string>();
         private string StateName { get; set; }
 
 
@@ -41,9 +41,10 @@ namespace Console_InputApplication.ConsolePrograms
         /// </summary>     
         private static void EndState(string name)
         {
-            if (State.Last() != name)
-                throw new Exception("");
-            State.Append(name);
+            
+            while (State.Last() != name)
+                State.RemoveAt(State.Count()-1 );
+            State.RemoveAt(State.Count() - 1);
             string Title = "/";
             foreach (var next in State)
                 Title += next + "/";
@@ -52,9 +53,6 @@ namespace Console_InputApplication.ConsolePrograms
 
         public void Dispose() => EndState(StateName);
 
-        internal static void Run(string v)
-        {
-            throw new NotImplementedException();
-        }
+        
     }
 }

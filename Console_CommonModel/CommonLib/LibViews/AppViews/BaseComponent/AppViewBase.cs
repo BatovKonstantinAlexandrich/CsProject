@@ -253,7 +253,16 @@ namespace Console_CommonModel.CommonLib.LibViews.AppViews.BaseComponent
         /// </summary>
         [Newtonsoft.Json.JsonIgnore]
         [System.Text.Json.Serialization.JsonIgnore]
-        public virtual IControlBase control { get; set; }
+        public virtual IControlBase control { get => Get<IControlBase>(nameof(control)); set=> Set<IControlBase>(nameof(control),value); }
+
+        [OnChange(nameof(control))]
+        public void OnControlChanged()
+        {
+            if(control is not null)
+            {
+                control.ViewModel = this;
+            }
+        }
 
         /// <summary>
         /// Вспомогательные методы создания компонентов представлений
@@ -1038,6 +1047,7 @@ namespace Console_CommonModel.CommonLib.LibViews.AppViews.BaseComponent
 
         public AppViewRoot GetAppRootView()
         {
+            
             if (this is AppViewRoot)
                 return (AppViewRoot)this;
             this.Debug(GetParentViews<AppViewBase>().Select(p => p.GetTypeName()).ToList().ToJson());
@@ -1079,14 +1089,14 @@ namespace Console_CommonModel.CommonLib.LibViews.AppViews.BaseComponent
                 return;
             }
             r.PutAction(name, () => {
-                var cts = new CancellationTokenSource();
-                var started = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-                Task.Run(() => {
-                    todo();
-                }, cts.Token);
-                while((DateTimeOffset.Now.ToUnixTimeMilliseconds()-started)<timeout)
-                    Thread.Sleep(timeout);
-                throw new Exception("Превышен интервеавл ожидания выполнения операции");
+                //var cts = new CancellationTokenSource();
+                //var started = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+                //Task.Run(() => {
+                //    todo();
+                //}, cts.Token);
+                //while((DateTimeOffset.Now.ToUnixTimeMilliseconds()-started)<timeout)
+                //    Thread.Sleep(timeout);
+                //throw new Exception("Превышен интервеавл ожидания выполнения операции");
             });
         }
 
