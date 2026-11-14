@@ -11,9 +11,10 @@ using Microsoft.AspNetCore.Components.Authorization;
 using MarketerWeb.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Components.Server.Circuits;
-using Blazor_CommonModel.Connections;
 using Microsoft.EntityFrameworkCore;
 using Blazor_CommonModel.Application;
+using Blazor_MyApp.Services.ContextServices;
+using Blazor_MyApp.Services;
 
 
 namespace Blazor_CommonModel
@@ -24,7 +25,7 @@ namespace Blazor_CommonModel
         
         public static void Main(string[] args)
         {
-            ServiceFactory.Get().AddTypesAsync(typeof(Program).Assembly, true);
+            ServiceFactory.Get().AddTypesAsync(typeof(Blazor_CommonModel.Program).Assembly, true);
             ServiceFactory.Get().AddTypesAsync(typeof(MudBlazor.Colors).Assembly, true);
             
             AppProviderService.GetInstance().AddServiceImplementation<IClientAPI, BlazorClientAPI>();
@@ -38,9 +39,16 @@ namespace Blazor_CommonModel
  
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.AddHostedService<DoCheckBackground>();
             builder.Services.AddRazorComponents().AddInteractiveServerComponents();
-            builder.Services.AddScoped<CircuitHandler, TrackingCircuitHandler>();
+            //builder.Services.AddHostedService<GrpcBackgroundMessaging>();
+            builder.Services.AddHostedService<DoCheckBackground>();
+            builder.Services.AddSingleton<AuthorizationOptions>();
+            builder.Services.AddSingleton<ConnectionsCollection>();
+            builder.Services.AddSingleton<ApplicationEventsService>();
+
+            builder.Services.AddScoped<LayoutService>();
+            builder.Services.AddScoped<CookieManager>();
+            builder.Services.AddTransient<CircuitHandler, ConnectionsHandler>();
             DeliveryDbContext.ConfigureDeliveryServices(builder.Services, builder.Configuration);
             MonitoringUnit.ConfigureServices(builder.Services);
             AppProviderService.GetInstance().Get<AuthorizationCollection<UserContext>>();
@@ -62,20 +70,25 @@ namespace Blazor_CommonModel
             builder.Services.AddCascadingAuthenticationState();
             builder.Services.AddScoped<AuthStateProvider<DeliveryDbContext>>();
             builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<AuthStateProvider<DeliveryDbContext>>());
-            builder.Services.AddAuthorizationCore(config =>
-            {
-                //todo configure authorization
+            //builder.Services.AddAuthorizationCore(config =>
+            //{
+            //    //todo configure authorization
                 
-            });
+            //});
+            //builder.Services.AddAuthorization(config =>
+            //{
+            //    //todo configure authorization
 
-            builder.Services.AddSingleton<AuthorizationCollection<ClientInfo>>( sp => sp.Get<ConnectionTracker>());
-            builder.Services.AddSingleton<ConnectionTracker>();
+            //});
+            //builder.Services.AddAuthentication(options =>
+            //{
+            //    options.AddScheme("SessionTokens", opts => { });
+            //});
+
             builder.Services.AddSingleton<ApplicationEventsService>();
             builder.Services.AddScoped<IClientAPI, BlazorClientAPI>();
             builder.Services.AddScoped<IAppModalService, AppModalService>();
             builder.Services.AddScoped<IContextMenuService, ContextMenuService>();
-            var cm = AppProviderService.GetInstance().Get<ConnectionsModule>();  
-            cm.OnConfigureServices(builder.Services);
             // Также нужен AddHttpContextAccessor
             builder.Services.AddHttpContextAccessor();
             // 4. Добавляем каскадное состояние аутентификации
@@ -165,7 +178,7 @@ namespace Blazor_CommonModel
         }
         else
         {
-            <MudBlazor.Charts.Line></MudBlazor.Charts.Line>
+            <p>content</p>
         }
     }
 </MudCard>";

@@ -33,14 +33,13 @@
   </ItemGroup>
  
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="9.0.31" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="9.0.31" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="9.0.21" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
-	  <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="6.0.29" />
 	  <PackageReference Include="MudBlazor" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Blazor_MyApp\Blazor_MyApp.csproj" />
     <ProjectReference Include="..\Console_CommonModel\Console_CommonModel.csproj" />
   </ItemGroup>
 
@@ -295,6 +294,10 @@
     <None Update="Icons\view_headline">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Connections\" />
   </ItemGroup>
 
 </Project>

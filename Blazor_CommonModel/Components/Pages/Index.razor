@@ -1,12 +1,13 @@
 ﻿@page "/"
 @using Blazor_CommonModel.Shared.Components
+@using Blazor_MyApp.Services.ContextServices
 @using Console_CommonModel.CommonLib.LibDesigner.DesignerServices
 @inherits BaseComponent
 @inject IJSRuntime JS
-@inject ConnectionTracker Tracker
-@foreach (var conn in Tracker.GetAll())
+@inject ConnectionsCollection cons 
+@foreach (var conn in cons.GetAll())
 {
-    <p>Circuit: @conn.CircuitId, IP: @conn.IpAddress, Connected: @conn.ConnectedAt</p>
+    <p>Circuit:  IP: @conn.Ip4, Connected: @conn.LastActive</p>
 }
 @code 
 {

@@ -102,9 +102,9 @@ else
                     onclicked(pitem);
             };
             nodes.Add(p);
-            p.Children = new();
+            p.Children = new List<ITreeItemData<TreeViewNodeModel>> ();
             var children = CreateTreeItemDatas(getChildren(item), createNode, getChildren, onclicked);
-            children.ForEach(c => p.Children.Add(c));
+            children.ForEach(c => p.Children.ToList().Add(c));
         }
         return nodes;
     }

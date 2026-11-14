@@ -26,17 +26,16 @@ namespace Blazor_CommonModel
             if(this.EnableLogging)
                 logger.LogInformation("DoCheck()");
             serviceProvider.Get<ConnectionsCollection>().DoCheck();
-            var users = serviceProvider.GetServices<AuthorizationCollection<UserContext>>();
+            var connections = serviceProvider.Get<ConnectionsCollection>().GetAll();
+            this.Debug("connections count = " + connections.Count());
+
+            var users = serviceProvider.Get<AuthorizationCollection<UserContext>>().GetAll();
             this.Debug("users count = "+users.Count());
-            foreach (var active in users)
-            {
-                active.DoCheck();
-            }
-            this.Debug("users count = " + users.Count());
-            foreach (var active in serviceProvider.GetServices<AuthorizationCollection<ServiceContext>>())
-            {
-                active.DoCheck();
-            } 
+          
+            //var services = serviceProvider.Get<AuthorizationCollection<ServiceContext>>().GetAll();
+            //serviceProvider.Get<AuthorizationCollection<ServiceContext>>().DoCheck();
+            //this.Debug("services count = " + services.Count());
+            
         }
     }
 }
