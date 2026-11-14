@@ -2,16 +2,17 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.11" />
+		<PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.11" />
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\Console_CommonModel\Console_CommonModel.csproj" />
 	  <ProjectReference Include="..\Console_InputControl\Console_InputControl.csproj" />
+	  <ProjectReference Include="..\GrpcPort.Contracts\GrpcPort.Contracts.csproj" />
 	</ItemGroup>
 	<ItemGroup>
 	  <None Update="MicroserviceConnector.db">

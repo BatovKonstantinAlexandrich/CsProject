@@ -42,7 +42,7 @@ namespace Console_CommonModel.CommonLib.LibData.Console_DataModule.DataADO
             enabledChanging = true;
         }
 
-        private void OnDataChanged(object sender, IChangingListEvent e)
+        private void OnDataChanged(object sender, ListChangedEvent e)
         {
             try
             {
@@ -80,7 +80,7 @@ namespace Console_CommonModel.CommonLib.LibData.Console_DataModule.DataADO
             }
         }
 
-        public void OnVisibleDataChanged(object sender, IChangingListEvent e)
+        public void OnVisibleDataChanged(object sender, ListChangedEvent e)
         {
             try
             {

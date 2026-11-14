@@ -62,22 +62,22 @@
         return Task.CompletedTask;
     }
 
-    private RenderFragment CreateComponent() => builder =>
-    {
-        // 1. Открываем компонент, указывая его тип
-        builder.OpenComponent(0, typeof(ContainerControl));
+    // private RenderFragment CreateComponent() => builder =>
+    // {
+    //     1. Открываем компонент, указывая его тип
+    //     builder.OpenComponent(0, typeof(ContainerControl));
 
-        // 2. Добавляем параметры (название параметра и значение)
-        // Важно: числа (0, 1, 2...) — это "sequence numbers".
-        // Они должны быть уникальными и постоянными для каждой строки кода.
-        var designer = new DesignerView() {   };
+    //     2. Добавляем параметры (название параметра и значение)
+    //     Важно: числа (0, 1, 2...) — это "sequence numbers".
+    //     Они должны быть уникальными и постоянными для каждой строки кода.
+    //     var designer = new DesignerView() {   };
 
-        builder.AddAttribute(1, nameof(ContainerControl.ViewModel), designer);
-        // builder.AddAttribute(1, nameof(ButtonControl.Text), "Someone's best friend!");
+    //     builder.AddAttribute(1, nameof(ContainerControl.ViewModel), designer);
+    //     builder.AddAttribute(1, nameof(ButtonControl.Text), "Someone's best friend!");
 
-        // 3. Закрываем компонент
-        builder.CloseComponent();
-    };
+    //     3. Закрываем компонент
+    //     builder.CloseComponent();
+    // };
 
 
 
@@ -103,27 +103,29 @@
 }
 <div style="position: fixed; width: 100%; height: 100%;" @oncontextmenu:stopPropagation @oncontextmenu:preventDefault>
     <div style="position: relative; width: 100%; height: 100%;">        
-        @* <StatusControl Model="@(new StatusView())" @ref="@StatusControlRef"></StatusControl> *@
+        @* <StatusControl Active="@(DesignerViewRef.StatusView.Active)"></StatusControl> *@
         @* <div style="width: 100%; height: 100%;  display: flex;"> *@
              @* <div style="align-self: center; justify-self: center; margin: auto;">  *@
 
         <ContainerControl FullSize="@true" ViewModel="@DesignerViewRef"></ContainerControl>
-        
+
 
                 @* @CreateComponent() *@
             @* </div> *@
         @* </div> *@        
     </div>
 </div>
+
 @code
 {
+    public bool Active = true;
     public StatusControl StatusControlRef { get; set; }
     protected override async Task OnInitializedAsync()
     {
         DesignerViewRef = new AppViewRoot();
 
         await base.OnInitializedAsync();
-       
+
         var designer = DesignerViewRef;
 
 
@@ -139,14 +141,26 @@
         //     designer.DesignMode = !designer.DesignMode;
 
         // };
-
+        DesignerViewRef.StatusView.OnChange += evt => StateHasChanged();
         designer.Name = nameof(AppViewRoot);
         if (designer.GetAppRootView() != designer)
             throw new Exception("designer.GetAppRootView() != designer");
-        // designer.Append(designer.CreateButton("Диалог", async () => {
-        //     var account = new UserAccount();
-        //     await designer.CreateEditDialog(account);
-        // }));
+        designer.Append(designer.CreateButton("Диалог", async () => {
+            // var account = new UserAccount();
+            // await designer.CreateEditDialog(account);
+            // Active = Active ? false : true;
+            // DesignerViewRef.StatusView.Active = DesignerViewRef.StatusView.Active?false:true;
+            //StateHasChanged();
+            
+            DesignerViewRef.PutAction("12", () =>
+            {
+                Thread.Sleep(1111);
+                lock(this){
+                    StateHasChanged();
+                }
+            });
+
+        }));
         // designer.Append(designer.CreateButton("Бизнес моделирование", async () =>
         // {
         //     designer.OnNavSelected("Бизнес моделирование");

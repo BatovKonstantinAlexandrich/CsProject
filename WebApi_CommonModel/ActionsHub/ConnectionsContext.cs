@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
-public class ConnectionsContext: AsyncContext
+public class ConnectionsContext : AsyncContext, IConnectionsContext
 {
     private readonly bool _Logging = true;
 
@@ -11,22 +11,22 @@ public class ConnectionsContext: AsyncContext
     /// <summary>
     /// Операции по наименованиям
     /// </summary>
-    public ConcurrentDictionary<string, ConsumerController> Connections = new ConcurrentDictionary<string,ConsumerController>();
+    public ConcurrentDictionary<string, ConsumerController> Connections = new ConcurrentDictionary<string, ConsumerController>();
 
-    
+
     public void Ping()
     {
-        foreach(var kv in Connections)
+        foreach (var kv in Connections)
         {
             kv.Value.Request("Ping", new Dictionary<string, string>() { },
                 result => { }).Wait();
         }
-        
+
     }
 
     public ConsumerController AddClientConnection(string ConnectionId, Action<string> Request)
     {
-        return Connections[ConnectionId] = new ConsumerController(Request, this);        
+        return Connections[ConnectionId] = new ConsumerController(Request, this);
     }
 
     public void RemoveClientConnection(string connectionId)
@@ -39,5 +39,5 @@ public class ConnectionsContext: AsyncContext
             todo();
         }
     }
-    
+
 }

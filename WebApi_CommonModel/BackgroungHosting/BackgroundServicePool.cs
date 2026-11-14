@@ -11,7 +11,7 @@ namespace WebApi_CommonModel.BackgroungHosting
     ) : BackgroundService, IDisposable
     {
         
-        private void OnBackgroundServicesChanged(object? sender, IChangingListEvent e)
+        private void OnBackgroundServicesChanged(object? sender, ListChangedEvent e)
         {
             switch (e.Target.Action)
             {

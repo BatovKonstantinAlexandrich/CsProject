@@ -433,7 +433,7 @@ namespace Console_CommonModel.CommonLib.LibViews.AppViews.BaseComponent
             this.OnAppendedChild += (pnode) => {
                 if (pnode is AppViewBase view)
                 {
-                    EventHandler<IChangingListEvent> handler = (source, evt) => {
+                    EventHandler<ListChangedEvent> handler = (source, evt) => {
                         switch (evt.Target.Action)
                         {
                             case "added": view.ContextMenuPublic.Items.Add((ContextView)evt.Target.Item); break;
@@ -690,7 +690,7 @@ namespace Console_CommonModel.CommonLib.LibViews.AppViews.BaseComponent
         /// <summary>
         /// Вызывается при изменении contextMenuServices
         /// </summary>
-        private void OnContextMenuChanged(object sender, IChangingListEvent e)
+        private void OnContextMenuChanged(object sender, ListChangedEvent e)
         {
 
             var contextMenu = CreateContextMenuView(

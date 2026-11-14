@@ -1,13 +1,47 @@
-﻿using Console_CommonModel.CommonLib.LibData.AbstractionModel;
+﻿using ClassModelLib.ActionsClient;
+
+using Console_CommonModel.CommonLib.LibData.AbstractionModel;
+
+using Org.BouncyCastle.Asn1.X509;
+
+using System.Collections.Concurrent;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
 
 /// <summary>
 /// Активные объекты.
 /// Проходят процедуру авторизации в приложении.
 /// Система будет отслеживать их состояние.
 /// </summary>
-public class ActiveObject : BaseEntity, IActiveObject
+public class ActiveObject : AsyncContext, IActiveObject
 {
+    internal ConcurrentQueue<ActionResponse> output;
+    internal ConcurrentQueue<ActionRequest> input;
+
+    public void DoAction(string name, Dictionary<string,object> args, Action<object> onsuccess, Action<string> onerror)
+    {
+        if(input is null)
+            throw new ArgumentNullException(nameof(input));
+        
+        this.input.Enqueue(new()
+        {
+            SerialKey = this.Put(new()
+            {
+                OnError = onerror,
+                OnSuccess = onsuccess
+            }),
+            AccessToken = this.SecretKey,
+            ActionName = name,
+            MessageObject = args
+        });
+    }
+
+    public object Invoke(string name, Dictionary<string, object> args)
+    {
+        var method = this.GetType().GetMethods().First(m => m.Name == name);
+        object[] pars = method.GetParameters().Select(par => args[name]).ToArray();
+        return method.Invoke(this, pars);
+    }
 
     [DisplayName("Последнее посещение")]
     [NotInput]
@@ -33,11 +67,6 @@ public class ActiveObject : BaseEntity, IActiveObject
     [NotInput]
     public string URL { get; set; } = "";
 
-    public async Task DoCheck(object context, string key)
-    {
-        this.Info($"DoCheck({context},{key})");
-        await Task.CompletedTask;
-    }
 
     [Label("последний ИП")]
     [InputTcpIpAddress]
@@ -58,6 +87,5 @@ public class ActiveObject : BaseEntity, IActiveObject
 
     public ActiveObject()
     {
-        //this.Info("CREATED");
     }
 } 

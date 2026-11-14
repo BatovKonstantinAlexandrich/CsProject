@@ -15,10 +15,15 @@ public abstract class BaseSignin<TActiveObject, TAuthenticationMember, TObjectIn
 {
     public readonly ITokenProvider _tokenProvider;
     public DbContextAuth<TActiveObject, TAuthenticationMember, TObjectInfo> _model;
-    public static AuthorizationCollection<TActiveObject> _context = new AuthorizationCollection<TActiveObject>();
+    public static AuthorizationCollection<TActiveObject> _context = null;
 
     public BaseSignin(ITokenProvider tokenProvider)
     {
+        if(_context is null)
+        {
+            _context = AppProviderService.GetInstance().Get<AuthorizationCollection<TActiveObject>>();
+        }
+        
         this._tokenProvider = tokenProvider;
     }
 

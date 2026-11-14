@@ -48,6 +48,28 @@ public static class ObjectExtensions
         object[] pars = method.GetParameters().Select(par => args[name]).ToArray();
         return method.Invoke(target, pars);
     }
+
+    public static object Invoke(this object target, string name, Dictionary<string, string> args)
+    {
+        var method = target.GetType().GetMethods().First(m => m.Name == name);
+        object[] pars = method.GetParameters().Select(par => TextDataSetter.FromText(args[name], par.ParameterType.GetTypeName())).ToArray();
+        return method.Invoke(target, pars);
+    }
+
+    
+
+    public static ActionResponse Invoke(this object target, ActionRequest request)
+    {        
+        var result = target.Invoke(request.ActionName, request.MessageObject);
+        return new ActionResponse()
+        {
+            RequestMessage = request,
+            SerialKey = request.SerialKey,
+            ActionSuccess = true,
+            ActionResult = result 
+        };
+    }
+
     public static object Invoke(this object target, string name, object[] args)
     {
          var methods = target.GetType().GetMethods();

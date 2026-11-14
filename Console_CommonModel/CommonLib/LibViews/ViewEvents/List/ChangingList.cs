@@ -5,7 +5,7 @@ namespace Console_CommonModel.CommonLib.LibViews.ViewEvents.List
 
     public interface IChangingListEvents
     {
-        public event EventHandler<IChangingListEvent> OnChanged;
+        public event EventHandler<ListChangedEvent> OnChanged;
     }
 
     public class ChangingList : ChangingList<object> { }
@@ -25,7 +25,7 @@ namespace Console_CommonModel.CommonLib.LibViews.ViewEvents.List
 
         public Action OnAdded(Action<int, object> onadded)
         {
-            EventHandler<IChangingListEvent> p = (s, e) =>
+            EventHandler<ListChangedEvent> p = (s, e) =>
             {
                 if (e.Target.Action == "added")
                 {
@@ -64,12 +64,12 @@ namespace Console_CommonModel.CommonLib.LibViews.ViewEvents.List
             this.items = new(items);
         }
 
-        public event EventHandler<IChangingListEvent> OnChanged = (s, e) => { };
-        public void PushEvent(IChangingListMessage message)
+        public event EventHandler<ListChangedEvent> OnChanged = (s, e) => { };
+        public void PushEvent(ChangingListMessage message)
         {
             try
             {
-                OnChanged.Invoke(this, new IChangingListEvent(message));
+                OnChanged.Invoke(this, new ListChangedEvent(message));
             }
             catch (Exception ex)
             {
@@ -138,12 +138,12 @@ namespace Console_CommonModel.CommonLib.LibViews.ViewEvents.List
 
         public bool RemoveRange(IEnumerable<T> expected)
         {
-            List<IChangingListMessage> eventList = new();
+            List<ChangingListMessage> eventList = new();
             foreach (var item in expected)
             {
                 var index = items.IndexOf(item);
                 var result = items.Remove(item);
-                eventList.Add(new IChangingListMessage()
+                eventList.Add(new ChangingListMessage()
                 {
                     Action = "removed",
                     Item = item,

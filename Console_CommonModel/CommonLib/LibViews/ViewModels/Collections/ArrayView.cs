@@ -126,8 +126,8 @@ public class MyList : ViewItem, IList<object>
         //_items.Add(new ListItem() { Title = "Item1" });
         //_items.Add(new ListItem() { Title = "Item2" });
         OnListChanges = new EventHandler((sender, args) => {
-            IChangingListEvent message = ((IChangingListEvent)args);
-            IChangingListMessage changes = message.GetChanges();
+            ListChangedEvent message = ((ListChangedEvent)args);
+            ChangingListMessage changes = message.GetChanges();
             this.Info($"Изменения {changes.Action} {changes.Item}");
         });
     }
@@ -150,7 +150,7 @@ public class MyList : ViewItem, IList<object>
     {
         Changed = true;
         this.Info($"Added {item}");
-        this.OnListChanges.Invoke(this, new IChangingListEvent(new IChangingListMessage()
+        this.OnListChanges.Invoke(this, new ListChangedEvent(new ChangingListMessage()
         {
             Item = item,
             Action = "Add"

@@ -35,8 +35,8 @@ namespace Console_CommonModel.CommonLib.LibModels.Console_InputModule.ViewModels
             _items = new List<T>();
             OnListChanged = new EventHandler((sender, args) =>
             {
-                IChangingListEvent message = (IChangingListEvent)args;
-                IChangingListMessage changes = message.GetChanges();
+                ListChangedEvent message = (ListChangedEvent)args;
+                ChangingListMessage changes = message.GetChanges();
                 sender.Info($"Изменения {changes.Action} {changes.Item}");
             });
         }
@@ -59,7 +59,7 @@ namespace Console_CommonModel.CommonLib.LibModels.Console_InputModule.ViewModels
         {
             Changed = true;
             this.Info($"Added {item}");
-            OnListChanged.Invoke(this, new IChangingListEvent(new IChangingListMessage()
+            OnListChanged.Invoke(this, new ListChangedEvent(new ChangingListMessage()
             {
                 Item = item,
                 Action = "Add"

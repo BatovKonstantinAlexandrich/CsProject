@@ -18,7 +18,7 @@ namespace Console_CommonModel.CommonLib.LibViews.AppViews.CollectionModule
             CreateSignleView = CreateSignleView;
         }
 
-        public override void OnDataChanged(object sender, IChangingListEvent evt)
+        public override void OnDataChanged(object sender, ListChangedEvent evt)
         {
             this.Info(Entities);
             var entity = (TEntity)evt.Target.Item;
@@ -58,7 +58,7 @@ namespace Console_CommonModel.CommonLib.LibViews.AppViews.CollectionModule
 
         }
 
-        public virtual void OnDataChanged(object sender, IChangingListEvent evt)
+        public virtual void OnDataChanged(object sender, ListChangedEvent evt)
         {
             this.Info(Entities);
             this.Info(Layout.Controls.Count());

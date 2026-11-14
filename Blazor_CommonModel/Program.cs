@@ -11,6 +11,9 @@ using Microsoft.AspNetCore.Components.Authorization;
 using MarketerWeb.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Components.Server.Circuits;
+using Blazor_CommonModel.Connections;
+using Microsoft.EntityFrameworkCore;
+using Blazor_CommonModel.Application;
 
 
 namespace Blazor_CommonModel
@@ -34,15 +37,17 @@ namespace Blazor_CommonModel
 
  
             var builder = WebApplication.CreateBuilder(args);
-        
-            builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 
+            builder.Services.AddHostedService<DoCheckBackground>();
+            builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+            builder.Services.AddScoped<CircuitHandler, TrackingCircuitHandler>();
             DeliveryDbContext.ConfigureDeliveryServices(builder.Services, builder.Configuration);
             MonitoringUnit.ConfigureServices(builder.Services);
-
+            AppProviderService.GetInstance().Get<AuthorizationCollection<UserContext>>();
             ModuleUser.ConfigureServices(builder.Configuration, builder.Services);
             ModuleService.ConfigureServices<DeliveryDbContext>(builder.Configuration, builder.Services);
 
+            builder.Services.AddHttpContextAccessor();
             builder.Services.AddMudServices();
             builder.Services.AddNavMenu();
             // Program.cs
@@ -55,19 +60,22 @@ namespace Blazor_CommonModel
             // Authorization
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddCascadingAuthenticationState();
-            builder.Services.AddScoped<UserService>();
-            builder.Services.AddScoped<AuthStateProvider>();
-            builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<AuthStateProvider>());
+            builder.Services.AddScoped<AuthStateProvider<DeliveryDbContext>>();
+            builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<AuthStateProvider<DeliveryDbContext>>());
             builder.Services.AddAuthorizationCore(config =>
             {
                 //todo configure authorization
                 
             });
 
+            builder.Services.AddSingleton<AuthorizationCollection<ClientInfo>>( sp => sp.Get<ConnectionTracker>());
+            builder.Services.AddSingleton<ConnectionTracker>();
+            builder.Services.AddSingleton<ApplicationEventsService>();
             builder.Services.AddScoped<IClientAPI, BlazorClientAPI>();
             builder.Services.AddScoped<IAppModalService, AppModalService>();
             builder.Services.AddScoped<IContextMenuService, ContextMenuService>();
-            builder.Services.AddScoped<CircuitHandler, TrackingCircuitHandler>();
+            var cm = AppProviderService.GetInstance().Get<ConnectionsModule>();  
+            cm.OnConfigureServices(builder.Services);
             // Также нужен AddHttpContextAccessor
             builder.Services.AddHttpContextAccessor();
             // 4. Добавляем каскадное состояние аутентификации
@@ -77,7 +85,7 @@ namespace Blazor_CommonModel
             // 5. Добавляем сервисы для работы с состоянием аутентификации в Blazor
             //builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider<SigninUser<DeliveryDbContext>, UserContext, UserAccount, UserPerson>>();
 
-            builder.Services.AddScoped<ConnectionTracker>();
+            
             builder.Services.AddScoped<ILocalStorage, LocalStorage>();
             ModuleUser.ConfigureServices(builder.Configuration, builder.Services);
             var app = builder.Build();

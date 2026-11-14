@@ -15,7 +15,7 @@ namespace Console_CommonModel.CommonLib.LibModels.Console_ClassServiceModel
             //ClassTypes.OnChanged += OnClassTypesChanged;
         }
 
-        private void OnClassTypesChanged(object sender, IChangingListEvent evt)
+        private void OnClassTypesChanged(object sender, ListChangedEvent evt)
         {
             var type = (Type)evt.Target.Item;
             switch (evt.Target.Action)

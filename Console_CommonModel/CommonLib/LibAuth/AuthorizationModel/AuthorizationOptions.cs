@@ -51,7 +51,7 @@ public class AuthorizationOptions
 
     public AuthorizationOptions()
     {
-        this.SessionTimeout = 1000 * 60 * 10;   // 10 имн
+        this.SessionTimeout = 1000 * 3;   // 3 сек
         this.KeyLength = 32;
         this.UserCookie = "UserKey";
         this.ServiceCookie = "ServiceKey";

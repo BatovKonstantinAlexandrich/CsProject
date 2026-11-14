@@ -29,7 +29,7 @@ namespace Console_CommonModel.CommonLib.LibViews.AppViewModules.StatusModule
         [Label("Active")]
         public bool Active { get => Get<bool>(nameof(Active)); set => Set(nameof(Active), value); }
 
-        private readonly BlockingCollection<(string Name, Action Todo, IControlBase SyncRoot)> _actionQueue = new();
+        private readonly BlockingCollection<(string Name, Action Todo)> _actionQueue = new();
 
         //private System.Windows.Forms.Timer _progressTimer;
         private const int ProgressMax = 100;
@@ -47,8 +47,19 @@ namespace Console_CommonModel.CommonLib.LibViews.AppViewModules.StatusModule
             Height = 30;
             HeightUnit = "px";
             MinHeight = 30;
-            
-            Task.Run(ProcessActionQueue);
+
+            Task.Run(() => {
+                while(true)
+                {
+                    foreach(var todo in _actionQueue.GetConsumingEnumerable())
+                    {
+                        //Active = true;
+                        
+                        todo.Todo();
+                        //Active = false;
+                    }
+                }
+            });
         }
 
         public override IControlBase ToControl()
@@ -95,9 +106,7 @@ namespace Console_CommonModel.CommonLib.LibViews.AppViewModules.StatusModule
             //this.Get<SigninUser<DeliveryDbContext>>()
             try
             {
-                this.Active = true;
-                todo();
-                this.Active = false;
+                _actionQueue.Add((name,todo));
             }
             catch(Exception ex)
             {
@@ -126,74 +135,9 @@ namespace Console_CommonModel.CommonLib.LibViews.AppViewModules.StatusModule
             //_actionQueue.Add((name, todo, sync));
             //DoAsync();
         }
+         
 
-        private void ProcessActionQueue()
-        {
-            foreach (var job in _actionQueue.GetConsumingEnumerable())
-            {
-                try
-                {
-                    RunQueuedAction(job.Name, job.Todo,job.SyncRoot );
-                }
-                catch (Exception ex)
-                {
-                    this.Info($"PutAction queue: {ex.Message}");
-                }
-            }
-        }
-
-        private void RunQueuedAction(string Name, Action Todo, IControlBase SyncRoot)
-        {
-            var ui = SyncRoot;
-            if (ui is null || ui.IsDisposed)
-            {
-                try
-                {
-                    ui = this.ToControl().GetAppForm();
-                }
-                catch
-                {
-                    try { Todo(); }
-                    catch (Exception ex) { this.Info(ex.Message); }
-                    return;
-                }
-            }
-
-            if (ui is null || ui.IsDisposed)
-            {
-                try { Todo(); }
-                catch (Exception ex) { this.Info(ex.Message); }
-                return;
-            }
-
-            Exception error = null;
-            ui.Invoke(new Action(() => StartProgressAnimation(Name)));
-
-            var work = Task.Run(() =>
-            {
-                try
-                {
-                    Todo();
-                }
-                catch (Exception ex)
-                {
-                    error = ex;
-                }
-            });
-            work.Wait();
-
-            if (ui.IsDisposed)
-                return;
-
-            ui.Invoke(new Action(() =>
-            {
-                StopProgressAnimation();
-                if (error is not null)
-                    OnActionError(Name, error);
-                else
-                    OnActionCompleted(Name);
-            }));
-        }
+        
 
         public void StartProgressAnimation(string name)
         {

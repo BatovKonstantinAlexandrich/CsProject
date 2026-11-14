@@ -11,22 +11,23 @@ using System.Threading.Tasks;
 
 
 /// <summary>
-/// Контекст регистрации служебных функций
+/// Контекст регистрации служебных функций.
+/// Вроде как тут собственные операции, без удаленного выхова.
 /// </summary>
-public class ActionsContext
+public class ActionsContext : IActionsContext
 {
     /// <summary>
     /// Операции по наименованиям
     /// </summary>
     private ConcurrentDictionary<string, HubActionModel> Actions = new ConcurrentDictionary<string, HubActionModel>();
-    
+
 
     public List<MethodModel> GetActions() => Actions.Values.Select(a => (MethodModel)a).ToList();
 
     public HubActionModel GetActionModel(string name) => Actions[name];
 
     public ActionsContext()
-    {        
+    {
         this.AddAction(nameof(GetActionList), new MethodModel()
         {
             Label = "Получить список операции",
@@ -47,7 +48,7 @@ public class ActionsContext
         {
             Label = "Получить модель параметров операции",
             Name = nameof(GetActionModel)
-        }, (args, onsuccess,onerror) =>
+        }, (args, onsuccess, onerror) =>
         {
             if (!args.ContainsKey("action"))
                 throw new ArgumentException("action");
@@ -58,8 +59,8 @@ public class ActionsContext
     /// <summary>
     /// Регистрация операции
     /// </summary>
-    public Action AddAction(string Name, MethodModel method, 
-        Action<Dictionary<string,string>,Action<object>,Action<string>> Todo)
+    public Action AddAction(string Name, MethodModel method,
+        Action<Dictionary<string, string>, Action<object>, Action<string>> Todo)
     {
         var action = new HubActionModel(Name, Todo)
         {
@@ -69,16 +70,17 @@ public class ActionsContext
             Attributes = method.Attributes
         };
         this.Actions[Name] = action;
-        return () => {
+        return () =>
+        {
             this.Actions.TryRemove(Name, out var removedAction);
         };
     }
 
-  
+
     /// <summary>
     /// Выполнение операции
     /// </summary>
-    public object DoAction(string Action, Dictionary<string,string> args)
+    public object DoAction(string Action, Dictionary<string, string> args)
     {
         if (Actions.ContainsKey(Action) == false)
         {
@@ -86,14 +88,14 @@ public class ActionsContext
             throw new Exception($"Операция [{Action}] не зарегистрирована. Доступны следующие операции: {list}");
         }
         var result = Actions[Action].Exec(args);
-        if(result is Task t)
+        if (result is Task t)
         {
             t.Wait();
             return ((dynamic)t).Result;
         }
         return result;
     }
- 
+
 
     public void DoAction(string Action, Dictionary<string, string> args, Action<object> onsuccess, Action<string> onerror)
     {
@@ -102,7 +104,7 @@ public class ActionsContext
             string list = GetActionList();
             throw new Exception($"Операция [{Action}] не зарегистрирована. Доступны следующие операции: {list}");
         }
-        Actions[Action].Exec(args, onsuccess, onerror);        
+        Actions[Action].Exec(args, onsuccess, onerror);
     }
 
 

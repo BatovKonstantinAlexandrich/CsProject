@@ -22,7 +22,7 @@ namespace Console_CommonModel
     /// </summary>
     public class CommonProgram
     {
-        static void Main(string[] args) => RunTests<CommonProgram>(args);
+        static void Mains(string[] args) => RunTests<CommonProgram>(args);
 
         public static void Run<TProgram>(string[] args)
         {

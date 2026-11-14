@@ -1,22 +1,22 @@
 ﻿using Microsoft.AspNetCore.Components.Authorization;
-using MarketerWeb.Authorization.Models;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 
 namespace MarketerWeb.Authorization;
 
-public class AuthStateProvider : AuthenticationStateProvider, IDisposable
+public class AuthStateProvider<TDb> : AuthenticationStateProvider, IDisposable
+    where TDb : DeliveryDbContext
 {
-    private readonly UserService _userService;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly SigninUser<TDb> _signinUser;
 
-    public User? CurrentUser { get; set; } = new();
+    public UserContext? CurrentUser { get; set; } = new();
 
-    public AuthStateProvider(IHttpContextAccessor httpContextAccessor,UserService blazorSchoolUserService)
+    public AuthStateProvider(SigninUser<TDb> signin, IHttpContextAccessor httpContextAccessor )
     {
         AuthenticationStateChanged += OnAuthenticationStateChangedAsync;
-        _userService = blazorSchoolUserService;
         _httpContextAccessor = httpContextAccessor;
+        _signinUser = signin;
     }
 
     private async void OnAuthenticationStateChangedAsync(Task<AuthenticationState> task)
@@ -24,11 +24,15 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
         var authenticationState = await task;
         if (authenticationState is not null)
         {
-            CurrentUser = User.FromClaimsPrincipal(authenticationState.User);
+            //var email = authenticationState.User.Claims.FirstOrDefault(c => c.Type == Enum.GetName(ClaimTypes.Name))?.Value;
+            
+            //CurrentUser = FromClaimsPrincipal();
         }
-    }    
+    }
 
-    public User GetUserFromHttp()
+
+
+    public UserContext GetUserFromHttp()
     {
         var headers = _httpContextAccessor.HttpContext.Request.Headers;        
         if ( headers.ContainsKey("X-Auth-Roles") == false )
@@ -46,10 +50,10 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
                 }
             }
             var userId = headers.ContainsKey("X-Auth-UserId") && headers["X-Auth-UserId"].Count() > 0? headers["X-Auth-UserId"].First(): "";
-            return new User()
+            return new UserContext()
             {
-                Roles = roles,
-                UserId = userId
+                //Roles = roles,
+                //UserId = userId
             };
         }
     }
@@ -60,8 +64,8 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
         var user = GetUserFromHttp();
         if (user is not null)
         {
-            var  roles = CurrentUser.Roles.ToHashSet();
-            roles.ExceptWith(user.Roles);
+            //var  roles = CurrentUser.Roles.ToHashSet();
+            //roles.ExceptWith(user.Roles);
             CurrentUser = user;
             principal = user.ToClaimsPrincipal();            
         }       
@@ -76,10 +80,10 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
         var headers = _httpContextAccessor.HttpContext.Request.Headers;
         headers["X-Auth-UserId"] = user == null ?
             new Microsoft.Extensions.Primitives.StringValues() :
-            new Microsoft.Extensions.Primitives.StringValues(user.UserId);
+            new Microsoft.Extensions.Primitives.StringValues(user.Id.ToString());
         headers["X-Auth-Roles"] = user == null ?
             new Microsoft.Extensions.Primitives.StringValues() :
-            new Microsoft.Extensions.Primitives.StringValues(user.Roles.ToArray());
+            new Microsoft.Extensions.Primitives.StringValues(user.BusinessResources.Select(r => r.Name).ToArray());
         CurrentUser = user;
 
         if (user is not null)
@@ -93,14 +97,14 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
     public async Task LoginAsync(string username, string password)
     {
         var principal = new ClaimsPrincipal();
-        var user = await _userService.FindUserFromDatabaseAsync(username, password);
+        var user = await FindUserFromDatabaseAsync(username, password);
         var headers = _httpContextAccessor.HttpContext.Request.Headers;
         headers["X-Auth-UserId"] = user == null ?
             new Microsoft.Extensions.Primitives.StringValues():
-            new Microsoft.Extensions.Primitives.StringValues(user.UserId);
+            new Microsoft.Extensions.Primitives.StringValues(user.Id.ToString());
         headers["X-Auth-Roles"] = user == null?
 			new Microsoft.Extensions.Primitives.StringValues(): 
-			new Microsoft.Extensions.Primitives.StringValues(user.Roles.ToArray());
+			new Microsoft.Extensions.Primitives.StringValues(user.BusinessResources.Select(S=>S.Name).ToArray());
         CurrentUser = user;
 
         if (user is not null)
@@ -109,6 +113,14 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
         }
 
         NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(principal)));
+    }
+
+    private async Task<UserContext> FindUserFromDatabaseAsync(string username, string password)
+    {
+        using (var db = typeof(TDb).New<TDb>())
+        {
+            return _signinUser.FindUserContext(username, password);
+        }
     }
 
     public async Task LogoutAsync()

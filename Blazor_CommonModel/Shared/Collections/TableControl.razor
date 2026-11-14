@@ -74,7 +74,7 @@ else
         _multiSelection = Model.DataRowsSelected is not null;
     }
 
-    private void OnModelChanged(object? sender, IChangingListEvent e)
+    private void OnModelChanged(object? sender, ListChangedEvent e)
         => InvokeAsync(StateHasChanged);
 
     private string GetCellValue(object row, string column)

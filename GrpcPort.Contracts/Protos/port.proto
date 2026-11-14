@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+option csharp_namespace = "GrpcPort.Contracts";
+
+package port;
+
+// Порт обмена сообщениями между микросервисами.
+service PortService {
+  // Авторизация клиента и выдача сессионного сертификата шифрования.
+  rpc Authenticate (AuthRequest) returns (AuthResponse);
+
+  // Двусторонний поток: клиент шлёт сообщения, сервер доставляет из исходящей очереди.
+  rpc OpenStream (stream StreamEnvelope) returns (stream StreamEnvelope);
+}
+
+message AuthRequest {
+  string client_id = 1;
+  string secret = 2;
+}
+
+message AuthResponse {
+  bool success = 1;
+  string message = 2;
+  string session_token = 3;
+  // X.509 сертификат (DER) для шифрования payload сообщений.
+  bytes encryption_certificate = 4;
+  string certificate_thumbprint = 5;
+  int64 expires_unix = 6;
+}
+
+message StreamEnvelope {
+  string session_token = 1;
+  string message_id = 2;
+  string correlation_id = 3;
+  int64 timestamp_unix = 4;
+  // Тип: "data" | "ack" | "ping" | "pong" | "error"
+  string type = 5;
+  // Зашифрованный или открытый payload (в демо — UTF-8 текст).
+  bytes payload = 6;
+  map<string, string> headers = 7;
+}

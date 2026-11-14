@@ -34,7 +34,7 @@ public class FileTokenProvider<TDbContextUser> : ITokenProvider
 
 public class DeliveryUserSignin : SigninUser<DeliveryDbContext>
 {
-    public DeliveryUserSignin( ) : base( new(),new FileTokenProvider<UserContext>() )
+    public DeliveryUserSignin( ) : base( new(),new FileTokenProvider<UserContext>(), AppProviderService.GetInstance().Get<AuthorizationUsers>() )
     {
     }
 }
@@ -48,13 +48,14 @@ public class SigninUser<TDbContextUser> : BaseSignin<UserContext, UserAccount, U
 
     public AuthorizationUsers _users;
     public TDbContextUser GetDbContext() => _model;
-    public SigninUser(TDbContextUser dbContextUser, ITokenProvider tokenProvider) : base(tokenProvider)
+    public SigninUser(TDbContextUser dbContextUser, ITokenProvider tokenProvider, AuthorizationUsers users) : base(tokenProvider)
     {
         if (dbContextUser is null)
             dbContextUser = typeof(TDbContextUser).New<TDbContextUser>();
         this.SetDbContext(dbContextUser);
-        this._users = AuthorizationUsers.Get();
-     
+        this._users = users;
+
+
     }
     public override UserContext Verify()
     {
@@ -64,7 +65,14 @@ public class SigninUser<TDbContextUser> : BaseSignin<UserContext, UserAccount, U
 
     public bool Signout()
     {
-        throw new NotImplementedException();
+        if(IsSignin())
+        {
+            var key = this.Verify().SecretKey;
+            this._users.Remove(key);
+            this._tokenProvider.Set("");
+            return true;
+        }
+        return false;
     }
 
     public override bool Signout(string key)
@@ -279,7 +287,13 @@ public class SigninUser<TDbContextUser> : BaseSignin<UserContext, UserAccount, U
         this._model = db;
     }
 
- 
+    public UserContext FindUserContext(string username, string password)
+    {
+        UserAccount acc = this._model.UserAccounts.FirstOrDefault(a => a.Email.ToLower() == username.ToLower());
+        if (acc.Hash == UserAccount.GetHashSha256(password))
+            throw new Exception("Пароль не прошел проверку по хешу");
+        return this._model.UserContexts.FirstOrDefault(c => c.AccountId == acc.Id);
+    }
 }
 
 /*

@@ -15,8 +15,7 @@ public interface IActiveObject
     [InputDateTime]
     DateTime LastActiveTime { get; set; }
 
-    [Label("Клоюч доступа")]
-    
+    [Label("Ключ доступа")]    
     string SecretKey { get; set; }
 
     [Label("Адрес текущей странице")]
@@ -31,6 +30,5 @@ public interface IActiveObject
     [InputEngWord]
     string UserAgent { get; set; }
 
-    [Label("Актуализация состояния")]
-    Task DoCheck(object context, string key);
+ 
 }

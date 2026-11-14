@@ -109,7 +109,7 @@ public class TableView : AppViewBase
     }
 
 
-    private void OnDataRowsChanged(object sender, IChangingListEvent e)
+    private void OnDataRowsChanged(object sender, ListChangedEvent e)
     {
         
     }

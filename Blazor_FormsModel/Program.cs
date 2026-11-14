@@ -11,11 +11,6 @@ namespace Blazor_FormsModel
 
             // Add services to the container.
             builder.Services.AddTransient<IBusinessPageService, BusinessPageService>();
-            builder.Services.AddInputForm();
-            builder.Services.AddInputForm();
-            builder.Services.AddBusinessPages();
-        
-
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 

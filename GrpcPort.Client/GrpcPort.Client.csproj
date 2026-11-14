@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc.Net.Client" Version="2.71.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Consoles_ActionsClient\Console_ActionsClient.csproj" />
+    <ProjectReference Include="..\GrpcPort.Contracts\GrpcPort.Contracts.csproj" />
+    <ProjectReference Include="..\GrpcPort.SamplePlugin\GrpcPort.SamplePlugin.csproj">
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+      <Private>true</Private>
+    </ProjectReference>
+  </ItemGroup>
+
+  <Target Name="CopySamplePlugin" AfterTargets="Build">
+    <MakeDir Directories="$(OutputPath)plugins" />
+    <Copy SourceFiles="$(OutputPath)GrpcPort.SamplePlugin.dll" DestinationFolder="$(OutputPath)plugins" SkipUnchangedFiles="true" Condition="Exists('$(OutputPath)GrpcPort.SamplePlugin.dll')" />
+  </Target>
+
+</Project>

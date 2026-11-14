@@ -975,7 +975,7 @@ public static class ObjectLogExtensions
         messages.ToList().ForEach(x => target.WriteLine(x));         
     }
     public static string GetId(this object target)
-        => $"{target.GetType().GetTypeName()}";
+        => target is null? "": $"{target.GetType().GetTypeName()}";
     public static void LogInformation(this object target, object message)
     {
         try

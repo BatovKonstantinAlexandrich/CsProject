@@ -47,7 +47,7 @@ namespace Console_CommonModel.CommonLib.LibViews.AppViewModules
         }
 
 
-        private void OnColumnsChanged(object sender, IChangingListEvent e)
+        private void OnColumnsChanged(object sender, ListChangedEvent e)
         {
             this.Info(Columns);
         }

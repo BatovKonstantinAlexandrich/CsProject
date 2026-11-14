@@ -29,6 +29,7 @@ public class ModuleUser
         //services.AddScoped<ILocalStorage, LocalStorage>();
         services.AddScoped<ITokenProvider, MemoryTokenProvider>();
         services.AddSingleton<AuthorizationUsers>();
+        services.AddSingleton(typeof(AuthorizationCollection<UserContext>),sp=>sp.GetRequiredService<AuthorizationUsers>());
         services.AddSingleton(typeof(APIActiveCollection<UserContext>),sp=>sp.GetRequiredService<AuthorizationUsers>());
         services.AddSingleton(typeof(APIUsers),sp=>sp.GetRequiredService<AuthorizationUsers>());
         services.AddScoped<GroupingUser<DeliveryDbContext>>();

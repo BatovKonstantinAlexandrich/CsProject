@@ -23,7 +23,7 @@ namespace Console_CommonModel.CommonLib.LibViews.SharedViewCollections
             formControls.OnChanged += OnFormControlsChanged;
         }
 
-        private void OnFormControlsChanged(object sender, IChangingListEvent evt)
+        private void OnFormControlsChanged(object sender, ListChangedEvent evt)
         {
             switch (evt.Target.Action)
             {

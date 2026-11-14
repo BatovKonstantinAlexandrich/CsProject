@@ -131,7 +131,7 @@
     {
         try
         {
-
+            ViewModel.OnChange += evt => this.StateHasChanged();
             if (this.ViewModel.control is null)
             {
                 this.ViewModel.control = control;

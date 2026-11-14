@@ -55,7 +55,7 @@ namespace Console_CommonModel.CommonLib.LibViews.AppViewModules
         }
 
 
-        private void OnDataChanged(object sender, IChangingListEvent e)
+        private void OnDataChanged(object sender, ListChangedEvent e)
         {
             this.Info(table.VisibleColumns);
             table.SetDataRows(table.VisibleColumns, entities);

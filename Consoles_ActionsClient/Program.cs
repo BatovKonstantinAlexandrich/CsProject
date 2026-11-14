@@ -1,4 +1,7 @@
-﻿using RootConsumer.ActionsClient;
+﻿
+using Console_CommonModel;
+
+using RootConsumer.ActionsClient;
 
 namespace Consoles_ActionsClient
 {
@@ -6,7 +9,7 @@ namespace Consoles_ActionsClient
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello, World!");
+            CommonProgram.Run<Program>(args);
             ActionsProgram.RunActionsProgram(ref args);
         }
     }

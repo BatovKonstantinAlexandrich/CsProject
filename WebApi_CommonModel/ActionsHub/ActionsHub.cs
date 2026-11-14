@@ -8,7 +8,11 @@ public class ActionsHub: HubBase
 {
     private readonly ActionContextService actionsService;
 
-    public ActionsHub(ILogger<ActionsHub> logger, IHttpContextAccessor httpContextAccessor, ConnectionsContext clientsContext, ActionsContext serviceContext) : base(logger, httpContextAccessor, clientsContext, serviceContext)
+    public ActionsHub(ILogger<ActionsHub> logger, 
+        IHttpContextAccessor httpContextAccessor,
+        ConnectionsContext clientsContext,
+        ActionsContext serviceContext
+        ) : base(logger, httpContextAccessor, clientsContext, serviceContext)
     {
         this.actionsService = new ActionContextService(this.actionsContext);        
     }

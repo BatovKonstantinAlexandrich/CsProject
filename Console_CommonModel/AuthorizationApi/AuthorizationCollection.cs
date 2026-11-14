@@ -1,4 +1,6 @@
-﻿ 
+﻿
+using Blazor_CommonModel.Application;
+
 using Microsoft.Extensions.Logging;
 using Org.BouncyCastle.Asn1.X509;
 
@@ -6,6 +8,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.ConstrainedExecution;
 using System.Text;
 
 
@@ -15,16 +18,15 @@ using System.Text;
 /// <typeparam name="T">Тип объектов сеанса</typeparam>
 public class AuthorizationCollection<T>: APIActiveCollection<T> where T : ActiveObject
 {
-  
+    private readonly ApplicationEventsService _applicationEventsService;
     private readonly AuthorizationOptions _options;
     protected readonly ConcurrentDictionary<string, T> _memory;
     protected readonly ConcurrentDictionary<string, ConcurrentDictionary<string, object>> _sessions;
     private readonly int _keylength;
 
-    public AuthorizationCollection() : this(new AuthorizationOptions()) { }
-    protected AuthorizationCollection( AuthorizationOptions options)
+    public AuthorizationCollection( AuthorizationOptions options, ApplicationEventsService applicationEventsService)
     {
-       
+        this._applicationEventsService = applicationEventsService;
         this._options = options;
         this._keylength = options.KeyLength;
         this._memory = new ConcurrentDictionary<string, T>();
@@ -37,6 +39,12 @@ public class AuthorizationCollection<T>: APIActiveCollection<T> where T : Active
         return _memory;
     }
 
+    public class ActivateObjectEvent<TActiveObject> : CommonEventMessage<TActiveObject>
+    {
+        public ActivateObjectEvent(TActiveObject Target) : base(Target)
+        {
+        }
+    }
 
     /// <summary>
     /// Метод получения контекста сеанса
@@ -92,6 +100,8 @@ public class AuthorizationCollection<T>: APIActiveCollection<T> where T : Active
         this.RemoveAll();
     }
 
+    
+
 
     /// <summary>
     /// Выполнение проверки активности объектов данной коллекции,
@@ -105,7 +115,7 @@ public class AuthorizationCollection<T>: APIActiveCollection<T> where T : Active
         long timestamp = this.GetTimestamp();
         foreach (var pair in this._memory)
         {
-            ActiveObject user = pair.Value;
+            ActiveObject user = Take(pair.Key);      
             if (user.LastActive < (timestamp - this._options.SessionTimeout))
             {
                 this.Remove(pair.Key);
@@ -144,7 +154,7 @@ public class AuthorizationCollection<T>: APIActiveCollection<T> where T : Active
     /// </summary>
     /// <param name="key">ключ доступа </param>
     /// <returns>ссылка на объект </returns>
-    public T Remove(string key)
+    public virtual T Remove(string key)
     {
         //this.Info($"Remove({key})");
         if (this._memory.ContainsKey(key))
@@ -152,6 +162,7 @@ public class AuthorizationCollection<T>: APIActiveCollection<T> where T : Active
             ConcurrentDictionary<string, object> targetSession = null;
             T target = null;
             this._memory.TryRemove(key, out target);
+            _applicationEventsService.Publish(new ActivateObjectEvent<T>(target));
             this._sessions.TryRemove(key, out targetSession);
             foreach(object model in new List<object>(targetSession.Values))
             {
@@ -210,9 +221,10 @@ public class AuthorizationCollection<T>: APIActiveCollection<T> where T : Active
     /// <param name="item"> ссылка на объект</param>
     /// <returns>ключ доступа к объекту</returns>
     public virtual string Put(T item)
-    {            
+    {
         //this.Info($"Put({item})");
-        this.Remove(item.SecretKey);
+        if(this.ContainsKey(item.SecretKey))
+            this.Remove(item.SecretKey);
         lock (this._sessions)
         {
             string key = this.GenerateKey();
@@ -225,6 +237,7 @@ public class AuthorizationCollection<T>: APIActiveCollection<T> where T : Active
             //this.Info($"{GetType().GetTypeName()} Put {key} user {item.Id}");
             return key;
         }
+        _applicationEventsService.Publish(new ActivateObjectEvent<T>(item));
     }
 
 

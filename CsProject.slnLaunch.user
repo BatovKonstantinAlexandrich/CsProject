@@ -3,11 +3,15 @@
     "Name": "Новый профиль",
     "Projects": [
       {
-        "Path": "Grpc_WorkerService\\Grpc_WorkerService.csproj",
+        "Path": "Blazor_MyApp\\Blazor_MyApp.csproj",
         "Action": "Start"
       },
       {
-        "Path": "Console_CsDeveloper\\Console_CsDeveloper.csproj",
+        "Path": "GrpcPort.Server\\GrpcPort.Server.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "Hub_ActionsModel\\Hub_ActionsModel.csproj",
         "Action": "Start"
       }
     ]

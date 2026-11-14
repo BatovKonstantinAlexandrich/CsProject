@@ -30,15 +30,13 @@ public class UserContext : ActiveObject
     public ConcurrentDictionary<string, Action> ActiveFunctions = new();
 
 
-
+ 
 
     public ClaimsPrincipal ToClaimsPrincipal()
     {
         var claims = new Claim[]
         {
-            //new Claim(ClaimTypes.NameIdentifier, Account is not null? Account.Email: ""),
-            //new Claim(ClaimTypes.Name, Account?.Email),
-            //new Claim(ClaimTypes.Hash, Account?.Hash),
+            new Claim(ClaimTypes.Name, Account?.Email)
         };
         var roles = (BusinessResources is null ? new List<BusinessResource>() : BusinessResources).Select(r => new Claim(ClaimTypes.Role, r.Code));
         

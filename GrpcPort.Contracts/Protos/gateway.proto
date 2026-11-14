@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+option csharp_namespace = "Grpc_ProgramsService";
+
+package greet;
+
+service GatewayService {
+  // Worker: получает задания из своей очереди, возвращает ответы.
+  rpc Start (stream GatewayActionResponse) returns (stream GatewayActionRequest);
+
+  // Producer: кладёт задания в очереди воркеров и читает ответы по SerialKey.
+  rpc Produce (stream GatewayActionRequest) returns (stream GatewayActionResponse);
+}
+
+message GatewayActionRequest {
+  string AccessToken = 1;
+  string SerialKey = 2;
+  string ActionName = 3;
+  string MessageObject = 4;
+}
+
+message GatewayActionResponse {
+  string SerialKey = 1;
+  string MessageObject = 2;
+  string ActionStatus = 3;
+  string StatusText = 4;
+  bool Success = 5;
+  string RequestMessage = 6;
+  bool Confirmed = 7;
+  string AccessToken = 8;
+}

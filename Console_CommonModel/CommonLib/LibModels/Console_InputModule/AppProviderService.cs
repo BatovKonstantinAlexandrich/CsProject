@@ -346,6 +346,8 @@ public static class IServiceProviderExtrensions
             if (typeof(T).IsInterface)
             {
                 var implementation = typeof(T).Assembly.GetTypes().Where(pt => pt.GetInterfaces().Contains(typeof(T))).FirstOrDefault();
+                if (implementation is null)
+                    return null;
                 return (T)sp.GetService(implementation);
             }
             else

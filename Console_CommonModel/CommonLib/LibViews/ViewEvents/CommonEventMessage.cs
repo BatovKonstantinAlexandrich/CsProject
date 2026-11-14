@@ -3,6 +3,12 @@
 /// <summary>
 /// Сообщение передаваемое в качестве события
 /// </summary>
+public class CommonEventMessage : CommonEventMessage<object>
+{
+    public CommonEventMessage(object Target) : base(Target)
+    {
+    }
+}
 public class CommonEventMessage<T>: EventArgs
 {
     public DateTime Created { get; } = DateTime.Now;

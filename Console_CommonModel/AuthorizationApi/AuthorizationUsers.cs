@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
 
+using Blazor_CommonModel.Application;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -13,7 +15,8 @@ using Microsoft.Extensions.Logging;
 /// </summary>
 public class AuthorizationUsers: AuthorizationCollection<UserContext>, APIUsers
 {
-    public AuthorizationUsers(  AuthorizationOptions options ): base( options){
+    public AuthorizationUsers(  AuthorizationOptions options, ApplicationEventsService applicationEventsService) : base( options, applicationEventsService)
+    {
     }
     /// <summary>
     /// Проверка наличия объекта с заданным ключом

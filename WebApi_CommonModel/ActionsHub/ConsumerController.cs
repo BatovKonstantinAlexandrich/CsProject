@@ -1,5 +1,6 @@
 ﻿using Console_CommonModel.CommonLib.LibModels.Console_ClassDataModel;
 
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -22,6 +23,8 @@ public class ConsumerController
     /// <summary>
     /// Передача запроса на подключенный сервис
     /// </summary>
+    [JsonIgnore]
+    [System.Text.Json.Serialization.JsonIgnore]
     private Action<string> Send { get; set; }
 
     /// <summary>
@@ -38,10 +41,12 @@ public class ConsumerController
     /// Зарегистрированные операции
     /// </summary>
     public Dictionary<string, HubActionModel> Actions { get; set; } = new Dictionary<string, HubActionModel>();
-    
+
     /// <summary>
     /// Операции для отмены изменений
     /// </summary>
+    [JsonIgnore]
+    [System.Text.Json.Serialization.JsonIgnore]
     public List<Action> Rollback { get; set; } = new();
 
 
@@ -68,7 +73,7 @@ public class ConsumerController
     {
         if (_Logging)
             System.Console.WriteLine($"Service: {Name}. Requesting: \n" + JObject.FromObject(Args).ToString());
-        string SerialKey = this.AsyncContext.Put(new ActionHandler()
+        string SerialKey = this.AsyncContext.Put(new ()
         {
             OnSuccess = OnSuccess,
             OnError = OnError == null ? (evt) => {

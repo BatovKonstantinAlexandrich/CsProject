@@ -18,7 +18,7 @@ namespace Console_CommonModel.CommonLib.LibModels.Console_ClassDataModel
         public string? Body { get; set; }
 
         public List<MethodParameterModel> Parameters { get; set; } = new();
-        public List<MethodModelAttribute> Attributes { get; set; } = new();
+        public List<Console_CommonModel.CommonLib.LibModels.Console_ClassDataModel.MethodModelAttribute> Attributes { get; set; } = new();
 
 
     }

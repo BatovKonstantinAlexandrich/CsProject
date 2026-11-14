@@ -33,7 +33,7 @@ namespace Console_CommonModel.CommonLib.LibData.Console_DataModule.DataADO
             };
         }
 
-        private void OnDataViewChanged(object arg1, IChangingListEvent @event)
+        private void OnDataViewChanged(object arg1, ListChangedEvent @event)
         {
             var entity = (TEntity)@event.Target.Item;
             switch (@event.Target.Action)

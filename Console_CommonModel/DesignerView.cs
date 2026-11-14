@@ -918,7 +918,7 @@ namespace WinFormsApp
             }
         }
 
-        public void OnDesignerFocusedViewsChanged(object sender, IChangingListEvent evt)
+        public void OnDesignerFocusedViewsChanged(object sender, ListChangedEvent evt)
         {
             var view = evt.Target.Item as ViewItem;
             if (view is not null && !IsDesignerChromeView(view))

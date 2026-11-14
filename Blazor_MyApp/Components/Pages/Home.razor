@@ -1,0 +1,43 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using Blazor_MyApp.Services.ContextServices
+@inject NavigationManager nav
+@inject IHttpContextAccessor accessor
+@inject CookieManager provider
+@inject ConnectionsCollection connections
+@inject IServiceProvider sp
+@inject IJSRuntime js
+@code
+{
+ 
+    protected async override Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        
+    }
+
+    
+}
+@code
+{
+    public async Task OnButtonClicked(){
+        var result = await js.InvokeAsync<string>("console.log", new[] { 1 });
+        Console.WriteLine(result);
+    }
+}
+<PageTitle>Connections</PageTitle>
+@foreach (var con in connections.GetAll())
+{
+    <p>@con.UserAgent</p>
+} 
+<button @onclick="OnClick">Нажми меня</button>
+
+@code {
+    private void OnClick()
+    {
+        Console.WriteLine("Кнопка нажата!");
+    }
+}
+<button @onclick="@OnButtonClicked">
+    test
+</button>

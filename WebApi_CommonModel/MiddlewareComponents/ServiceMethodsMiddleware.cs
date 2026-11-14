@@ -396,13 +396,23 @@ namespace WebApi_CommonModel.MiddlewareComponents
             var requestModel = new RequestModel();
             
             requestModel.url = Uri.UnescapeDataString(http.Request.Path.ToString());
+            Func<IEnumerable<string>, string> cc = arr => {
+                string r = "";
+                foreach (var l in arr)
+                {
+                    r += l + ", ";
+                }
+                if (r.EndsWith(", "))
+                    r = r.Substring(0, r.Length - 2);
+                return r;
+            };
             requestModel.headers = http.Request.Headers.ToDictionary(
                     h => h.Key,
-                    h => string.Join(", ", h.Value)
+                    h => cc(h.Value.Select(s => s.ToString()))
             );
             requestModel.args = http.Request.Query.ToDictionary(
                     h => h.Key,
-                    h => string.Join(", ", h.Value)
+                    h => cc(h.Value.Select(s => s.ToString()))
             );
             requestModel.body = await ReadBody(http);
             return requestModel;
@@ -453,20 +463,26 @@ namespace WebApi_CommonModel.MiddlewareComponents
         [NotInput]
         [Label("Зарегистрировать сервис")]
         public Dictionary<string, HubActionModel> AddServiceMethods(Type tservice)
-
         {
-            Dictionary<string, HubActionModel> res = new();
-            var names = tservice.GetOwnMethodNotStaticNames();
-            this.Debug(names);
-            Actions[$"/api/services/{tservice.GetTypeName()}/actions"] = new HubActionModel($"/api/services/{tservice.GetTypeName()}/actions", (args, onsuccess, onerror) => {
-                onsuccess(new List<string>(names));
-            });
-            foreach (var name in names)
+            try
             {
-                var a = this.AddServiceMethod(tservice, name);
-                Actions[a.Name] = res[a.Name] = a;
+                Dictionary<string, HubActionModel> res = new();
+                var names = tservice.GetOwnMethodNotStaticNames();
+                this.Debug(names);
+                Actions[$"/api/services/{tservice.GetTypeName()}/actions"] = new HubActionModel($"/api/services/{tservice.GetTypeName()}/actions", (args, onsuccess, onerror) => {
+                    onsuccess(new List<string>(names));
+                });
+                foreach (var name in names)
+                {
+                    var a = this.AddServiceMethod(tservice, name);
+                    Actions[a.Name] = res[a.Name] = a;
+                }
+                return res;
             }
-            return res;
+            catch(Exception ex)
+            {
+                throw new OperationCanceledException($"Исключение при выполнении метода {GetType().GetTypeName()}.{nameof(AddServiceMethods)}(...) => {ex.ToTextDocument()}");
+            }
         }
 
         [NotInput]

@@ -43,7 +43,7 @@ namespace WinFormsApp.AppViews.AppRootModule
 
                     Attach(node);
 
-                    void OnChildrenChanged(object _, IChangingListEvent e)
+                    void OnChildrenChanged(object _, ListChangedEvent e)
                     {
                         if (e.Target.Action == "added" && e.Target.Item is AppViewBase child)
                             WireRecursive(child);

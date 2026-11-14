@@ -9,15 +9,19 @@ using System.Reflection;
 public class ActionModel: MethodModel
 {
     public string Method { get; set; }
-    private readonly Func<Dictionary<string, string>, object> Todo;
 
-    public ActionModel(string name, Func<Dictionary<string, string>, object> todo)
+
+    public string OwnerClientId { get; set; }
+
+    private readonly Func<Dictionary<string, object>, object> Todo;
+
+    public ActionModel(string name, Func<Dictionary<string, object>, object> todo)
     {
         Name = name;
         Todo = todo;
     }
 
-    public async Task<object> Exec(Dictionary<string, string> args)
+    public async Task<object> Exec(Dictionary<string, object> args)
     {
         Console.WriteLine($"[{nameof(ActionModel)}] Name={Name} выполнение процедуры");
         return Todo(args);

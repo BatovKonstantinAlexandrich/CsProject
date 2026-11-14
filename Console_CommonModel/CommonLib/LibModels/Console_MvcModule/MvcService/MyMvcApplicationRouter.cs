@@ -131,13 +131,23 @@ namespace Console_CommonModel.CommonLib.LibModels.Console_MvcModule.MvcService
         {
             var requestModel = new RequestModel();
             requestModel.url = http.Request.Path.ToString();
+            Func<IEnumerable<string>, string> cc = arr => {
+                string r = "";
+                foreach(var l in arr)
+                {
+                    r += l + ", ";
+                }
+                if (r.EndsWith(", "))
+                    r = r.Substring(0, r.Length - 2);
+                return r;
+            };
             requestModel.headers = http.Request.Headers.ToDictionary(
                     h => h.Key,
-                    h => string.Join(", ", h.Value)
+                    h => cc(h.Value.Select(s => s.ToString()))
             );
             requestModel.args = http.Request.Query.ToDictionary(
                     h => h.Key,
-                    h => string.Join(", ", h.Value)
+                    h => cc(h.Value.Select(s => s.ToString()))
             );
             requestModel.body = await ReadBody(http);
             return requestModel;

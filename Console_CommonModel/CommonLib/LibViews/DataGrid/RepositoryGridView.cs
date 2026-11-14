@@ -531,12 +531,12 @@ namespace Console_CommonModel.CommonLib.LibViews.DataGrid
             LoadDataFromRepository();
         }
 
-        private void OnDataRowsChanged(object sender, IChangingListEvent e)
+        private void OnDataRowsChanged(object sender, ListChangedEvent e)
         {
             // Обработка изменения данных
         }
 
-        private void OnVisibleColumnsChanged(object sender, IChangingListEvent e)
+        private void OnVisibleColumnsChanged(object sender, ListChangedEvent e)
         {
             // Обработка изменения видимых колонок
         }

@@ -892,9 +892,9 @@ public static class InputFormServiceExtension
         return services;
     }
 
-    public static global::InputFormModel ToForm(this Type target)
+    public static global::InputFormModel ToForm2(this Type target)
     {
-        return target.ToForm( target.Name.New() );
+        return target.ToInputForm( target.Name.New() );
     }
     public static global::InputModel CreateControl(this Type target, object instance,string type,string value)
     {
@@ -916,7 +916,7 @@ public static class InputFormServiceExtension
             default: throw new Exception("Не реализована функция создания элемента управления данными помеченными атрибутом "+type+"("+value+")");
         }
     }
-    public static global::InputFormModel ToForm(this Type target, object instance)
+    public static global::InputFormModel ToInputForm(this Type target, object instance)
     {
         var model = new InputFormModel();
         /*foreach (var propertyName in target.GetUserInputPropertyNames())

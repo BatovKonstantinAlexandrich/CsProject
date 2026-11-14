@@ -45,8 +45,8 @@
     }
 }
 
-<div style="@Model.GetCssText()">        
-    <MudProgressLinear  Style="@("width: 100%; z-order=1;")" Indeterminate="@Model.Active">        
+<div style="@Model?.GetCssText()">        
+    <MudProgressLinear  Style="@("width: 100%; z-order=1;")" Indeterminate="@Active">        
     </MudProgressLinear>
     <MudText>@Text</MudText>
 </div>

@@ -1,354 +1,353 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>disable</Nullable>
-	<StartupObject>Console_CommonModel.CommonProgram</StartupObject>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Library</OutputType>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>disable</Nullable>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="CommonLib\LibData\Новая папка\**" />
-    <Compile Remove="CommonLib\LibModels\Console_ClassTestModel\**" />
-    <Compile Remove="CommonLib\LibViews\AppViews\PagesModule\**" />
-    <Compile Remove="CommonLib\LibViews\AppViews\PanelModule\**" />
-    <Compile Remove="CommonLib\LibViews\AppViews\SideModule\**" />
-    <EmbeddedResource Remove="CommonLib\LibData\Новая папка\**" />
-    <EmbeddedResource Remove="CommonLib\LibModels\Console_ClassTestModel\**" />
-    <EmbeddedResource Remove="CommonLib\LibViews\AppViews\PagesModule\**" />
-    <EmbeddedResource Remove="CommonLib\LibViews\AppViews\PanelModule\**" />
-    <EmbeddedResource Remove="CommonLib\LibViews\AppViews\SideModule\**" />
-    <None Remove="CommonLib\LibData\Новая папка\**" />
-    <None Remove="CommonLib\LibModels\Console_ClassTestModel\**" />
-    <None Remove="CommonLib\LibViews\AppViews\PagesModule\**" />
-    <None Remove="CommonLib\LibViews\AppViews\PanelModule\**" />
-    <None Remove="CommonLib\LibViews\AppViews\SideModule\**" />
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Remove="CommonLib\LibData\Новая папка\**" />
+		<Compile Remove="CommonLib\LibModels\Console_ClassTestModel\**" />
+		<Compile Remove="CommonLib\LibViews\AppViews\PagesModule\**" />
+		<Compile Remove="CommonLib\LibViews\AppViews\PanelModule\**" />
+		<Compile Remove="CommonLib\LibViews\AppViews\SideModule\**" />
+		<EmbeddedResource Remove="CommonLib\LibData\Новая папка\**" />
+		<EmbeddedResource Remove="CommonLib\LibModels\Console_ClassTestModel\**" />
+		<EmbeddedResource Remove="CommonLib\LibViews\AppViews\PagesModule\**" />
+		<EmbeddedResource Remove="CommonLib\LibViews\AppViews\PanelModule\**" />
+		<EmbeddedResource Remove="CommonLib\LibViews\AppViews\SideModule\**" />
+		<None Remove="CommonLib\LibData\Новая папка\**" />
+		<None Remove="CommonLib\LibModels\Console_ClassTestModel\**" />
+		<None Remove="CommonLib\LibViews\AppViews\PagesModule\**" />
+		<None Remove="CommonLib\LibViews\AppViews\PanelModule\**" />
+		<None Remove="CommonLib\LibViews\AppViews\SideModule\**" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Dapper" Version="2.1.66" />
+		<PackageReference Include="Microsoft.AspNet.WebApi.Core" Version="5.3.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Http.Extensions" Version="2.3.13" />
-		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.11" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.11" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.11" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.11" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.11" />
+		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Abstractions" Version="9.0.0" />
 		<PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
-		<PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.11" />
-		<PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
+		<PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
 
-		<PackageReference Include="Npgsql" Version="8.0.6" />
-		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
+		<PackageReference Include="Npgsql" Version="9.0.2" />
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />
 		<PackageReference Include="Oracle.ManagedDataAccess.Core" Version="23.6.0" />
-		<PackageReference Include="System.Data.Odbc" Version="5.0.0" />
-		<PackageReference Include="System.Data.OleDb" Version="5.0.0" />
+		<PackageReference Include="System.Data.Odbc" Version="9.0.0" />
+		<PackageReference Include="System.Data.OleDb" Version="9.0.0" />
 		<PackageReference Include="MySql.Data" Version="9.1.0" />
 		<PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
 		<PackageReference Include="MailKit" Version="4.16.0" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Abstractions" Version="8.0.11" />
-
-
 
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.Abstractions" Version="2.3.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.12" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.1" />
-		<PackageReference Include="Microsoft.Extensions.DependencyModel" Version="9.0.1" />
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.1" />
-		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.1" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyModel" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.0" />
 
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
 		<PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.3.1" />
 		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.3.1" />
-
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="CommonLib\LibExtensions\Новая папка\" />
-	  <Folder Include="CommonLib\LibViews\SharedViewCollections\MasterView\" />
-	  <Folder Include="CommonLib\LibViews\SharedViewCollections\TreeView\" />
+		<Folder Include="CommonLib\LibExtensions\Новая папка\" />
+		<Folder Include="CommonLib\LibViews\SharedViewCollections\MasterView\" />
+		<Folder Include="CommonLib\LibViews\SharedViewCollections\TreeView\" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Compile Update="CommonLib\LibData\BaseEntityControlsService.cs">
-	    <SubType>Component</SubType>
-	  </Compile>
-	  <Compile Update="CommonLib\LibViews\AppViews\MediaModule\DataStreamView.cs">
-	    <SubType>UserControl</SubType>
-	  </Compile>
-	  <Compile Update="CommonLib\Others\ComponentBase.cs">
-	    <SubType>Component</SubType>
-	  </Compile>
-	  <Compile Update="CommonLib\LibViews\DataComponents\DataSourceComponent.cs">
-	    <SubType>Component</SubType>
-	  </Compile>
-	  <Compile Update="CommonLib\LibViews\DataComponents\DbContextComponent.cs">
-	    <SubType>Component</SubType>
-	  </Compile>
-	  <Compile Update="CommonLib\LibViews\DataComponents\EntityDataTale.cs">
-	    <SubType>Component</SubType>
-	  </Compile>
-	  <Compile Update="CommonLib\LibViews\DataComponents\ServiceComponentBase.cs">
-	    <SubType>Component</SubType>
-	  </Compile>
-	  <Compile Update="CommonLib\LibViews\DataComponents\StoredProcedure.cs">
-	    <SubType>Component</SubType>
-	  </Compile>
-	  <Compile Update="CommonLib\LibViews\ViewCustomizers\KeyboardService.cs">
-	    <SubType>Component</SubType>
-	  </Compile>
-	  <Compile Update="Icons\IconsManager.cs">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </Compile>
+		<Compile Update="CommonLib\LibData\BaseEntityControlsService.cs">
+			<SubType>Component</SubType>
+		</Compile>
+		<Compile Update="CommonLib\LibViews\AppViews\MediaModule\DataStreamView.cs">
+			<SubType>UserControl</SubType>
+		</Compile>
+		<Compile Update="CommonLib\Others\ComponentBase.cs">
+			<SubType>Component</SubType>
+		</Compile>
+		<Compile Update="CommonLib\LibViews\DataComponents\DataSourceComponent.cs">
+			<SubType>Component</SubType>
+		</Compile>
+		<Compile Update="CommonLib\LibViews\DataComponents\DbContextComponent.cs">
+			<SubType>Component</SubType>
+		</Compile>
+		<Compile Update="CommonLib\LibViews\DataComponents\EntityDataTale.cs">
+			<SubType>Component</SubType>
+		</Compile>
+		<Compile Update="CommonLib\LibViews\DataComponents\ServiceComponentBase.cs">
+			<SubType>Component</SubType>
+		</Compile>
+		<Compile Update="CommonLib\LibViews\DataComponents\StoredProcedure.cs">
+			<SubType>Component</SubType>
+		</Compile>
+		<Compile Update="CommonLib\LibViews\ViewCustomizers\KeyboardService.cs">
+			<SubType>Component</SubType>
+		</Compile>
+		<Compile Update="Icons\IconsManager.cs">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Compile>
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Update="Icons\access_time">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\account_tree">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\add">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\application_xp.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\apps">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\attach_money">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\box.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\card.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\cd.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\Collections\ui-icons_222222_256x240.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\Collections\ui-icons_228ef1_256x240.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\Collections\ui-icons_ef8c08_256x240.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\Collections\ui-icons_ffd27a_256x240.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\Collections\ui-icons_ffffff_256x240.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\controller.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\drive.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\edit">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\email">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\film.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\folder.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\font.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\help">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\home">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\icon">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\image.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\insert_chart">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\logout">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\map.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\message">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\messages">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\people">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\person">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_main-tb-icon_add-function.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_main-tb-icon_add-routine.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_main-tb-icon_add-schema.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_main-tb-icon_add-sql-editor.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_main-tb-icon_add-table.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_main-tb-icon_add-view.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_main-tb-icon_execute-sql-file.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_main-tb-icon_open-sql-file.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_main-tb-icon_preferences.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_main-tb-icon_refresh-conn.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_main-tb-icon_search_db.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_main-tb-sep.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-explain-tb-overview.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-resultset-tb-pin.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-resultset-tb-pinned.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_autocommit-off.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_autocommit-on.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_beautifier.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_beautifier_current.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_commit.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_execute-current.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_execute.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_explain.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_find.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_open.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_rollback.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_save.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_special-chars-off.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_special-chars-on.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_stop-on-error-off.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_stop-on-error-on.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_stop.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_word-wrap-off.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_word-wrap-on.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_zoom-area.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_zoom-auto.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_zoom-center.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_zoom-in.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_zoom-jump.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_zoom-out.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\qe_sql-editor-tb-icon_zoom-reset.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\red-logo.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\remove">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\search">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\settings">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Icons\view_headline">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
+		<None Update="Icons\access_time">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\account_tree">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\add">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\application_xp.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\apps">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\attach_money">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\box.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\card.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\cd.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\Collections\ui-icons_222222_256x240.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\Collections\ui-icons_228ef1_256x240.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\Collections\ui-icons_ef8c08_256x240.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\Collections\ui-icons_ffd27a_256x240.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\Collections\ui-icons_ffffff_256x240.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\controller.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\drive.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\edit">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\email">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\film.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\folder.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\font.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\help">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\home">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\icon">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\image.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\insert_chart">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\logout">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\map.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\message">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\messages">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\people">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\person">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_main-tb-icon_add-function.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_main-tb-icon_add-routine.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_main-tb-icon_add-schema.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_main-tb-icon_add-sql-editor.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_main-tb-icon_add-table.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_main-tb-icon_add-view.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_main-tb-icon_execute-sql-file.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_main-tb-icon_open-sql-file.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_main-tb-icon_preferences.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_main-tb-icon_refresh-conn.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_main-tb-icon_search_db.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_main-tb-sep.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-explain-tb-overview.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-resultset-tb-pin.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-resultset-tb-pinned.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_autocommit-off.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_autocommit-on.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_beautifier.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_beautifier_current.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_commit.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_execute-current.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_execute.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_explain.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_find.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_open.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_rollback.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_save.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_special-chars-off.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_special-chars-on.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_stop-on-error-off.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_stop-on-error-on.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_stop.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_word-wrap-off.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_word-wrap-on.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_zoom-area.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_zoom-auto.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_zoom-center.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_zoom-in.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_zoom-jump.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_zoom-out.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\qe_sql-editor-tb-icon_zoom-reset.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\red-logo.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\remove">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\search">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\settings">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Icons\view_headline">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
 	</ItemGroup>
+
 	<ItemGroup>
 		<PackageReference Include="NSwag.CodeGeneration.CSharp" Version="13.19.0" />
-		<PackageReference Include="NSwag.CodeGeneration.TypeScript" Version="13.19.0" />		
+		<PackageReference Include="NSwag.CodeGeneration.TypeScript" Version="13.19.0" />
 		<PackageReference Include="System.ServiceModel.Duplex" Version="4.10.*" />
 		<PackageReference Include="System.ServiceModel.Http" Version="4.10.*" />
 		<PackageReference Include="System.ServiceModel.NetTcp" Version="4.10.*" />
 		<PackageReference Include="System.ServiceModel.Security" Version="4.10.*" />
 		<PackageReference Include="System.ServiceModel.Federation" Version="4.10.*" />
 	</ItemGroup>
+
 	<ItemGroup>
-	  <ProjectReference Include="..\Console_InputControl\Console_InputControl.csproj" />
+		<ProjectReference Include="..\Console_InputControl\Console_InputControl.csproj" />
 	</ItemGroup>
 
 </Project>
