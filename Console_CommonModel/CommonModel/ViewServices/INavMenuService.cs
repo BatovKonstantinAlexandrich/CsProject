@@ -19,9 +19,24 @@ public class NavMenuService: INavMenuService
       
     }
 
+    public NavMenuService(Assembly assembly)
+    {
+        this._assembly = assembly;         
+
+    }
+
 
     public List<ILink> GetPageLinks(string uri)
     {
+        if(uri.StartsWith("http"))
+        {
+            uri = uri.Substring(uri.IndexOf("://")+3);
+            uri = uri.Substring(uri.IndexOf("/")+1);
+        }
+        if(!uri.EndsWith("/"))
+        {
+            uri += "/";
+        }
         _logger.LogInformation(uri);
         var navList = new List<ILink>();
         string ns = "Blazor_MyApp.Components.Pages";
@@ -35,18 +50,44 @@ public class NavMenuService: INavMenuService
         var pagesTypes = types;// Assembly.GetExecutingAssembly().GetPages(ns);
         if (pagesTypes.Count() == 0)
             throw new Exception("Не найдены компоненты страниц");
+        if (!(uri.CountOfChar("/").Count() > 4) && uri.Length > 3)
+        {
+            string p = uri;
+            if (uri.EndsWith("/"))
+                p = uri.Substring(0, p.Length - 1);
+            if(p.LastIndexOf("/")!=-1)
+                p = p.Substring(0, p.LastIndexOf("/"));
+            this.Debug(p);
+            
+
+            navList.Add(new LinkViewModel() { Icon = "home", Label = "Назад", Href = p });
+        }
         foreach (var page in pagesTypes)
         {
             var attrs = page.GetAttributes();
+            string href = null;
             if (attrs.ContainsKey("RouteAttribute"))
             {
-                navList.Add(new LinkViewModel() { Icon = "home", Label = page.GetTypeName(), Href = attrs["RouteAttribute"] });
+                href = attrs["RouteAttribute"];                
             }
             if (attrs.ContainsKey("Route"))
             {
-                navList.Add(new LinkViewModel() { Icon = "home", Label = page.GetTypeName(), Href = attrs["Route"] });
+                href = attrs["Route"];                
             }
 
+            this.Debug(href);
+            
+            if (String.IsNullOrWhiteSpace(href))
+                continue;
+            if (!href.EndsWith("/"))
+                href = href + "/";
+            var v1 = href.CountOfChar('/');
+            var v2 = uri.CountOfChar('/');
+            this.Debug($"{v1}={v2}");
+            if ((v2+1)==v1)
+            {
+                navList.Add(new LinkViewModel() { Icon = "home", Label = page.GetTypeName(), Href = href });
+            }            
         };
         return navList.ToList();
     }
@@ -195,17 +236,27 @@ public static class NavMenuServiceExtension
 }
 
 
+
+/// <summary>
+/// 
+/// </summary>
 public class NavMenuServiceTest: TestingService<NavMenuService>
 {
     public NavMenuServiceTest(IServiceProvider sp) : base(sp)
     {
     }
 
+    public override TestingReport DoTest(bool interactive = false, bool force = false)
+    {
+        return base.DoTest(interactive, force);
+    }
+
     public override bool OnServiceTest(NavMenuService service)
     {
         service._assembly = "BlazorHostingProgram".ToType().Assembly;
-        this.Debug(service.GetPageLinks("/"));
-
+        this.Debug(service.GetPageLinks("/").Select(p => p.Label));
+        this.Debug(service.GetPageLinks("/actions/").Select(p => p.Label));
+        
         return true;
     }
 }

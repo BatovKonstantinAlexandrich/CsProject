@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
@@ -9,12 +9,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Blazor_CommonModel\Blazor_CommonModel.csproj" />
     <ProjectReference Include="..\Console_CommonModel\Console_CommonModel.csproj" />
-    <ProjectReference Include="..\Console_RoyaltyData\Console_RoyaltyData.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.11" />
-    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.14.0" />
   </ItemGroup>
 
   <ItemGroup>

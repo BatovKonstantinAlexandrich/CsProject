@@ -24,6 +24,10 @@ namespace Console_CommonModel.CommonLib.LibModels.ServiceBuilderModule
 
 
     }
+
+
+
+
     public class ServiceDbContextBase<TServiceModel> : FileDbContext
         where TServiceModel : ServiceModel
     {

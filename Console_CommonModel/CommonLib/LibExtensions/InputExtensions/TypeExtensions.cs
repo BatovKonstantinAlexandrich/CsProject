@@ -181,6 +181,8 @@ public static class StringExtensions
     [Label("Кол-во символов в строке")]
     public static int CountOfChar(this string text, char ch)
     {
+        if (String.IsNullOrWhiteSpace(text))
+            return 0;
         int n = 0;
         foreach(char p in text.ToCharArray())
         {

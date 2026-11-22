@@ -73,6 +73,21 @@ namespace Blazor_MyApp
 
                     AppProviderService.GetInstance().AddServiceImplementation<IClientAPI, BlazorClientAPI>();
                     AppProviderService.GetInstance().AddServiceImplementation<IComponentsFactory<IControlBase>, WebComponentsFactory>();
+                    var ns = new NavMenuService(typeof(BlazorHostingProgram).Assembly);
+
+                    this.Debug(ns.GetPageLinks("/").Select(p => p.Label));
+                    this.Debug(ns.GetPageLinks("/actions").Select(p => p.Label));
+
+                    //while(true)
+                    //{
+                    //    Console.Clear();
+                    //    Console.Write("uri");
+                    //    var uri = Console.ReadLine();
+                    //    this.Debug(ns.GetPageLinks(uri).Select(p => p.Href));
+                    //    InputConsole.ConfirmContinue();
+
+
+                    //}
 
                     var builder = WebApplication.CreateBuilder(args);
 
@@ -86,7 +101,7 @@ namespace Blazor_MyApp
                     //ModuleUser.ConfigureServices<DeliveryDbContext, CookieManager>(builder.Configuration, builder.Services);
                     ////ModuleService.ConfigureServices(builder.Configuration, builder.Services);
 
-                    this.Info(new ViewServicesUnit(AppProviderService.GetInstance()).DoTest().ToDocument());
+                    this.Info(new ViewServicesUnit(AppProviderService.GetInstance()).DoTest(false,true).ToDocument());
                     // Add services to the container.
                     builder.Services.AddRazorComponents()
                         .AddInteractiveServerComponents();

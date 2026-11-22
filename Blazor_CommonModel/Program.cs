@@ -60,7 +60,7 @@ namespace Blazor_CommonModel
 
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddMudServices();
-            builder.Services.AddNavMenu();
+            builder.Services.AddNavMenu(typeof(Program).Assembly);
             // Program.cs
             builder.Services.Configure<ForwardedHeadersOptions>(options =>
             {

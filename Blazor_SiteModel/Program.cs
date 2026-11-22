@@ -1,6 +1,8 @@
 using Blazor_SiteModel.Components;
 using Blazor_SiteModel.Services;
 
+using pickpoint_delivery_service;
+
 namespace Blazor_SiteModel;
 
 public class Program
@@ -12,7 +14,7 @@ public class Program
         builder.Services.AddRazorComponents()
             .AddInteractiveServerComponents();
 
-        ModuleUser.ConfigureServices(builder.Configuration, builder.Services);
+        ModuleUser.ConfigureServices<DeliveryDbContext>(builder.Configuration, builder.Services);
 
         builder.Services.AddScoped<ILocalStorage, LocalStorage>(); 
         builder.Services.AddSingleton<ICatalogService, CatalogService>();

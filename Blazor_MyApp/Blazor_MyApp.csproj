@@ -13,4 +13,8 @@
     <ProjectReference Include="..\WebApi_CommonModel\WebApi_CommonModel.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Components\Pages\Franshize\" />
+  </ItemGroup>
+
 </Project>

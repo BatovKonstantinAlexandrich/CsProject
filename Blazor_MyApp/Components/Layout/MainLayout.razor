@@ -19,12 +19,13 @@
         layoutService.Menus.Clear();
 
         var menus = nav.GetPageLinks(uri);
+        this.Debug($"{uri}={menus.Select(m => m.Href).ToJson()}");
         layoutService.Menus.AddRange(menus);
          
     }
     public void OnLocationChanged(object sender, LocationChangedEventArgs evt)
     {
-        var uri = evt.Location;
+        var uri = navigationManager.Uri;
         this.OnLocationChanged(uri);
     }
 }
