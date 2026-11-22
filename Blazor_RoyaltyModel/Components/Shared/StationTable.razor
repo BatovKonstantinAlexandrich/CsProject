@@ -1,0 +1,26 @@
+<DataTable Caption="@Caption" IsEmpty="Stations.Count == 0" ColumnCount="5" EmptyText="В этом городе станций нет">
+    <Header>
+        <th>Город</th>
+        <th>Адрес</th>
+        <th>Специализация</th>
+        <th>Часы</th>
+        <th>Телефон</th>
+    </Header>
+    <ChildContent>
+        @foreach (var station in Stations)
+        {
+            <tr>
+                <td>@station.City</td>
+                <td>@station.Address</td>
+                <td>@station.Note</td>
+                <td>@station.Hours</td>
+                <td><a class="text-link" href="@($"tel:{station.Phone}")">@station.Phone</a></td>
+            </tr>
+        }
+    </ChildContent>
+</DataTable>
+
+@code {
+    [Parameter] public IReadOnlyList<Station> Stations { get; set; } = [];
+    [Parameter] public string Caption { get; set; } = "Адреса СТО";
+}

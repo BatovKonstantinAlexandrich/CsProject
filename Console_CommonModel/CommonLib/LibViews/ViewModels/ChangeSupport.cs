@@ -274,12 +274,12 @@ namespace ActionModels
                     }
                     else
                     {
-                        throw new Exception($"PropertyNotInitiallized {key}");
+                        throw new Exception($"PropertyNotInitiallized {key} {GetType().GetTypeName()}");
                     }
                 }
                 else
                 {
-                    throw new Exception($"PropertyNotInitiallized {key}");
+                    throw new Exception($"PropertyNotInitiallized {key} {GetType().GetTypeName()}");
                 }
 
             }

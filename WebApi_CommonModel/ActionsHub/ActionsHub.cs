@@ -6,7 +6,7 @@
 /// </summary>
 public class ActionsHub: HubBase 
 {
-    private readonly ActionContextService actionsService;
+    private readonly ActionsService actionsService;
 
     public ActionsHub(ILogger<ActionsHub> logger, 
         IHttpContextAccessor httpContextAccessor,
@@ -14,7 +14,7 @@ public class ActionsHub: HubBase
         ActionsContext serviceContext
         ) : base(logger, httpContextAccessor, clientsContext, serviceContext)
     {
-        this.actionsService = new ActionContextService(this.actionsContext);        
+        this.actionsService = new ActionsService(this.actionsContext);        
     }
 
 
@@ -37,7 +37,7 @@ public class ActionsHub: HubBase
     }
 
 
-    public HubActionModel GetActionModel(string action) => actionsContext.GetActionModel(action);
+    public ActionsModel GetActionModel(string action) => actionsContext.GetActionModel(action);
 
 
     public string Login(string name)
@@ -90,7 +90,7 @@ public class ActionsHub: HubBase
         foreach(var kv in this.connectionsContext.Connections.Where(kv => kv.Key != connectionId).ToList())
         {
             var otherConnectionId = kv.Key;
-            var pars = new Dictionary<string, string>() {
+            var pars = new Dictionary<string, object>() {
                 { "method", model.ToJson() }
             };
             kv.Value.Request("OnPublish", pars, 

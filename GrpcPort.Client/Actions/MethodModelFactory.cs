@@ -1,6 +1,4 @@
 using System.Reflection;
-using GrpcPort.Contracts.Actions;
-
 using WinFormsApp.Console.Console_ClassModule.ClassDataModel;
 
 namespace GrpcPort.Client.Actions;

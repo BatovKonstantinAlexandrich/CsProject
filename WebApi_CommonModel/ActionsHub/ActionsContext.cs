@@ -19,12 +19,12 @@ public class ActionsContext : IActionsContext
     /// <summary>
     /// Операции по наименованиям
     /// </summary>
-    private ConcurrentDictionary<string, HubActionModel> Actions = new ConcurrentDictionary<string, HubActionModel>();
+    private ConcurrentDictionary<string, ActionsModel> Actions = new ConcurrentDictionary<string, ActionsModel>();
 
 
     public List<MethodModel> GetActions() => Actions.Values.Select(a => (MethodModel)a).ToList();
 
-    public HubActionModel GetActionModel(string name) => Actions[name];
+    public ActionsModel GetActionModel(string name) => Actions[name];
 
     public ActionsContext()
     {
@@ -52,7 +52,7 @@ public class ActionsContext : IActionsContext
         {
             if (!args.ContainsKey("action"))
                 throw new ArgumentException("action");
-            onsuccess(GetActionModel(args["action"]));
+            onsuccess(GetActionModel($"{args["action"]}"));
         });
     }
 
@@ -60,9 +60,9 @@ public class ActionsContext : IActionsContext
     /// Регистрация операции
     /// </summary>
     public Action AddAction(string Name, MethodModel method,
-        Action<Dictionary<string, string>, Action<object>, Action<string>> Todo)
+        Action<Dictionary<string, object>, Action<object>, Action<string>> Todo)
     {
-        var action = new HubActionModel(Name, Todo)
+        var action = new ActionsModel(Name, Todo)
         {
             Label = method.Label,
             Name = method.Name,
@@ -80,7 +80,7 @@ public class ActionsContext : IActionsContext
     /// <summary>
     /// Выполнение операции
     /// </summary>
-    public object DoAction(string Action, Dictionary<string, string> args)
+    public object DoAction(string Action, Dictionary<string, object> args)
     {
         if (Actions.ContainsKey(Action) == false)
         {
@@ -97,7 +97,7 @@ public class ActionsContext : IActionsContext
     }
 
 
-    public void DoAction(string Action, Dictionary<string, string> args, Action<object> onsuccess, Action<string> onerror)
+    public void DoAction(string Action, Dictionary<string, object> args, Action<object> onsuccess, Action<string> onerror)
     {
         if (Actions.ContainsKey(Action) == false)
         {

@@ -461,8 +461,14 @@ public class TypeHelperStrict
         }
 
         var processedMethods = new HashSet<string>();
-        foreach (var methodInfo in type.GetMethods(memberFlags))
+        var methods = type.GetOwnMethodNames();
+        if(type.IsGenericType && !type.IsGenericTypeDefinition)
         {
+            methods.AddRange(type.GetGenericTypeDefinition().GetMethods(memberFlags).Select(m=>m.Name));
+        }
+        foreach (var name in methods)
+        {
+            var methodInfo = type.GetMethodByName(name);
             if (methodInfo.IsSpecialName || methodInfo.IsStatic)
                 continue;
             if (!processedMethods.Add(methodInfo.Name))

@@ -10,6 +10,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Console_CommonModel\Console_CommonModel.csproj" />
+	  <ProjectReference Include="..\GrpcPort.Contracts\GrpcPort.Contracts.csproj" />
+
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="ActionsModels\" />
+    <Folder Include="ServiceModule\" />
   </ItemGroup>
 
 </Project>

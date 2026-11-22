@@ -1,46 +1,75 @@
-﻿using System.Security.Cryptography.X509Certificates;
-using System.Text;
-
-using ClassModelLib.ServicesModule;
-
-using Console_CommonModel.CommonLib.LibModels.Console_ClassDataModel;
-
-using Grpc.Core;
-using Grpc.Net.Client;
-
-using Grpc_ProgramsService;
-
+﻿using ClassModelLib.ServicesModule;
 using GrpcPort.Client.Actions;
-using GrpcPort.Client.Crypto;
-using GrpcPort.Contracts;
+using pickpoint_delivery_service;
 
-using Newtonsoft.Json;
+using System.Runtime.CompilerServices;
 
 using WinFormsApp.Console.Console_ClassModule.ClassServiceModel;
 
 var client = new GrpcActionsClient("http://localhost:5081", "svc-orders", $"secret-svc-orders");
 client.ConnectAsync().Wait();
-foreach(WinFormsApp.Console.Console_ClassModule.ClassDataModel.MethodModel method in client.GetType().ToClassModel().Methods)
+client.PublishAsync(new()
 {
-    client.PublishAsync(new()
-    {
-        Name = method.Name,
-        Attributes = method.Attributes,
-        
-    }, args => null, default);
-}
-while(true)
-{
-    InputConsole.Clear();
-    var selected = InputConsole.SingleSelect
-    (
-        "Выберите действие",
-        client.GetKnownRemoteActions().Select(m => m.Name),
-        ref args
-    );
+    Name = "Stop",
+    Attributes = new(),
 
-    var m = client.GetKnownRemoteActions().FirstOrDefault(m => m.Name==selected) ;
+}, 
+args => {
+
+    client.Debug("Stop");
+    return null;
+}, default).Wait();
+
+
+while (true)
+{
+
+    InputConsole.SelectAction(
+        "Модуль управления сервисом",
+        new() {
+
+
+            { "Подключить сервис",  ()=>{
+
+                using(var db = new ClientClassDbContext())
+                {
+                    foreach(var method in db.CreateClassModel(typeof(DeliveryDbContext)).Methods)
+                    {
+                        client.PublishAsync(method, args => {
+                            return null;
+                        }).Wait();
+                    }
+                    
+                }
+                InputConsole.ConfirmContinue();
+            } },
+
+
+            { "Выполнить операцию", ()=>{
+                
+                client.GetActionsList(actions => {
+                    InputConsole.Clear();
+                    var selected = InputConsole.SingleSelect
+                    (
+                        "Выберите действие",
+                        actions,
+                        ref args
+                    );
+                    OnActionSelected(selected);
+
+                }).Wait();
+                
+
+                //var m = client.GetKnownRemoteActions().FirstOrDefault(m => m.Name==selected) ;
+            } },
+        },ref args);
+    
     //TODO:
+}
+
+void OnActionSelected(string selected)
+{
+    throw new NotImplementedException();
 }
 
 /*

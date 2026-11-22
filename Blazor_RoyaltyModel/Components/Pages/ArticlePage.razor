@@ -1,0 +1,24 @@
+@page "/blog/{Slug}"
+@inject IContentService Content
+
+<PageTitle>@(article?.Title ?? "Статья")</PageTitle>
+
+@if (article is null)
+{
+    <PageHeading Title="Статья не найдена" />
+}
+else
+{
+    <PageHeading Title="@article.Title" Lead="@($"{article.Category} · {article.Date.ToString("d MMMM yyyy", CultureInfo.GetCultureInfo("ru-RU"))}")" />
+    <article class="wrap section prose">
+        <p>@article.Excerpt</p>
+        <p>@article.Body</p>
+    </article>
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+    private Article? article;
+
+    protected override void OnParametersSet() => article = Content.FindArticle(Slug);
+}

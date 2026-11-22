@@ -13,4 +13,5 @@ public static class StreamActionTypes
     public const string OnPublish = "on-publish";
     public const string OnUnpublish = "on-unpublish";
     public const string Catalog = "catalog";
+    public const string ListActions = "list-actions";
 }

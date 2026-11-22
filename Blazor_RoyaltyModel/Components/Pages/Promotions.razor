@@ -1,0 +1,16 @@
+@page "/promotions"
+@inject IPromotionService PromotionData
+
+<PageTitle>Акции месяца</PageTitle>
+<PageHeading Title="Акции месяца" Lead="Предложения по городам. Срок и условия читаются со страницы акции." />
+
+<section class="wrap section promo-list">
+    @foreach (var item in PromotionData.GetAll())
+    {
+        <a href="@($"/promotions/{item.Slug}")">
+            <span>@item.City</span>
+            <strong>@item.Title</strong>
+            <small>@item.From.ToString("dd.MM.yyyy") – @item.To.ToString("dd.MM.yyyy")</small>
+        </a>
+    }
+</section>

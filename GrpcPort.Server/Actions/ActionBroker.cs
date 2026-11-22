@@ -36,9 +36,15 @@ public sealed class ActionBroker
         CancellationToken cancellationToken)
     {
         var type = envelope.Type ?? StreamActionTypes.Data;
-
+        this.Debug($"{session.SessionToken}: {envelope.Type}");
         switch (type)
         {
+            case StreamActionTypes.ListActions:
+
+                var actions = session.PublishedActions.ToJson();
+                await SendAsync(session, StreamActionTypes.Pong, actions, envelope.MessageId, cancellationToken);
+                break;
+
             case StreamActionTypes.Ping:
                 await SendAsync(session, StreamActionTypes.Pong, "pong", envelope.MessageId, cancellationToken);
                 break;
@@ -134,9 +140,12 @@ public sealed class ActionBroker
 
         if (string.Equals(request.ActionName, "ListActions", StringComparison.OrdinalIgnoreCase))
         {
-            _ = ReplyToCallerAsync(caller, callerSerialKey, request, _actions.GetActions(), null);
+            var names = _actions.GetActions().Select(a => a.Name).ToList();
+            this.Debug(_ = ReplyToCallerAsync(caller, callerSerialKey, request, names, null));
+            
             return;
-        }
+        } 
+
 
         _actions.DoAction(
             request.ActionName,
@@ -152,7 +161,7 @@ public sealed class ActionBroker
         if (handler is null)
         {
             _logger.LogWarning("Response без pending handler: {Key}", Truncate(response.SerialKey));
-            return;
+            return; 
         }
 
         if (response.ActionSuccess)

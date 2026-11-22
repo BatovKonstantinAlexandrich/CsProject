@@ -1,0 +1,29 @@
+@inject IStationService Stations
+
+<DataTable Caption="Где проведут услугу" IsEmpty="rows.Count == 0" ColumnCount="3">
+    <Header>
+        <th>Город</th>
+        <th>Станций</th>
+        <th></th>
+    </Header>
+    <ChildContent>
+        @foreach (var row in rows)
+        {
+            <tr>
+                <td>@row.City</td>
+                <td>@row.Count</td>
+                <td><a class="text-link" href="@($"/stations?city={Uri.EscapeDataString(row.City)}")">Смотреть адреса</a></td>
+            </tr>
+        }
+    </ChildContent>
+</DataTable>
+
+@code {
+    private IReadOnlyList<(string City, int Count)> rows = [];
+
+    protected override void OnInitialized() =>
+        rows = Stations.GetAll()
+            .GroupBy(station => station.City)
+            .Select(group => (group.Key, group.Count()))
+            .ToList();
+}

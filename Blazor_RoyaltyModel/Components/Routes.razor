@@ -1,0 +1,26 @@
+﻿<Router AppAssembly="typeof(Program).Assembly">
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+            <NotAuthorized>
+                @if (context.User.Identity?.IsAuthenticated == true)
+                {
+                    <RedirectToAccessDenied />
+                }
+                else
+                {
+                    <RedirectToLogin />
+                }
+            </NotAuthorized>
+        </AuthorizeRouteView>
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="typeof(Layout.MainLayout)">
+            <PageTitle>Страница не найдена</PageTitle>
+            <PageHeading Title="Страница не найдена" Lead="Такого адреса нет. Вернитесь на главную или откройте каталог услуг." />
+            <section class="wrap section">
+                <a class="btn-pill" href="/">На главную</a>
+            </section>
+        </LayoutView>
+    </NotFound>
+</Router>

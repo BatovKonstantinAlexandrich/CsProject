@@ -1,6 +1,5 @@
-﻿@page "/counter"
-@rendermode InteractiveServer
-@inject IJSRuntime js
+﻿@attribute [Route("/counter")]
+
 
 <PageTitle>Counter</PageTitle>
 
@@ -18,7 +17,7 @@
         currentCount++;
         Task.Run(()=> { 
             while(true){
-                js.InvokeAsync<string>("alert", new[] { 1 });
+                //js.InvokeAsync<string>("alert", new[] { 1 });
                 Console.WriteLine(currentCount);
                 Task.Delay(1000).Wait();
             }

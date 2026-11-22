@@ -38,7 +38,7 @@ namespace Hub_ActionsModel.Controllers
 
         [HttpPost]
         [Route("/api/actions/connections/actions/do")]
-        public IActionResult DoActionAsync(string Action, Dictionary<string, string> args)
+        public IActionResult DoActionAsync(string Action, Dictionary<string, object> args)
         {
             bool completed = false;
             object result = null;
@@ -62,7 +62,7 @@ namespace Hub_ActionsModel.Controllers
 
         [HttpGet]
         [Route("/api/actions/connections/actions/{name}")]
-        public HubActionModel GetActionModel(string name)
+        public ActionsModel GetActionModel(string name)
             => actions.GetActionModel(name);
 
         [HttpGet]

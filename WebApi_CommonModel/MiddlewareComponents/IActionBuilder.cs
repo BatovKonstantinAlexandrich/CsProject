@@ -7,6 +7,6 @@ namespace WebApi_CommonModel.MiddlewareComponents
 {
     public interface IActionBuilder
     {
-        public Dictionary<string, HubActionModel> Build(ActionServiceModel serviceModel);
+        public Dictionary<string, ActionsModel> Build(ActionServiceModel serviceModel);
     }
 }

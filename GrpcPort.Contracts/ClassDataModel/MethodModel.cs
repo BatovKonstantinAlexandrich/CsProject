@@ -23,7 +23,7 @@ namespace WinFormsApp.Console.Console_ClassModule.ClassDataModel
 
         public static MethodModel FromJson(string methodJson)
         {
-            throw new NotImplementedException();
+            return methodJson.FromJson<MethodModel>();
         }
     }
 }

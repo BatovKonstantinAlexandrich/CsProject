@@ -1,0 +1,36 @@
+@inject IAppointmentService Appointments
+
+<aside class="request-list">
+    <h2>Сохранённые заявки</h2>
+    <DataTable IsEmpty="_items.Count == 0" ColumnCount="5" EmptyText="Пока пусто. После отправки формы запись появится здесь.">
+        <Header>
+            <th>Имя</th>
+            <th>Телефон</th>
+            <th>Услуга</th>
+            <th>Станция</th>
+            <th>Сумма</th>
+        </Header>
+        <ChildContent>
+            @foreach (var item in _items)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.Phone</td>
+                    <td>@(item.ServiceTitle ?? "—")</td>
+                    <td>@(item.Station ?? "—")</td>
+                    <td>@(item.Estimate is null ? "—" : PriceText.Format(item.Estimate.Value))</td>
+                </tr>
+            }
+        </ChildContent>
+    </DataTable>
+</aside>
+
+@code {
+    private IReadOnlyList<AppointmentRequest> _items = [];
+
+    [Parameter] public string Kind { get; set; } = "Запись";
+    [Parameter] public int Revision { get; set; }
+
+    protected override void OnParametersSet() =>
+        _items = Appointments.GetAll().Where(item => item.Kind == Kind).Take(8).ToList();
+}

@@ -15,7 +15,7 @@ namespace WebApi_CommonModel.BackgroungHosting
         {
             switch (e.Target.Action)
             {
-                case "added": StartBackgroundService((Type)e.Target.Item); break;
+                case "added":   StartBackgroundService((Type)e.Target.Item); break;
                 case "removed": StopBackgroundService((Type)e.Target.Item); break;
             }
         }
@@ -24,6 +24,7 @@ namespace WebApi_CommonModel.BackgroungHosting
         {
             try
             {
+                logger.LogInformation($"StartBackgroundService({item.GetTypeName()})");
                 var backgroundService = (IWorkerService)AppProviderService.GetInstance().GetService(item);
                 context.BackgroundServices[item] = backgroundService;
                 backgroundService.Start();
@@ -38,6 +39,8 @@ namespace WebApi_CommonModel.BackgroungHosting
         {
             try
             {
+                logger.LogInformation($"StopBackgroundService({item.GetTypeName()})");
+
                 context.BackgroundServices[item].Stop();
                 context.BackgroundServices.TryRemove(item, out var p);
             }

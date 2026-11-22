@@ -15,16 +15,19 @@ using Microsoft.EntityFrameworkCore;
 using Blazor_CommonModel.Application;
 using Blazor_MyApp.Services.ContextServices;
 using Blazor_MyApp.Services;
-
+using System.Diagnostics;
 
 namespace Blazor_CommonModel
 {
     
+
     public class Program 
     {
+
         
         public static void Main(string[] args)
         {
+
             ServiceFactory.Get().AddTypesAsync(typeof(Blazor_CommonModel.Program).Assembly, true);
             ServiceFactory.Get().AddTypesAsync(typeof(MudBlazor.Colors).Assembly, true);
             
@@ -33,14 +36,14 @@ namespace Blazor_CommonModel
 
             CommonProgram.Run<Program>(new string[] {  "--no-force"});
 
-            //var unit = new AppUnit();
-            //unit.DoTest(false, false).PrintDocument();
+            var unit = new AppUnit();
+            unit.DoTest(false, false).PrintDocument();
 
- 
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddRazorComponents().AddInteractiveServerComponents();
             //builder.Services.AddHostedService<GrpcBackgroundMessaging>();
+            //builder.Services.AddHostedService<ActionsBackgroundClient>();
             builder.Services.AddHostedService<DoCheckBackground>();
             builder.Services.AddSingleton<AuthorizationOptions>();
             builder.Services.AddSingleton<ConnectionsCollection>();
@@ -52,7 +55,7 @@ namespace Blazor_CommonModel
             DeliveryDbContext.ConfigureDeliveryServices(builder.Services, builder.Configuration);
             MonitoringUnit.ConfigureServices(builder.Services);
             AppProviderService.GetInstance().Get<AuthorizationCollection<UserContext>>();
-            ModuleUser.ConfigureServices(builder.Configuration, builder.Services);
+            ModuleUser.ConfigureServices<DeliveryDbContext>(builder.Configuration, builder.Services);
             ModuleService.ConfigureServices<DeliveryDbContext>(builder.Configuration, builder.Services);
 
             builder.Services.AddHttpContextAccessor();
@@ -100,7 +103,7 @@ namespace Blazor_CommonModel
 
             
             builder.Services.AddScoped<ILocalStorage, LocalStorage>();
-            ModuleUser.ConfigureServices(builder.Configuration, builder.Services);
+            ModuleUser.ConfigureServices<DeliveryDbContext>(builder.Configuration, builder.Services);
             var app = builder.Build();
             app.UseForwardedHeaders();
             app.UseHttpsRedirection();            

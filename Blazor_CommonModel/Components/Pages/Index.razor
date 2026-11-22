@@ -5,10 +5,6 @@
 @inherits BaseComponent
 @inject IJSRuntime JS
 @inject ConnectionsCollection cons 
-@foreach (var conn in cons.GetAll())
-{
-    <p>Circuit:  IP: @conn.Ip4, Connected: @conn.LastActive</p>
-}
 @code 
 {
     public AppViewBase ViewRef { get; set; } = new();
@@ -19,6 +15,7 @@
 
     private string LastKey = "—";
     private string LastCode = "—";
+
 
     [JSInvokable]
     public Task OnKeyDown(string key, string code)
@@ -35,6 +32,7 @@
         return Task.CompletedTask;
     }
 
+
     [JSInvokable]
     public Task OnKeyPress(string key, string code)
     {
@@ -50,6 +48,7 @@
         return Task.CompletedTask;
     }
 
+
     [JSInvokable]
     public Task OnKeyUp(string key, string code)
     {
@@ -62,6 +61,7 @@
         StateHasChanged();
         return Task.CompletedTask;
     }
+
 
     // private RenderFragment CreateComponent() => builder =>
     // {
@@ -123,7 +123,7 @@
     public StatusControl StatusControlRef { get; set; }
     protected override async Task OnInitializedAsync()
     {
-        DesignerViewRef = new AppViewRoot();
+        DesignerViewRef = new DesignerView();
 
         await base.OnInitializedAsync();
 
@@ -137,68 +137,57 @@
             await JS.InvokeVoidAsync("keyboardHandler.register", _objRef);
         };
 
-        // designer.keyboardConfig["q"] = () =>
-        // {
-        //     designer.DesignMode = !designer.DesignMode;
+        designer.keyboardConfig["q"] = () =>
+        {
+            designer.DesignMode = !designer.DesignMode;
 
-        // };
+        };
         DesignerViewRef.StatusView.OnChange += evt => StateHasChanged();
         designer.Name = nameof(AppViewRoot);
         if (designer.GetAppRootView() != designer)
             throw new Exception("designer.GetAppRootView() != designer");
         designer.Append(designer.CreateButton("Диалог", async () => {
-            // var account = new UserAccount();
-            // await designer.CreateEditDialog(account);
-            // Active = Active ? false : true;
-            // DesignerViewRef.StatusView.Active = DesignerViewRef.StatusView.Active?false:true;
-            //StateHasChanged();
-            
-            DesignerViewRef.PutAction("12", () =>
-            {
-                Thread.Sleep(1111);
-                lock(this){
-                    StateHasChanged();
-                }
-            });
-
+            Active = Active ? false : true;
+            DesignerViewRef.StatusView.Active = DesignerViewRef.StatusView.Active?false:true;
+            StateHasChanged();
         }));
-        // designer.Append(designer.CreateButton("Бизнес моделирование", async () =>
-        // {
-        //     designer.OnNavSelected("Бизнес моделирование");
-        // }));
-        // designer.Append(designer.CreateButton("Регистрация", async () =>
-        // {
-        //     designer.LayoutFill(new BusinessModelView());
-        // }));
+        designer.Append(designer.CreateButton("Бизнес моделирование", async () =>
+        {
+            designer.Cast<DesignerView>().OnNavSelected("Бизнес моделирование");
+        }));
+        designer.Append(designer.CreateButton("Регистрация", async () =>
+        {
+            designer.LayoutFill(new BusinessModelView());
+        }));
 
-        // designer.LayoutTop(new ButtonView(){
-        //     OnClick = (p,e)=> {
-        //             designer.AddNavOption("Бизнес моделирование", new BusinessModelView());
-        //             designer.OnNavSelected("Бизнес моделирование");
-        //     }
-        // });
-        // designer.AddNavOption("Личный кабинет", new UserHomeView());
-        // designer.AddNavOption("Вход", signIn);
-        // designer.AddNavOption("Бизнес моделирование", new BusinessModelView());
-        // designer.AddNavOption("Регистрация", new UserSignupView());
-        // var signin = new UserSigninView<DeliveryDbContext>();
+        designer.LayoutTop(new ButtonView(){
+            OnClick = (p,e)=> {
+                    designer.Cast<DesignerView>().AddNavOption("Бизнес моделирование", new BusinessModelView());
+                    designer.Cast<DesignerView>().OnNavSelected("Бизнес моделирование");
+            }
+        });
+        designer.Cast<DesignerView>().AddNavOption("Личный кабинет", new UserHomeView());
+        // designer.Cast<DesignerView>().AddNavOption("Вход", signIn);
+        designer.Cast<DesignerView>().AddNavOption("Бизнес моделирование", new BusinessModelView());
+        designer.Cast<DesignerView>().AddNavOption("Регистрация", new UserSignupView<DeliveryDbContext>());
+        var signin = new UserSigninView<DeliveryDbContext>();
 
-        // var editView = EditView.CreateEditViewBase(new UserAccount(), (s, e) =>
-        // {
-        //     this.Info("Completed");
-        //     this.Info(s);
-        //     this.Info(e);
-        // });
+        var editView = EditView.CreateEditViewBase(new UserAccount(), (s, e) =>
+        {
+            this.Info("Completed");
+            this.Info(s);
+            this.Info(e);
+        });
 
-        // EditViewDesignerService designerService = new EditViewDesignerService();
-        // designerService.SetControl(editView);
-        // editView.ViewDesigner = designerService;
+        EditViewDesignerService designerService = new EditViewDesignerService();
+        designerService.SetControl(editView);
+        editView.ViewDesigner = designerService;
 
-        // designer.LayoutFill(signin);
+        designer.LayoutFill(signin);
 
         // this.DesignerViewRef.OpenFile(@"C:\CsProject\Blazor_CommonModel\Projects\app.xml");
         // designer.OnNavSelected("Вход");
-        // designer.DesignMode = true;
+        designer.DesignMode = true;
 
     }
     private static void CreateUserBusinessFunctionsMenuView(UserContext user, DesignerView designer)

@@ -1,0 +1,27 @@
+@page "/login"
+
+<PageTitle>Кабинет</PageTitle>
+<PageHeading Title="Кабинет" Lead="Вход выполнен через Keycloak." />
+
+<section class="wrap section">
+    <div class="form-card">
+        <p><strong>@userName</strong></p>
+        <a class="btn-pill" href="/account/logout" data-enhance-nav="false">Выйти</a>
+    </div>
+</section>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthState { get; set; }
+
+    private string userName = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthState is null)
+            return;
+
+        var state = await AuthState;
+        userName = state.User.Identity?.Name ?? "";
+    }
+}

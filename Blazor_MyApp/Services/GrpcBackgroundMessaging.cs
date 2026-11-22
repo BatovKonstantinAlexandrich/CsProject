@@ -1,4 +1,6 @@
-﻿using Grpc.Core;
+﻿using Blazor_MyApp.Services.ContextServices;
+
+using Grpc.Core;
 using Grpc.Net.Client;
 
 using Grpc_ProgramsService;
@@ -21,14 +23,14 @@ namespace Blazor_MyApp.Services
 {
     public class GrpcBackgroundMessaging : BackgroundService
     {
-
+        private readonly ConnectionsCollection _connections;
         string clientId = "svc-orders";
         string secret = $"secret-svc-orders";
         string serverAddress = "http://localhost:5081";
 
-        public GrpcBackgroundMessaging()
+        public GrpcBackgroundMessaging(ConnectionsCollection connections)
         {
-
+            this._connections = connections;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)

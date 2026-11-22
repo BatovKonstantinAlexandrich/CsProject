@@ -881,7 +881,6 @@ public static class InputFormServiceExtension
     public static IServiceCollection AddInputForm(this IServiceCollection services)
     {
         services.AddScoped<DataValidationService>();
-        services.AddScoped<FormService>();
         services.AddScoped<IInputFormService, InputFormService>();
         services.AddDbContext<InputFormDbContext>(options => options.UseInMemoryDatabase(nameof(InputFormDbContext)));
 

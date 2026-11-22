@@ -802,6 +802,7 @@ public class InputConsoleСontrol(ref string[] args) : IConsoleСontrol
             try
             {
                 var action = SingleSelect(title, options.Keys, ref args);
+                this.Info($"{action} selected");
                 if (action is not null)
                     options[action]();
                 break;
@@ -846,10 +847,12 @@ public class InputConsoleСontrol(ref string[] args) : IConsoleСontrol
             Console.Write("Выбор (номер)> ");
             Console.ResetColor();
             var read = Console.ReadLine();
+            Console.WriteLine(read);
             if (int.TryParse(read, out var n) && n >= 1 && n <= list.Count)
             {
                 this.Push(ref args, (n - 1).ToString());
-                return list[n-1];
+                var res = list[n-1];
+                return res;
             }
             Error("Неверный номер, повторите.");
             ConfirmContinue();

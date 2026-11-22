@@ -190,9 +190,7 @@ public class DbContextUserInitializer: DbContextInitiliazer<DbContextUser>
         };
     }
 
-    /// <summary>
-    /// Создание пользователей 
-    /// </summary>
+    [Label("Инициализация учётных записей пользователей")]
     public int InitUsers(DbContextUser context )
     {
         context.EnableDataChangedAttributes = false;
@@ -246,9 +244,7 @@ public class DbContextUserInitializer: DbContextInitiliazer<DbContextUser>
     }
 
 
-    /// <summary>
-    /// Создание ролей 
-    /// </summary>
+    [Label("Инициализация ролей пользователей")]
     public int InitRoles(DbContextUser context, string[] roles)
     {
         int result = 0;
@@ -281,9 +277,7 @@ public class DbContextUserInitializer: DbContextInitiliazer<DbContextUser>
     }
 
 
-    /// <summary>
-    /// Создание групп польщователей 
-    /// </summary>
+    [Label("Инициализация групп пользователей")]
     public int InitGroups(DbContextUser context, string[] roles)
     {
         int result = 0;

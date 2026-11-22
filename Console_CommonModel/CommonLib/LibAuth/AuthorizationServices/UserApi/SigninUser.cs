@@ -55,7 +55,7 @@ public class SigninUser<TDbContextUser> : BaseSignin<UserContext, UserAccount, U
         this.SetDbContext(dbContextUser);
         this._users = users;
 
-
+        
     }
     public override UserContext Verify()
     {

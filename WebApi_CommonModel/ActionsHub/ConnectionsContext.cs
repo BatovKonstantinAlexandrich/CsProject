@@ -11,22 +11,22 @@ public class ConnectionsContext : AsyncContext, IConnectionsContext
     /// <summary>
     /// Операции по наименованиям
     /// </summary>
-    public ConcurrentDictionary<string, ConsumerController> Connections = new ConcurrentDictionary<string, ConsumerController>();
+    public ConcurrentDictionary<string, ActionsConsumer> Connections = new ConcurrentDictionary<string, ActionsConsumer>();
 
 
     public void Ping()
     {
         foreach (var kv in Connections)
         {
-            kv.Value.Request("Ping", new Dictionary<string, string>() { },
+            kv.Value.Request("Ping", new Dictionary<string, object>() { },
                 result => { }).Wait();
         }
 
     }
 
-    public ConsumerController AddClientConnection(string ConnectionId, Action<string> Request)
+    public ActionsConsumer AddClientConnection(string ConnectionId, Action<string> Request)
     {
-        return Connections[ConnectionId] = new ConsumerController(Request, this);
+        return Connections[ConnectionId] = new ActionsConsumer(Request, this);
     }
 
     public void RemoveClientConnection(string connectionId)

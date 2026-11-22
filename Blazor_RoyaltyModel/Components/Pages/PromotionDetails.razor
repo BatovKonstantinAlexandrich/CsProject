@@ -1,0 +1,25 @@
+@page "/promotions/{Slug}"
+@inject IPromotionService Promotions
+
+<PageTitle>@(item?.Title ?? "Акция")</PageTitle>
+
+@if (item is null)
+{
+    <PageHeading Title="Акция не найдена" />
+}
+else
+{
+    <PageHeading Title="@item.Title" Lead="@($"{item.City} · {item.From:dd.MM.yyyy} – {item.To:dd.MM.yyyy}")" />
+    <section class="wrap section prose">
+        <p>@item.Lead</p>
+        <p>@item.Details</p>
+        <a class="btn-pill" href="@($"/callback?service=ekspress-zamena-masla&city={Uri.EscapeDataString(item.City)}")">Записаться по акции</a>
+    </section>
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+    private Promotion? item;
+
+    protected override void OnParametersSet() => item = Promotions.Find(Slug);
+}

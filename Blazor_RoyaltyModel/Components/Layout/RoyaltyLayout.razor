@@ -1,0 +1,74 @@
+@inherits LayoutComponentBase
+@using Console_RoyaltyData.RoyaltyEntities
+@inject ApplicationAuthorizationService Auth
+@inject NavigationManager Navigation
+
+<div class="royalty-shell">
+    <header class="royalty-toolbar">
+        <div class="royalty-toolbar-inner">
+            <button type="button" class="royalty-icon-button" aria-label="Открыть меню" @onclick="ToggleSidenav">☰</button>
+            <span class="royalty-toolbar-title">Бухгалтерские отчёты</span>
+            <span class="royalty-spacer"></span>
+            @if (employee is not null)
+            {
+                <div class="royalty-profile">
+                    <div class="royalty-profile-name">@employee.GetFullName()</div>
+                    <div class="royalty-profile-login">@employee.AdLogin</div>
+                </div>
+            }
+            <a class="royalty-logout" href="/account/logout" data-enhance-nav="false">Выйти</a>
+        </div>
+    </header>
+
+    @if (sidenavOpen)
+    {
+        <div class="royalty-sidenav-backdrop" @onclick="CloseSidenav"></div>
+        <aside class="royalty-sidenav">
+            <div class="royalty-sidenav-title">Меню</div>
+            <nav class="royalty-sidenav-nav">
+                @foreach (var item in Menu)
+                {
+                    <NavLink href="@item.Href" class="royalty-sidenav-link" Match="NavLinkMatch.All" @onclick="CloseSidenav">
+                        @item.Title
+                    </NavLink>
+                }
+            </nav>
+        </aside>
+    }
+
+    <nav class="royalty-section-nav" aria-label="Разделы">
+        <div class="royalty-section-nav-inner">
+            @foreach (var item in Menu)
+            {
+                <NavLink href="@item.Href" class="royalty-section-link" Match="NavLinkMatch.All">@item.Title</NavLink>
+            }
+        </div>
+    </nav>
+
+    <div class="royalty-content">
+        @Body
+    </div>
+</div>
+
+@code {
+    private bool sidenavOpen;
+    private Employee? employee;
+    private IReadOnlyList<MenuLink> Menu => Auth.GetEmployeeMainMenu()
+        .Select(item => new MenuLink(item.Key, item.Value))
+        .ToList();
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            employee = Auth.IsSigned() ? Auth.GetEmployee() : null;
+        }
+        catch (InvalidOperationException)
+        {
+            employee = null;
+        }
+    }
+
+    private void ToggleSidenav() => sidenavOpen = !sidenavOpen;
+    private void CloseSidenav() => sidenavOpen = false;
+}

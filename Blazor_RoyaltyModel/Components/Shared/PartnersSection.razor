@@ -1,0 +1,16 @@
+@inject IContentService Content
+
+<section class="band">
+    <div class="wrap section">
+        <h2 class="blue-title">Сертифицированные партнёры по запчастям и материалам</h2>
+        <div class="partner-row">
+            @foreach (var partner in Content.GetPartners())
+            {
+                <article>
+                    <strong>@partner.Title</strong>
+                    <span>@partner.Caption</span>
+                </article>
+            }
+        </div>
+    </div>
+</section>

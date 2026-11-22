@@ -1,0 +1,9 @@
+@page "/access-denied"
+@attribute [AllowAnonymous]
+
+<PageTitle>Нет доступа</PageTitle>
+<PageHeading Title="Нет доступа" Lead="Учётная запись не получила доступ к приложению." />
+
+<section class="wrap section">
+    <a class="btn-pill" href="/account/login?returnUrl=/" data-enhance-nav="false">Зайти через Keycloak</a>
+</section>

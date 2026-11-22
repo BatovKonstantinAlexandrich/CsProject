@@ -1,0 +1,171 @@
+@page "/royalty/main-settings"
+@inject RoyaltyWorkspaceService Royalty
+
+<PageTitle>Основные параметры</PageTitle>
+
+<section class="royalty-card">
+    <h1>Основные параметры</h1>
+    <p class="lead">Задайте основные коэффициенты роялти для выбранных подразделений.</p>
+    <div class="royalty-card-divider"></div>
+
+    <div class="royalty-controls">
+        <div class="royalty-field">
+            <label>Тип предприятия</label>
+            <select @bind="enterpriseType" @bind:after="ReloadAsync">
+                <option value="external">Внешняя франшиза</option>
+                <option value="internal">Внутренняя франшиза</option>
+            </select>
+        </div>
+        <div class="royalty-field">
+            <label>Год</label>
+            <select @bind="year" @bind:after="ReloadAsync">
+                @foreach (var item in RoyaltyWorkspaceService.Years)
+                {
+                    <option value="@item">@item</option>
+                }
+            </select>
+        </div>
+        <div class="royalty-field">
+            <label>Месяц</label>
+            <select @bind="month" @bind:after="ReloadAsync">
+                @foreach (var item in RoyaltyWorkspaceService.Months)
+                {
+                    <option value="@item">@RoyaltyWorkspaceService.MonthLabel(item)</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <label class="apply-to-all">
+        <input type="checkbox" @bind="applyToAll" /> Установить параметры для всех
+    </label>
+
+    @if (applyToAll)
+    {
+        <div class="royalty-controls">
+            <div class="royalty-field">
+                <label>Расчётный коэффициент</label>
+                <input type="number" step="any" @bind="allKoefCalc" />
+            </div>
+            <div class="royalty-field">
+                <label>Коэффициент роялти</label>
+                <input type="number" step="any" @bind="allKoefRoyalty" />
+            </div>
+            <div class="royalty-field">
+                <label>НДС</label>
+                <input type="number" step="any" @bind="allNds" />
+            </div>
+        </div>
+    }
+    else
+    {
+        <h3 class="access-items-title">Доступные подразделения</h3>
+        <p class="access-items-subtitle">Список подразделений, доступных для настройки параметров.</p>
+        <input class="royalty-search royalty-field" placeholder="Подразделение, владелец или ИНН" @bind="search" @bind:event="oninput" />
+
+        @if (loading)
+        {
+            <p class="access-items-empty">Загрузка…</p>
+        }
+        else if (!Visible.Any())
+        {
+            <p class="access-items-empty">@(rows.Count == 0 ? "Нет данных для отображения." : "Ничего не найдено.")</p>
+        }
+        else
+        {
+            <div class="access-items-table-wrap">
+                <table class="access-items-table">
+                    <thead>
+                        <tr>
+                            <th>Подразделение</th>
+                            <th>Тип</th>
+                            <th>Владелец</th>
+                            <th>ИНН владельца</th>
+                            <th>Расчётный коэффициент</th>
+                            <th>Коэффициент роялти</th>
+                            <th>НДС</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Visible)
+                        {
+                            <tr class="@(row.Selected ? "selected" : null)" @onclick="() => row.Selected = true">
+                                <td>@row.Name</td>
+                                <td>@row.TypeShop</td>
+                                <td>@row.OwnerName</td>
+                                <td>@row.OwnerInn</td>
+                                <td><input class="turnover-input" type="number" step="any" @bind="row.KoefCalc" @bind:event="oninput" /></td>
+                                <td><input class="turnover-input" type="number" step="any" @bind="row.KoefRoyalty" @bind:event="oninput" /></td>
+                                <td><input class="turnover-input" type="number" step="any" @bind="row.NdsSt" @bind:event="oninput" /></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    }
+
+    <div class="royalty-actions">
+        <button class="royalty-btn" type="button" disabled="@busy" @onclick="SaveAsync">Сохранить</button>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(status))
+    {
+        <p class="status-text">@status</p>
+    }
+</section>
+
+@code {
+    private string enterpriseType = "external";
+    private int year;
+    private int month;
+    private string search = "";
+    private bool applyToAll;
+    private decimal allKoefCalc = 3;
+    private decimal allKoefRoyalty = 3;
+    private decimal allNds = 22;
+    private bool loading = true;
+    private bool busy;
+    private string status = "";
+    private List<RoyaltyDepartmentRow> rows = [];
+
+    private IEnumerable<RoyaltyDepartmentRow> Visible =>
+        rows.Where(item => string.IsNullOrWhiteSpace(search)
+            || $"{item.Name} {item.OwnerName} {item.OwnerInn}".Contains(search, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        (year, month) = RoyaltyWorkspaceService.DefaultPeriod();
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        loading = true;
+        rows = await Royalty.GetDepartmentRowsAsync(enterpriseType == "internal", year, month);
+        loading = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        busy = true;
+        IEnumerable<RoyaltyDepartmentRow> target = applyToAll
+            ? rows.Select(item =>
+            {
+                item.KoefCalc = allKoefCalc;
+                item.KoefRoyalty = allKoefRoyalty;
+                item.NdsSt = allNds;
+                return item;
+            })
+            : rows.Where(item => item.Selected).DefaultIfEmpty().Where(item => item is not null)!;
+
+        if (applyToAll)
+            target = rows;
+        else if (!rows.Any(item => item.Selected))
+            target = rows;
+
+        await Royalty.SaveMainSettingsAsync(target, year, month);
+        status = "Параметры сохранены.";
+        await ReloadAsync();
+        busy = false;
+    }
+}

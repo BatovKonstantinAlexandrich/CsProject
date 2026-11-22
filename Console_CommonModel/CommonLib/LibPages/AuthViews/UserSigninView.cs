@@ -48,6 +48,7 @@ namespace Console_CommonModel.CommonLib.LibPages.AuthViews
 
         public UserSigninView(Action<UserContext> onsuccess)
         {
+            
             ShowLoginForm();
             this.onsuccess = onsuccess;
             this.Dock = "Fill";

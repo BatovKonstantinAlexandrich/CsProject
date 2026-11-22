@@ -523,22 +523,40 @@ public class ConsoleProgram: ProgressProgram
                 return items.ToArray()[pindex-1];
             }
             ConsoleKeyInfo key;
+            //do
+            //{
+            //    i = 1;
+            //    InputConsole.Clear();
+            //    InputConsole.Info(title);
+            //    InputConsole.WriteLine("\n"+0 + ")" + "выход");
+            //    foreach (var next in items)
+            //    {
+            //        string label = next.ToString();
+            //        Console.WriteLine(i + $"){label}");
+            //        i++;
+            //    }
+            //    key = Console.ReadKey();
+            //    Thread.Sleep(100);
+            //} while (key.KeyChar < '0' || key.KeyChar > items.Count().ToString().ToCharArray()[0]);
+            string input = null;
             do
             {
+                i = 1;
                 InputConsole.Clear();
                 InputConsole.Info(title);
-                InputConsole.WriteLine("\n"+0 + ")" + "выход");
+                InputConsole.WriteLine("\n" + 0 + ")" + "выход");
                 foreach (var next in items)
                 {
                     string label = next.ToString();
                     Console.WriteLine(i + $"){label}");
                     i++;
                 }
-                key = Console.ReadKey();
+                input = Console.ReadLine();
                 Thread.Sleep(100);
-            } while (key.KeyChar < '0' || key.KeyChar > items.Count().ToString().ToCharArray()[0]);
-            int index = int.Parse(key.KeyChar.ToString()) - 1;
+            } while (String.IsNullOrWhiteSpace(input) || !input.IsInt() || input.ToInt() < 0 || input.ToInt() > items.Count());
+            int index = input.ToInt()-1;
             args.Push(ref args, index.ToString());
+            //if (index == -1)
             if (index == -1)
             {
                 return null;

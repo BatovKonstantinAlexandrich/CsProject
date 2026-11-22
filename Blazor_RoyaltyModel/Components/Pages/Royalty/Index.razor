@@ -1,0 +1,164 @@
+@page "/royalty"
+@inject RoyaltyWorkspaceService Royalty
+
+<PageTitle>Расчёт роялти</PageTitle>
+
+<section class="royalty-card">
+    <h1>Расчёт роялти</h1>
+    <p class="lead">Необходимо задать значения параметров отчёта.</p>
+    <div class="royalty-card-divider"></div>
+
+    <div class="royalty-controls">
+        <div class="royalty-field">
+            <label>Тип предприятия</label>
+            <select @bind="enterpriseType" @bind:after="ReloadAsync">
+                <option value="external">Внешняя франшиза</option>
+                <option value="internal">Внутренняя франшиза</option>
+            </select>
+        </div>
+        <div class="royalty-field">
+            <label>Год</label>
+            <select @bind="year" @bind:after="ReloadAsync">
+                @foreach (var item in RoyaltyWorkspaceService.Years)
+                {
+                    <option value="@item">@item</option>
+                }
+            </select>
+        </div>
+        <div class="royalty-field">
+            <label>Месяц</label>
+            <select @bind="month" @bind:after="ReloadAsync">
+                @foreach (var item in RoyaltyWorkspaceService.Months)
+                {
+                    <option value="@item">@RoyaltyWorkspaceService.MonthLabel(item)</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <h3 class="access-items-title">Доступные подразделения</h3>
+    <p class="access-items-subtitle">Список подразделений, доступных для отчёта.</p>
+    <input class="royalty-search royalty-field" placeholder="Подразделение, владелец или ИНН" @bind="search" @bind:event="oninput" />
+
+    @if (loading)
+    {
+        <p class="access-items-empty">Загрузка…</p>
+    }
+    else if (!Visible.Any())
+    {
+        <p class="access-items-empty">@(rows.Count == 0 ? "Нет данных для отображения." : "Ничего не найдено.")</p>
+    }
+    else
+    {
+        <div class="access-items-table-wrap">
+            <table class="access-items-table">
+                <thead>
+                    <tr>
+                        <th>Подразделение</th>
+                        <th>Тип</th>
+                        <th>Владелец</th>
+                        <th>Закупки EA</th>
+                        <th>Закупки сторонние</th>
+                        <th>Соотношение закупок</th>
+                        <th>З/Н</th>
+                        <th>Претензии</th>
+                        <th>Соотношение претензий</th>
+                        <th>Услуги</th>
+                        <th>З/ч</th>
+                        @if (IsInternal)
+                        {
+                            <th>Согласовано</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Visible)
+                    {
+                        <tr class="@(row.Selected ? "selected" : null)" @onclick="() => Select(row)">
+                            <td>@row.Name</td>
+                            <td>@row.TypeShop</td>
+                            <td>@row.OwnerName</td>
+                            <td>@row.PurchaseEa.ToString("N2")</td>
+                            <td>@row.PurchaseOther.ToString("N2")</td>
+                            <td>@row.PurchaseRatio.ToString("N2")</td>
+                            <td>@row.CountRun</td>
+                            <td>@row.Pretensions</td>
+                            <td>@row.PretensionRatio.ToString("N2")</td>
+                            <td>
+                                <input class="turnover-input" type="number" step="any" @bind="row.ServiceTurnover" @bind:event="oninput" disabled="@(!IsInternal)" />
+                            </td>
+                            <td>
+                                <input class="turnover-input" type="number" step="any" @bind="row.PartsTurnover" @bind:event="oninput" disabled="@(!IsInternal)" />
+                            </td>
+                            @if (IsInternal)
+                            {
+                                <td><input type="checkbox" @bind="row.Approved" /></td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <div class="royalty-actions">
+        <button class="royalty-btn" type="button" disabled="@(!rows.Any(item => item.Selected) || busy)" @onclick="ExportAsync">Формировать отчёт</button>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(status))
+    {
+        <p class="status-text">@status</p>
+    }
+</section>
+
+@code {
+    private string enterpriseType = "external";
+    private int year;
+    private int month;
+    private string search = "";
+    private bool loading = true;
+    private bool busy;
+    private string status = "";
+    private List<RoyaltyDepartmentRow> rows = [];
+
+    private bool IsInternal => enterpriseType == "internal";
+    private IEnumerable<RoyaltyDepartmentRow> Visible =>
+        rows.Where(item => Matches(item, search));
+
+    protected override async Task OnInitializedAsync()
+    {
+        (year, month) = RoyaltyWorkspaceService.DefaultPeriod();
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        loading = true;
+        status = "";
+        rows = await Royalty.GetDepartmentRowsAsync(IsInternal, year, month);
+        loading = false;
+    }
+
+    private void Select(RoyaltyDepartmentRow row) => row.Selected = !row.Selected;
+
+    private async Task ExportAsync()
+    {
+        busy = true;
+        var messages = new List<string>();
+        foreach (var row in rows.Where(item => item.Selected))
+        {
+            messages.Add($"{row.Name}: {Royalty.Calculate(row.DepartmentId, year, month, row.ServiceTurnover, row.PartsTurnover)}");
+        }
+
+        status = string.Join(" · ", messages);
+        await ReloadAsync();
+        busy = false;
+    }
+
+    private static bool Matches(RoyaltyDepartmentRow row, string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            return true;
+        var text = $"{row.Name} {row.OwnerName} {row.OwnerInn}";
+        return text.Contains(query, StringComparison.OrdinalIgnoreCase);
+    }
+}

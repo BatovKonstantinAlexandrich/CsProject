@@ -655,7 +655,7 @@ namespace WinFormsApp
         /// <summary><see cref="SetDroppable"/> и обновление layoutTree на каждом уровне, в т.ч. после загрузки XML.</summary>
         public void ActivateDragAndDrop()
         {
-            var root = GetLayoutRootPane();
+            /*var root = GetLayoutRootPane();
             if (root is null)
                 return;
             ForEachLayoutView(root, pn =>
@@ -663,7 +663,8 @@ namespace WinFormsApp
                 if (pn is AppViewBase av)
                     SetupDesigner(av);
             });
-            RefreshLayoutDropAllow();
+            RefreshLayoutDropAllow();*/
+            Set(this.CreateButton("123"));
         }
 
         public void RefreshLayoutDropAllow()

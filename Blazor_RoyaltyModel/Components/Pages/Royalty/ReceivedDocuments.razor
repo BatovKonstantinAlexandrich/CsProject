@@ -1,0 +1,99 @@
+@page "/royalty/received-documents"
+@inject RoyaltyWorkspaceService Royalty
+
+<PageTitle>Полученные документы</PageTitle>
+
+<section class="royalty-card">
+    <h1>Полученные документы</h1>
+    <p class="lead">Счета и справки за выбранный период.</p>
+    <div class="royalty-card-divider"></div>
+
+    <div class="royalty-controls">
+        <div class="royalty-field">
+            <label>Год</label>
+            <select @bind="year" @bind:after="ReloadAsync">
+                @foreach (var item in RoyaltyWorkspaceService.Years)
+                {
+                    <option value="@item">@item</option>
+                }
+            </select>
+        </div>
+        <div class="royalty-field">
+            <label>Месяц</label>
+            <select @bind="month" @bind:after="ReloadAsync">
+                @foreach (var item in RoyaltyWorkspaceService.Months)
+                {
+                    <option value="@item">@RoyaltyWorkspaceService.MonthLabel(item)</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <input class="royalty-search royalty-field" placeholder="Подразделение, владелец или ИНН" @bind="search" @bind:event="oninput" />
+
+    @if (loading)
+    {
+        <p class="access-items-empty">Загрузка…</p>
+    }
+    else if (!Visible.Any())
+    {
+        <p class="access-items-empty">@(rows.Count == 0 ? "Нет полученных документов за выбранный период." : "Ничего не найдено.")</p>
+    }
+    else
+    {
+        <div class="access-items-table-wrap">
+            <table class="access-items-table">
+                <thead>
+                    <tr>
+                        <th>Подразделение</th>
+                        <th>Тип</th>
+                        <th>Владелец</th>
+                        <th>Месяц</th>
+                        <th>Год</th>
+                        <th>Счёт</th>
+                        <th>Справка</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Visible)
+                    {
+                        <tr>
+                            <td>@row.Name</td>
+                            <td>@row.TypeShop</td>
+                            <td>@row.OwnerName</td>
+                            <td>@RoyaltyWorkspaceService.MonthLabel(row.Month)</td>
+                            <td>@row.Year</td>
+                            <td><button class="royalty-btn-outline royalty-btn" type="button" disabled>Скачать</button></td>
+                            <td><button class="royalty-btn-outline royalty-btn" type="button" disabled>Скачать</button></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+@code {
+    private int year;
+    private int month;
+    private string search = "";
+    private bool loading = true;
+    private List<ReceivedDocumentRow> rows = [];
+
+    private IEnumerable<ReceivedDocumentRow> Visible =>
+        rows.Where(item => string.IsNullOrWhiteSpace(search)
+            || $"{item.Name} {item.OwnerName}".Contains(search, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        (year, month) = RoyaltyWorkspaceService.DefaultPeriod();
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        loading = true;
+        rows = await Royalty.GetReceivedDocumentsAsync(year, month);
+        loading = false;
+    }
+}

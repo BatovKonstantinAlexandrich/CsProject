@@ -67,10 +67,10 @@ public class HubBase: Hub
                     new() {
                         { "ResponseText",new ActionResponse()
                         {
-                            ActionStatus = "Success",
+                            ActionSuccess = true,
                             RequestMessage = RequestMessage,
                             SerialKey = RequestMessage.SerialKey,
-                            MessageObject = resp
+                            ActionResult = resp
                         }.ToJson()}
                     }, r => { }, e => { }).Wait();
                  
@@ -80,10 +80,10 @@ public class HubBase: Hub
                     new() {
                         { "ResponseText",new ActionResponse()
                         {
-                            ActionStatus = "Failed",
+                            ActionSuccess = false,
                             RequestMessage = RequestMessage,
                             SerialKey = RequestMessage.SerialKey,
-                           StatusText = err
+                           ErrorMessage = err
                         }.ToJson()}
                     }, r => { }, e => { }).Wait();               
             }
@@ -116,13 +116,13 @@ public class HubBase: Hub
     {
         Console.WriteLine("Обрабатываем результат выполнения удалённой процедуры: \n" + actionResponse.RequestMessage.ActionName);
         var handler = connectionsContext.Take(actionResponse.SerialKey);
-        if (actionResponse.ActionStatus == "Success")
+        if (actionResponse.ActionSuccess == true)
         {
-            handler.OnSuccess(actionResponse.MessageObject);
+            handler.OnSuccess(actionResponse.ActionResult);
         }
         else
         {
-            handler.OnError(actionResponse.StatusText);
+            handler.OnError(actionResponse.ErrorMessage);
         }
     }
 
@@ -140,20 +140,20 @@ public class HubBase: Hub
             }
             return new ActionResponse()
             {
-                ActionStatus = "Success",
+                ActionSuccess = true,
                 SerialKey = RequestMessage.SerialKey,
                 RequestMessage = RequestMessage,
-                MessageObject = InvokationResult
+                ActionResult = InvokationResult
             };
         }
         catch (Exception ex)
         {
             return new ActionResponse()
             {
-                ActionStatus = "Failed",
+                ActionSuccess = false,
                 SerialKey = RequestMessage.SerialKey,
                 RequestMessage = RequestMessage,
-                StatusText = ex.Message
+                ErrorMessage = ex.Message
             };
         }
     }

@@ -9,6 +9,6 @@ public class ActionResponse
 
     public static ActionResponse FromJson(string responseText)
     {
-        throw new NotImplementedException();
+        return responseText.FromJson<ActionResponse>();
     }
 }

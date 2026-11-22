@@ -468,7 +468,7 @@ public static List<MyMessageProperty> ParseActions(Type type)
   
 
     public static IEnumerable<Type> GetClassTypes(this Assembly assembly) =>
-        assembly.GetTypes().Where(t => t.IsClass == true && IsEng(("" + t.Name[0])));
+        assembly.GetTypes().Where(t => t.IsClass == true && t.Name is not null && t.Name.Length>1 && IsEng(("" + t.Name[0])));
 
     /// <summary>
     /// Вывод документации по сборе

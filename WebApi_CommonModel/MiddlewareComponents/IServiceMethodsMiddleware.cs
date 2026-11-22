@@ -6,7 +6,7 @@ namespace WebApi_CommonModel.MiddlewareComponents
     {
         public Action AddDbContext<TService>() where TService : DbContextBase;
         public Action RemoveDbContext<TService>() where TService : DbContextBase;
-        public HubActionModel AddServiceMethod<TService>(string methodName) where TService : class;
-        public HubActionModel RemoveServiceMethod<TService>(string methodName) where TService : class;
+        public ActionsModel AddServiceMethod<TService>(string methodName) where TService : class;
+        public ActionsModel RemoveServiceMethod<TService>(string methodName) where TService : class;
     }
 }

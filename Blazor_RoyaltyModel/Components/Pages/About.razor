@@ -1,0 +1,9 @@
+@page "/about"
+@inject IContentService Content
+
+<PageTitle>О нас</PageTitle>
+<PageHeading Title="О нас" />
+<section class="wrap section prose">
+    <p>@Content.GetAbout()</p>
+</section>
+<AdvantagesSection />

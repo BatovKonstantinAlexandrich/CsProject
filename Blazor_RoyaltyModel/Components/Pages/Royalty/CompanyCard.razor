@@ -1,0 +1,138 @@
+@page "/royalty/company-card"
+@inject RoyaltyWorkspaceService Royalty
+
+<PageTitle>Карточка предприятий</PageTitle>
+
+<section>
+    <div class="royalty-field" style="max-width:320px;margin-bottom:8px">
+        <label>Тип предприятия</label>
+        <select @bind="enterpriseType" @bind:after="ReloadAsync">
+            <option value="external">Внешняя франшиза</option>
+            <option value="internal">Внутренняя франшиза</option>
+        </select>
+    </div>
+    <input class="royalty-search royalty-field" placeholder="Название, подразделение или ИНН" @bind="search" @bind:event="oninput" />
+
+    @if (loading)
+    {
+        <p class="access-items-empty">Загрузка карточек предприятий</p>
+    }
+    else if (!Visible.Any())
+    {
+        <p class="access-items-empty">@(cards.Count == 0 ? "Нет предприятий выбранного типа." : "Ничего не найдено.")</p>
+    }
+    else
+    {
+        <div class="company-grid">
+            @foreach (var card in Visible)
+            {
+                <article class="enterprise-card">
+                    <button class="enterprise-card__edit" type="button" @onclick="() => edit = Clone(card)">Изменить</button>
+                    <div>
+                        <h2 class="enterprise-card__title">@card.Title</h2>
+                        <p class="enterprise-card__subtitle">@card.Subtitle</p>
+                    </div>
+                    <div class="enterprise-card__chips">
+                        <span class="chip @(card.IsInternal ? "chip--fpl" : "chip--fp")">@(card.IsInternal ? "ФПЛ" : "ФП")</span>
+                        <span class="chip chip--org">@(card.IsIp ? "ИП" : "ЮЛ")</span>
+                        <span class="chip @(card.Filled ? "chip--ok" : "chip--empty")">@(card.Filled ? "Заполнено" : "Не заполнено")</span>
+                    </div>
+                    <dl class="enterprise-card__details">
+                        <div><dt>ИНН:</dt><dd>@(string.IsNullOrWhiteSpace(card.Inn) ? "—" : card.Inn)</dd></div>
+                        <div>
+                            <dt>Договор:</dt>
+                            <dd>
+                                @if (!string.IsNullOrWhiteSpace(card.ContractNumber))
+                                {
+                                    <text>№ @card.ContractNumber</text>
+                                }
+                                @if (card.ContractDate is { } date)
+                                {
+                                    <text> от @date.ToString("dd.MM.yyyy")</text>
+                                }
+                                @if (string.IsNullOrWhiteSpace(card.ContractNumber) && card.ContractDate is null)
+                                {
+                                    <text>—</text>
+                                }
+                            </dd>
+                        </div>
+                    </dl>
+                    @if (card.BaseRate is { } rate)
+                    {
+                        <p class="enterprise-card__rate">Базовая ставка: @rate.ToString("0.##")%</p>
+                    }
+                </article>
+            }
+        </div>
+    }
+</section>
+
+@if (edit is not null)
+{
+    <div class="royalty-dialog-backdrop" @onclick="Close">
+        <div class="royalty-dialog" @onclick:stopPropagation="true">
+            <h2>@edit.Title</h2>
+            <div class="royalty-field"><label>Владелец</label><input @bind="edit.OwnerName" /></div>
+            <div class="royalty-field"><label>Подразделение</label><input @bind="edit.Subtitle" /></div>
+            <div class="royalty-field"><label>ИНН</label><input @bind="edit.Inn" /></div>
+            <div class="royalty-field"><label>ОГРН</label><input @bind="edit.Ogrn" /></div>
+            <div class="royalty-field"><label>Адрес</label><input @bind="edit.Address" /></div>
+            <div class="royalty-field"><label>Договор</label><input @bind="edit.ContractNumber" /></div>
+            <div class="royalty-actions">
+                <button class="royalty-btn-outline royalty-btn" type="button" @onclick="Close">Отмена</button>
+                <button class="royalty-btn" type="button" @onclick="SaveAsync">Сохранить</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private string enterpriseType = "external";
+    private string search = "";
+    private bool loading = true;
+    private List<CompanyCardView> cards = [];
+    private CompanyCardView? edit;
+
+    private IEnumerable<CompanyCardView> Visible =>
+        cards.Where(item => string.IsNullOrWhiteSpace(search)
+            || $"{item.Title} {item.Subtitle} {item.Inn} {item.ContractNumber}".Contains(search, StringComparison.OrdinalIgnoreCase));
+
+    protected override Task OnInitializedAsync() => ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        loading = true;
+        cards = await Royalty.GetCompanyCardsAsync(enterpriseType == "internal");
+        loading = false;
+    }
+
+    private static CompanyCardView Clone(CompanyCardView card) => new()
+    {
+        DepartmentId = card.DepartmentId,
+        OrganizationId = card.OrganizationId,
+        Title = card.Title,
+        Subtitle = card.Subtitle,
+        Inn = card.Inn,
+        Kpp = card.Kpp,
+        Ogrn = card.Ogrn,
+        Address = card.Address,
+        OwnerName = card.OwnerName,
+        ContractNumber = card.ContractNumber,
+        ContractDate = card.ContractDate,
+        IsInternal = card.IsInternal,
+        IsIp = card.IsIp,
+        Filled = card.Filled,
+        BaseRate = card.BaseRate
+    };
+
+    private void Close() => edit = null;
+
+    private async Task SaveAsync()
+    {
+        if (edit is null)
+            return;
+        await Royalty.SaveCompanyCardAsync(edit);
+        edit = null;
+        await ReloadAsync();
+    }
+}

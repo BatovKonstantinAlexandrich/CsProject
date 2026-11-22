@@ -1,0 +1,66 @@
+@page "/services/{Slug}"
+@inject ICatalogService Catalog
+
+<PageTitle>@(item?.Title ?? "Услуга")</PageTitle>
+
+@if (item is null)
+{
+    <PageHeading Title="Услуга не найдена" Lead="Проверьте ссылку или откройте полный каталог." />
+    <div class="wrap section"><a class="btn-pill" href="/services">Все услуги</a></div>
+}
+else
+{
+    <PageHeading Title="@item.Title" Lead="@category?.Title" />
+    <section class="wrap detail-grid">
+        <div class="prose">
+            <p>@item.Summary</p>
+            <p>Работа оценивается отдельно от запчастей. Перед ремонтом приёмщик согласует состав заказа и срок выдачи.</p>
+            @if (related.Count > 0)
+            {
+                <h2>Рядом в этой категории</h2>
+                <ul>
+                    @foreach (var other in related)
+                    {
+                        <li><a class="text-link" href="@($"/services/{other.Slug}")">@other.Title</a></li>
+                    }
+                </ul>
+            }
+        </div>
+        <aside class="price-card">
+            <span>Работа от</span>
+            <strong>@PriceText.Format(item.PriceFrom)</strong>
+            <span>@PriceText.Hours(item.Minutes)</span>
+            <a class="btn-pill" href="#booking">Записаться</a>
+            <a class="btn-pill ghost" href="@($"/calculate?service={item.Slug}")">Рассчитать</a>
+        </aside>
+    </section>
+    <section class="wrap section" id="booking">
+        <BookingForm ServiceSlug="@item.Slug" />
+    </section>
+    <section class="wrap section">
+        <h2>Где проведут</h2>
+        <CoverageTable />
+    </section>
+    @if (category is not null)
+    {
+        <section class="wrap section">
+            <h2>Прайс категории</h2>
+            <PriceTable CategorySlug="@category.Slug" HideTools="true" Caption="@category.Title" />
+        </section>
+    }
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    private ServiceItem? item;
+    private ServiceCategory? category;
+    private IReadOnlyList<ServiceItem> related = [];
+
+    protected override void OnParametersSet()
+    {
+        item = Catalog.Find(Slug);
+        category = item is null ? null : Catalog.FindCategoryByItem(item.Slug);
+        related = category?.Items.Where(i => i.Slug != Slug).Take(4).ToList() ?? [];
+    }
+}

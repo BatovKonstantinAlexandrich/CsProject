@@ -8,13 +8,15 @@ using GrpcPort.Client.Crypto;
 using GrpcPort.Contracts;
 using GrpcPort.Contracts.Actions;
 using Newtonsoft.Json;
+using Azure;
+using WebApi_CommonModel.BackgroungHosting;
 
 namespace GrpcPort.Client.Actions;
 
 /// <summary>
 /// gRPC-аналог ActionsConsumer: auth + stream + Publish/Request/Response.
 /// </summary>
-public sealed class GrpcActionsClient : IAsyncDisposable
+public sealed class GrpcActionsClient : IAsyncDisposable, IWorker
 {
     private readonly string _serverAddress;
     private readonly string _clientId;
@@ -91,6 +93,9 @@ public sealed class GrpcActionsClient : IAsyncDisposable
         await SendRawAsync(StreamActionTypes.Ping, "hello", encrypt: false, cancellationToken);
     }
 
+ 
+
+
     public async Task PublishAsync(
         MethodModel method,
         Func<Dictionary<string, object>, object?> execute,
@@ -144,7 +149,7 @@ public sealed class GrpcActionsClient : IAsyncDisposable
         string action,
         Dictionary<string, object> args,
         TimeSpan? timeout = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default )
     {
         var tcs = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -152,9 +157,12 @@ public sealed class GrpcActionsClient : IAsyncDisposable
         cts.Token.Register(() => tcs.TrySetException(new TimeoutException($"Timeout: {action}")));
 
         _ = RequestAsync(
-            action,
+            action,  
             args,
-            result => tcs.TrySetResult(result),
+            result => {
+                var data = tcs.TrySetResult(result);
+                this.Debug(data);
+            },
             error => tcs.TrySetException(new InvalidOperationException(error)),
             cancellationToken);
 
@@ -163,6 +171,24 @@ public sealed class GrpcActionsClient : IAsyncDisposable
 
     public IReadOnlyCollection<MethodModel> GetKnownRemoteActions() =>
         _remoteActions.Values.ToArray();
+
+    public async Task GetActionsList(Action<List<string>> onsuccess)
+    {
+        await this.RequestAsync("ListActions", new(), response =>
+        {
+            try
+            {
+                var actions = response.ToJson().FromJson<List<MethodModel>>();
+                onsuccess(actions.Select(a => a.Name).ToList());
+            }
+            catch(Exception ex)
+            {
+                this.Error(ex);
+            }
+        }, error=> { }, default);
+        ;
+    }
+
 
     public async ValueTask DisposeAsync()
     {
@@ -192,8 +218,16 @@ public sealed class GrpcActionsClient : IAsyncDisposable
         {
             await foreach (var msg in _call!.ResponseStream.ReadAllAsync(cancellationToken))
             {
-                var text = DecodePayload(msg);
-                await HandleIncomingAsync(msg.Type, text);
+                try
+                {
+                    this.Debug(msg);
+                    var text = DecodePayload(msg);
+                    await HandleIncomingAsync(msg.Type, text);
+                }
+                catch(Exception ex)
+                {
+                    this.Error(msg);
+                }
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -366,4 +400,17 @@ public sealed class GrpcActionsClient : IAsyncDisposable
 
     private static string Truncate(string value) =>
         value.Length <= 120 ? value : value[..120] + "...";
+
+    public async Task RunWorkerAsync(CancellationToken stoppingToken)
+    {
+        this.ConnectAsync(stoppingToken).Wait();
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            if(!IsConnected)
+            {
+                this.ConnectAsync(stoppingToken).Wait();
+            }
+            Task.Delay(250);
+        }
+    }
 }

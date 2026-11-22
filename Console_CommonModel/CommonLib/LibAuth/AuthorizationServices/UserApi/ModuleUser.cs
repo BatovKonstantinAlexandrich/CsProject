@@ -6,13 +6,16 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
+using pickpoint_delivery_service;
+
 public class ModuleUser
 {
-    public static void ConfigureServices(IConfiguration configure, IServiceCollection services)
+    public static void ConfigureServices<TDeliveryDbContext>(IConfiguration configure, IServiceCollection services)
+        where TDeliveryDbContext : DeliveryDbContext
     {
         //InputConsole.GetLogger<ModuleUser>().LogInformation("Регистрация служб ... ");
         //services.AddHttpContextAccessor();
-        services.AddDbContext<DeliveryDbContext>(ConfigureDbContext);
+        services.AddDbContext<TDeliveryDbContext>(ConfigureDbContext);
         if (services.Any(descr => descr.ServiceType == typeof(AuthorizationOptions)) == false)
             services.AddSingleton<AuthorizationOptions>();
         //if (services.Any(descr => descr.ServiceType == typeof(MailRuService2)) == false)
@@ -22,9 +25,9 @@ public class ModuleUser
         
         
         
-        services.AddScoped<SigninUser<DeliveryDbContext>>();
-        services.AddScoped<SignupUser<DeliveryDbContext>>();
-        services.AddScoped<UserGroupsService<DeliveryDbContext>>();
+        services.AddScoped<SigninUser<TDeliveryDbContext>>();
+        services.AddScoped<SignupUser<TDeliveryDbContext>>();
+        services.AddScoped<UserGroupsService<TDeliveryDbContext>>();
         //services.AddScoped<IJSInvoke, JSInvoke>();
         //services.AddScoped<ILocalStorage, LocalStorage>();
         services.AddScoped<ITokenProvider, MemoryTokenProvider>();
@@ -32,10 +35,10 @@ public class ModuleUser
         services.AddSingleton(typeof(AuthorizationCollection<UserContext>),sp=>sp.GetRequiredService<AuthorizationUsers>());
         services.AddSingleton(typeof(APIActiveCollection<UserContext>),sp=>sp.GetRequiredService<AuthorizationUsers>());
         services.AddSingleton(typeof(APIUsers),sp=>sp.GetRequiredService<AuthorizationUsers>());
-        services.AddScoped<GroupingUser<DeliveryDbContext>>();
+        services.AddScoped<GroupingUser<TDeliveryDbContext>>();
         //services.AddScoped<SignupUser>();
         //services.AddScoped<SigninUser<DeliveryDbContext>>();
-        services.AddScoped<ManageUser<DeliveryDbContext>>();
+        services.AddScoped<ManageUser<TDeliveryDbContext>>();
         //InputConsole.GetLogger<ModuleUser>().LogInformation("Регистрация служб ... Успешно завершена");
 
     }

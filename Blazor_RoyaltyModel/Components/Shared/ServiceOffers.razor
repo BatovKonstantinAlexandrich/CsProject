@@ -1,0 +1,26 @@
+@inject ICatalogService Catalog
+
+<section class="wrap section">
+    <div class="section-head">
+        <h2>@Title</h2>
+        <a class="text-link" href="/services">Все услуги</a>
+    </div>
+    <div class="offer-grid">
+        @foreach (var item in items)
+        {
+            <a class="offer-card" href="@($"/services/{item.Slug}")">
+                <EaIcon Name="@item.Icon" />
+                <span>@item.Title</span>
+                <small>от @PriceText.Format(item.PriceFrom)</small>
+            </a>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Услуги по ремонту и сервису";
+
+    private IReadOnlyList<ServiceItem> items = [];
+
+    protected override void OnInitialized() => items = Catalog.GetPopular();
+}

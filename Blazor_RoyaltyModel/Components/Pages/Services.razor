@@ -1,0 +1,31 @@
+@page "/services"
+@inject ICatalogService Catalog
+
+<PageTitle>Услуги автосервиса</PageTitle>
+<PageHeading Title="Услуги по ремонту и сервису" Lead="Прайс работ общий для всех страниц каталога: категория, длительность и стоимость от." />
+
+<section class="wrap section">
+    <PriceTable CategorySlug="@Category" />
+</section>
+
+@foreach (var category in Catalog.GetCategories())
+{
+    <section class="wrap section @(category.Slug == Category ? "picked" : null)" id="@category.Slug">
+        <h2>@category.Title</h2>
+        <div class="offer-grid">
+            @foreach (var item in category.Items)
+            {
+                <a class="offer-card" href="@($"/services/{item.Slug}")">
+                    <EaIcon Name="@item.Icon" />
+                    <span>@item.Title</span>
+                    <small>от @PriceText.Format(item.PriceFrom)</small>
+                </a>
+            }
+        </div>
+    </section>
+}
+
+@code {
+    [SupplyParameterFromQuery]
+    public string? Category { get; set; }
+}

@@ -1,0 +1,13 @@
+<div class="field">
+    <label>
+        <span>@Label</span>
+        @ChildContent
+    </label>
+    @Validation
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = "";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? Validation { get; set; }
+}

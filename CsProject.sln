@@ -9,8 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApi_CommonModel", "WebAp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console_ActionsClient", "Consoles_ActionsClient\Console_ActionsClient.csproj", "{482A5CE1-778D-4498-B759-ED45BBDAA887}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blazor_FormsModel", "Blazor_FormsModel\Blazor_FormsModel.csproj", "{14020E38-94D2-45F1-B368-06E464318103}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console_InputControl", "Console_InputControl\Console_InputControl.csproj", "{33F40883-3B8A-4B5C-A716-5F719AA2AD38}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blazor_SiteModel", "Blazor_SiteModel\Blazor_SiteModel.csproj", "{D512EA66-EC61-4682-891E-A3A8361241CD}"
@@ -65,14 +63,6 @@ Global
 		{482A5CE1-778D-4498-B759-ED45BBDAA887}.Release|Any CPU.Build.0 = Release|Any CPU
 		{482A5CE1-778D-4498-B759-ED45BBDAA887}.Release|x64.ActiveCfg = Release|Any CPU
 		{482A5CE1-778D-4498-B759-ED45BBDAA887}.Release|x64.Build.0 = Release|Any CPU
-		{14020E38-94D2-45F1-B368-06E464318103}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{14020E38-94D2-45F1-B368-06E464318103}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{14020E38-94D2-45F1-B368-06E464318103}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{14020E38-94D2-45F1-B368-06E464318103}.Debug|x64.Build.0 = Debug|Any CPU
-		{14020E38-94D2-45F1-B368-06E464318103}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{14020E38-94D2-45F1-B368-06E464318103}.Release|Any CPU.Build.0 = Release|Any CPU
-		{14020E38-94D2-45F1-B368-06E464318103}.Release|x64.ActiveCfg = Release|Any CPU
-		{14020E38-94D2-45F1-B368-06E464318103}.Release|x64.Build.0 = Release|Any CPU
 		{33F40883-3B8A-4B5C-A716-5F719AA2AD38}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{33F40883-3B8A-4B5C-A716-5F719AA2AD38}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{33F40883-3B8A-4B5C-A716-5F719AA2AD38}.Debug|x64.ActiveCfg = Debug|Any CPU

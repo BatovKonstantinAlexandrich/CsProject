@@ -7,26 +7,66 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using System.Web.Http;
 
-public class NavMenuService 
+public class NavMenuService: INavMenuService
 {
-    private readonly ILogger<NavMenuService> _logger;
-    public NavMenuService(ILogger<NavMenuService> logger)
+    private readonly ILogger<NavMenuService> _logger
+        = LoggerFactory.Create(options => options.AddConsole()).CreateLogger<NavMenuService>();
+    public Assembly _assembly;
+
+    public NavMenuService(   )
     {
-        _logger = logger;
+       // this._assembly = assembly;         
       
     }
 
 
-    public List<MenuView> GetPageLinks(string uri)
+    public List<ILink> GetPageLinks(string uri)
     {
         _logger.LogInformation(uri);
-        var navList = new List<MenuView>();
-        string ns = "BlazorHospital.Client.Pages";
+        var navList = new List<ILink>();
+        string ns = "Blazor_MyApp.Components.Pages";
         var ids =
             uri.ReplaceAll("/", ".").ReplaceAll("\\", ".").Split(".").ToList().Where(s => string.IsNullOrEmpty(s) == false).Select(s => s.ToCapitalStyle()).ToList();
         ids.ForEach(id => ns += "." + id);
         _logger.LogInformation($"Namespace: {ns}");
-        foreach (var page in Assembly.GetCallingAssembly().GetPages(ns))
+
+        var types = _assembly.GetClassTypes().Where(t => t.Namespace is not null && t.Namespace.Contains("Pages"));
+        this.Debug(types.Count());
+        var pagesTypes = types;// Assembly.GetExecutingAssembly().GetPages(ns);
+        if (pagesTypes.Count() == 0)
+            throw new Exception("Не найдены компоненты страниц");
+        foreach (var page in pagesTypes)
+        {
+            var attrs = page.GetAttributes();
+            if (attrs.ContainsKey("RouteAttribute"))
+            {
+                navList.Add(new LinkViewModel() { Icon = "home", Label = page.GetTypeName(), Href = attrs["RouteAttribute"] });
+            }
+            if (attrs.ContainsKey("Route"))
+            {
+                navList.Add(new LinkViewModel() { Icon = "home", Label = page.GetTypeName(), Href = attrs["Route"] });
+            }
+
+        };
+        return navList.ToList();
+    }
+
+    public List<MenuView> GetPageMenu(string uri)
+    {
+        _logger.LogInformation(uri);
+        var navList = new List<MenuView>();
+        string ns = "Blazor_MyApp.Components.Pages";
+        var ids =
+            uri.ReplaceAll("/", ".").ReplaceAll("\\", ".").Split(".").ToList().Where(s => string.IsNullOrEmpty(s) == false).Select(s => s.ToCapitalStyle()).ToList();
+        ids.ForEach(id => ns += "." + id);
+        _logger.LogInformation($"Namespace: {ns}");
+
+        var types = _assembly.GetClassTypes().Where(t => t.Namespace is not null && t.Namespace.Contains("Pages"));
+        this.Debug(types.Count());
+        var pagesTypes = types;// Assembly.GetExecutingAssembly().GetPages(ns);
+        if (pagesTypes.Count() == 0)
+            throw new Exception("Не найдены компоненты страниц");
+        foreach (var page in pagesTypes)
         {
             var attrs = page.GetAttributes();
             if (attrs.ContainsKey("RouteAttribute"))
@@ -54,15 +94,15 @@ public class NavMenuService
     }
 
       
-    public MenuView[] GetPageLinks()
+    public List<ILink> GetPageLinks()
     {
         return typeof(CommonProgram).Assembly
             .GetTypes()
             .Where(t => "BaseComponent".ToType().IsAssignableFrom(t) && t.IsClass && !t.IsAbstract)
             .SelectMany(t => t.GetCustomAttributes<RouteAttribute>(inherit: true)
-                .Select(route => new MenuView
+                .Select(route => (ILink)new LinkViewModel()
                 {
-                    Text = t.Name,
+                    Label = t.Name,
                     Href = NormalizeRoute(route.Template),
                     Icon = "home"
                 }))
@@ -70,7 +110,7 @@ public class NavMenuService
             .GroupBy(link => link.Href, StringComparer.OrdinalIgnoreCase)
             .Select(g => g.First())
             .OrderBy(link => link.Href, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
+            .ToList();
     }
 
     private static string NormalizeRoute(string template)
@@ -80,17 +120,61 @@ public class NavMenuService
         var route = template.Trim();
         return route.StartsWith("/") ? route : "/" + route;
     }
+
+    public Task OnNavTreeInit(object evt)
+    {
+        throw new NotImplementedException();
+    }
+
+    
+
+    public List<MenuView> GetMenuViews()
+    {
+        throw new NotImplementedException();
+    }
+
+    public void Update(MenuView link)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void Remove(MenuView link)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void CreateMenuView()
+    {
+        throw new NotImplementedException();
+    }
+
+ 
+
+    List<ILink> INavMenuService.GetMenuViews()
+    {
+        throw new NotImplementedException();
+    }
+
+    public void Update(ILink link)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void Remove(ILink link)
+    {
+        throw new NotImplementedException();
+    }
 }
 
 public interface INavMenuService
 {
 
     public Task OnNavTreeInit(object evt);
-    public List<MenuView> GetPageLinks(string uri);
-    public List<MenuView> GetPageLinks();
-    public List<MenuView> GetMenuViews();
-    public void Update(MenuView link);
-    public void Remove(MenuView link);
+    public List<ILink> GetPageLinks(string uri);
+    public List<ILink> GetPageLinks();
+    public List<ILink> GetMenuViews();
+    public void Update(ILink link);
+    public void Remove(ILink link);
     public void CreateMenuView();
 }
 
@@ -98,10 +182,32 @@ public interface INavMenuService
 
 public static class NavMenuServiceExtension
 {
-    public static IServiceCollection AddNavMenu(this IServiceCollection services)
+    public static IServiceCollection AddNavMenu(this IServiceCollection services, Assembly assembly)
     {
         //services.AddOpenIcons();
-        services.AddScoped<NavMenuService>();
+        services.AddScoped<INavMenuService, NavMenuService>(sp => {
+            var ns = new NavMenuService();
+            ns._assembly = assembly;
+            return ns;
+        });
         return services;
     }
 }
+
+
+public class NavMenuServiceTest: TestingService<NavMenuService>
+{
+    public NavMenuServiceTest(IServiceProvider sp) : base(sp)
+    {
+    }
+
+    public override bool OnServiceTest(NavMenuService service)
+    {
+        service._assembly = "BlazorHostingProgram".ToType().Assembly;
+        this.Debug(service.GetPageLinks("/"));
+
+        return true;
+    }
+}
+
+

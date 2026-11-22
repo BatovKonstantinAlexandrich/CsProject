@@ -3,15 +3,23 @@
     "Name": "Новый профиль",
     "Projects": [
       {
-        "Path": "Blazor_MyApp\\Blazor_MyApp.csproj",
-        "Action": "Start"
-      },
-      {
         "Path": "GrpcPort.Server\\GrpcPort.Server.csproj",
         "Action": "Start"
       },
       {
         "Path": "Hub_ActionsModel\\Hub_ActionsModel.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "WebApi_CommonModel\\WebApi_CommonModel.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "Blazor_CommonModel\\Blazor_CommonModel.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "GrpcPort.Client\\GrpcPort.Client.csproj",
         "Action": "Start"
       }
     ]

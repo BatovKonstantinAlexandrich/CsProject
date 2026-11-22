@@ -18,7 +18,7 @@ namespace WebApi_CommonModel.MiddlewareComponents
         /// <summary>
         /// Операции по наименованиям внешних сервисов
         /// </summary>
-        public ConcurrentDictionary<string, HubActionModel> Actions = new ConcurrentDictionary<string, HubActionModel>();
+        public ConcurrentDictionary<string, ActionsModel> Actions = new ConcurrentDictionary<string, ActionsModel>();
         private IServiceScopeFactory _serviceProvider;
 
         [NotInput]
@@ -44,10 +44,10 @@ namespace WebApi_CommonModel.MiddlewareComponents
         private Action InitSelfControl()
         {
             var ctrl = this;
-            Dictionary<string, HubActionModel> res = new();
+            Dictionary<string, ActionsModel> res = new();
 
             var methodNames = typeof(IServiceMethodsMiddleware).GetMethods().Where(m => !m.IsStatic && m.DeclaringType!=typeof(Object)).Select(m => m.Name).ToList();
-            Actions[$"/api/services/"] = new HubActionModel($"/api/services/", (args, onsuccess, onerror) =>
+            Actions[$"/api/services/"] = new ActionsModel($"/api/services/", (args, onsuccess, onerror) =>
             {
                 try
                 {
@@ -67,7 +67,7 @@ namespace WebApi_CommonModel.MiddlewareComponents
                     var classModel = classDbContext.CreateClassModel(ctrl.GetType());
                     var methodModel = classModel.Methods.FirstOrDefault(m => m.Name == methodName);
                     var actionUrl = $"/api/actions/{methodName}";
-                    Actions[actionUrl] = res[methodName] = new HubActionModel(actionUrl, (args, onsuccess, onerror) =>
+                    Actions[actionUrl] = res[methodName] = new ActionsModel(actionUrl, (args, onsuccess, onerror) =>
                     {
                         //DoAction(actionUrl, args);
                         try
@@ -110,11 +110,11 @@ namespace WebApi_CommonModel.MiddlewareComponents
 
 
         [Label("Построить сборки")]
-        public Dictionary<string, HubActionModel> LoadWithBuilder<TActionDbContext, TActionBuilder>()
+        public Dictionary<string, ActionsModel> LoadWithBuilder<TActionDbContext, TActionBuilder>()
             where TActionDbContext : ActionDbContext
             where TActionBuilder : class, IActionBuilder
         {
-            Dictionary<string, HubActionModel> res = new();
+            Dictionary<string, ActionsModel> res = new();
             using (TActionDbContext db = typeof(TActionDbContext).New<TActionDbContext>())
             {
                 this.InfoTime("Формирование операция сервиса", () =>
@@ -122,7 +122,7 @@ namespace WebApi_CommonModel.MiddlewareComponents
                     var builder = typeof(TActionBuilder).New<TActionBuilder>();
                     foreach (var serviceModel in db.ActionServiceModels.ToList())
                     {
-                        res.AddRange<string, HubActionModel>(builder.Build(serviceModel));
+                        res.AddRange<string, ActionsModel>(builder.Build(serviceModel));
                     }
                 });
             }
@@ -131,10 +131,10 @@ namespace WebApi_CommonModel.MiddlewareComponents
 
         [Label("Построить сборки")]
         [NotInput]
-        public Dictionary<string, HubActionModel> LoadWithBuilders<TActionDbContext>(params IActionBuilder[] builders)
+        public Dictionary<string, ActionsModel> LoadWithBuilders<TActionDbContext>(params IActionBuilder[] builders)
             where TActionDbContext : ActionDbContext
         {
-            Dictionary<string, HubActionModel> res = new();
+            Dictionary<string, ActionsModel> res = new();
             using (TActionDbContext db = typeof(TActionDbContext).New<TActionDbContext>())
             {
                 this.Info(db.GetTypeName());
@@ -144,7 +144,7 @@ namespace WebApi_CommonModel.MiddlewareComponents
                     {
                         foreach (var serviceModel in db.ActionServiceModels.ToList())
                         {
-                            res.AddRange<string, HubActionModel>(builder.Build(serviceModel));
+                            res.AddRange<string, ActionsModel>(builder.Build(serviceModel));
                         }
                     }
                 });
@@ -154,10 +154,10 @@ namespace WebApi_CommonModel.MiddlewareComponents
 
         [Label("Собрать элементы управления")]
         [NotInput]
-        public Dictionary<string, HubActionModel> LoadControls<TActionDbContext>(params IControlService<ActionServiceModel>[] controls)
+        public Dictionary<string, ActionsModel> LoadControls<TActionDbContext>(params IControlService<ActionServiceModel>[] controls)
             where TActionDbContext : ActionDbContext
         {
-            Dictionary<string, HubActionModel> res = new();
+            Dictionary<string, ActionsModel> res = new();
             using (TActionDbContext db = typeof(TActionDbContext).New<TActionDbContext>())
             {
                 this.InfoTime("Формирование операция сервиса", () =>
@@ -201,7 +201,7 @@ namespace WebApi_CommonModel.MiddlewareComponents
         /// Регистрация операции
         /// </summary>
         [Label("Добавить метод")]
-        public void AddAction(string Name, HubActionModel model)
+        public void AddAction(string Name, ActionsModel model)
         {
             System.Console.WriteLine($"Выполняем процедуру {nameof(AddAction)}");
             this.Actions[Name] = model;
@@ -212,10 +212,10 @@ namespace WebApi_CommonModel.MiddlewareComponents
         /// Выполнение операции
         /// </summary>
         [NotInput()]
-        public object DoAction(string Action, Dictionary<string, string> args)
+        public object DoAction(string Action, Dictionary<string, object> args)
         {
             System.Console.WriteLine($"Выполняем процедуру {Action}");
-            HubActionModel todo = null;
+            ActionsModel todo = null;
             if (Actions.ContainsKey(Action) == false)
             {
                 foreach (var kv in Actions)
@@ -250,9 +250,9 @@ namespace WebApi_CommonModel.MiddlewareComponents
 
         [NotInput]
         [Description("Сравнивает url с заданным маршрутом")]
-        public (bool, Dictionary<string, string>) IsRoute(string url, string route)
+        public (bool, Dictionary<string, object>) IsRoute(string url, string route)
         {
-            Dictionary<string, string> values = new();
+            Dictionary<string, object> values = new();
             try
             {
                 List<string> expressions = new List<string>();
@@ -302,11 +302,21 @@ namespace WebApi_CommonModel.MiddlewareComponents
         [NotInput]
         public async Task InvokeAsync(HttpContext context, RequestDelegate next)
         {
-            var request = await GetRequestModel(context);
-            var response = await HandleHttpRequest(request);
-            await WriteResponse(context, response);
+            var location = context.Request.Path.ToString();
+            if(location.StartsWith("/api"))
 
-            await next.Invoke(context);
+            {
+                var request = await GetRequestModel(context);
+                var response = await HandleHttpRequest(request);
+                await WriteResponse(context, response);
+            }
+            else
+            {
+                await next.Invoke(context);
+            }
+           
+
+            
         }
 
         [NotInput]
@@ -345,7 +355,7 @@ namespace WebApi_CommonModel.MiddlewareComponents
                 SerialKey = serial,
                 AccessToken = Token,
                 ActionName = request.url,
-                MessageObject = request.args
+                MessageObject = request.args?.Select(kv => new KeyValuePair<string, object>()).ToDictionary<string, object>()
             };
 
             try
@@ -359,20 +369,47 @@ namespace WebApi_CommonModel.MiddlewareComponents
                 return new ActionResponse()
                 {
                     RequestMessage = model,
-                    MessageObject = data,
-                    Success = success,
+                    ActionResult = data,
+                    ActionSuccess = success,
                     SerialKey = serial
                 };
+            }
+            catch (HttpRequestException ex)
+            {
+                if(ex._status == 404)
+                {
+                    this.Error(ex.Message);
+                    return new ActionResponse()
+                    {
+                        ErrorMessage = _error,
+                        RequestMessage = model,
+                        ActionResult = result,
+                        ActionSuccess = false,
+                        SerialKey = serial
+                    };
+                }
+                else
+                {
+                    this.Error(ex.Message);
+                    return new ActionResponse()
+                    {
+                        ErrorMessage = _error,
+                        RequestMessage = model,
+                        ActionResult = result,
+                        ActionSuccess = false,
+                        SerialKey = serial
+                    };
+                }
             }
             catch (Exception ex)
             {
                 this.Error(ex.Message);
                 return new ActionResponse()
                 {
-                    StatusText = _error,
+                    ErrorMessage = _error,
                     RequestMessage = model,
-                    MessageObject = result,
-                    Success = false,
+                    ActionResult = result,
+                    ActionSuccess = false,
                     SerialKey = serial
                 };
             }
@@ -454,7 +491,7 @@ namespace WebApi_CommonModel.MiddlewareComponents
 
         [NotInput]
         [Label("Зарегистрировать сервис")]
-        public Dictionary<string, HubActionModel> AddServiceMethods<TService>()
+        public Dictionary<string, ActionsModel> AddServiceMethods<TService>()
             where TService : class
         {
             return AddServiceMethods(typeof(TService));
@@ -462,14 +499,14 @@ namespace WebApi_CommonModel.MiddlewareComponents
 
         [NotInput]
         [Label("Зарегистрировать сервис")]
-        public Dictionary<string, HubActionModel> AddServiceMethods(Type tservice)
+        public Dictionary<string, ActionsModel> AddServiceMethods(Type tservice)
         {
             try
             {
-                Dictionary<string, HubActionModel> res = new();
+                Dictionary<string, ActionsModel> res = new();
                 var names = tservice.GetOwnMethodNotStaticNames();
                 this.Debug(names);
-                Actions[$"/api/services/{tservice.GetTypeName()}/actions"] = new HubActionModel($"/api/services/{tservice.GetTypeName()}/actions", (args, onsuccess, onerror) => {
+                Actions[$"/api/services/{tservice.GetTypeName()}/actions"] = new ActionsModel($"/api/services/{tservice.GetTypeName()}/actions", (args, onsuccess, onerror) => {
                     onsuccess(new List<string>(names));
                 });
                 foreach (var name in names)
@@ -487,12 +524,12 @@ namespace WebApi_CommonModel.MiddlewareComponents
 
         [NotInput]
         [Label("Зарегистрировать сервис")]
-        public Dictionary<string, HubActionModel> AddServiceMethodsAll(Type tservice)
+        public Dictionary<string, ActionsModel> AddServiceMethodsAll(Type tservice)
         {
-            Dictionary<string, HubActionModel> res = new();
-            var names = tservice.GetMethods().Where(m => m.Name.StartsWith("add_") == false && m.Name.StartsWith("remove_") == false && m.Name.StartsWith("get_") == false && m.Name.StartsWith("set_") == false && !m.IsStatic && m.DeclaringType != typeof(Object)).Select(m => m.Name).ToList();
+            Dictionary<string, ActionsModel> res = new();
+            var names = tservice.GetOwnMethodNotStaticNames();
             this.Debug(names);
-            Actions[$"/api/services/{tservice.GetTypeName()}/actions"] = new HubActionModel($"/api/services/{tservice.GetTypeName()}/actions", (args, onsuccess, onerror) => {
+            Actions[$"/api/services/{tservice.GetTypeName()}/actions"] = new ActionsModel($"/api/services/{tservice.GetTypeName()}/actions", (args, onsuccess, onerror) => {
                 onsuccess(new List<string>(names));
             });
             foreach (var name in names)
@@ -509,7 +546,7 @@ namespace WebApi_CommonModel.MiddlewareComponents
 
         [NotInput]
         [Label("Зарегистрировать метод сервис")]
-        public HubActionModel AddServiceMethod<TService>(string methodName)
+        public ActionsModel AddServiceMethod<TService>(string methodName)
             where TService : class
         {
             return AddServiceMethod(typeof(TService), methodName);
@@ -517,25 +554,31 @@ namespace WebApi_CommonModel.MiddlewareComponents
 
         [NotInput]
         [Label("Зарегистрировать метод сервис")]
-        public HubActionModel AddServiceMethod(Type tservice, string methodName)
+        public ActionsModel AddServiceMethod(Type tservice, string methodName)
         { 
             using (var classDbContext = new ClassDbContext())
             {
+                
+                
+                
+                
+                
                 var classModel = classDbContext.CreateClassModel(tservice);
                 
                 
-                //classModel = classDbContext.CreateClassModel(tservice.GetMethodByName(methodName).DeclaringType);
+                
                 var methodModel = classModel.Methods.FirstOrDefault(m => m.Name == methodName);
                 if(methodModel is null)
                 {
-                    methodModel = classDbContext.Methods.FirstOrDefault(m => m.Name == methodName);
+                    var parentCLass = classDbContext.GetClassModel((int)classModel.ParentId);                    
+                    methodModel = parentCLass.Methods.FirstOrDefault(m => m.Name == methodName);
                 }
                 if(methodModel is null)
                 {
-                    throw new ArgumentNullException($"Не удалось найти метод {methodName}");
+                    throw new ArgumentNullException($"Не удалось найти метод {methodName} в типе {tservice.GetTypeName()} => {tservice.GetMethods().Select(m=>m.Name).ToJson()} ");                    
                 }
                 var actionUrl = $"/api/services/{tservice.GetTypeName()}/actions/{methodName}";
-                return new HubActionModel(actionUrl, (args, onsuccess, onerror) =>
+                return new ActionsModel(actionUrl, (args, onsuccess, onerror) =>
                 {
                     //DoAction(actionUrl, args);
                     try
@@ -576,7 +619,7 @@ namespace WebApi_CommonModel.MiddlewareComponents
 
         [NotInput]
         [Label("Удалить сервис")]
-        public HubActionModel RemoveServiceMethod<TService>(string methodName)
+        public ActionsModel RemoveServiceMethod<TService>(string methodName)
              where TService : class
         {
             var actionUrl = $"/api/services/{typeof(TService).GetTypeName()}/actions/{methodName}";

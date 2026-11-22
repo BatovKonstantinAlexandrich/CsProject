@@ -1,0 +1,18 @@
+@inject IContentService Content
+
+<section class="wrap section">
+    <div class="section-head">
+        <h2>Свежие статьи в блоге</h2>
+        <a class="text-link" href="/blog">Перейти в блог</a>
+    </div>
+    <div class="blog-grid">
+        @foreach (var article in Content.GetArticles())
+        {
+            <a class="blog-card" href="@($"/blog/{article.Slug}")">
+                <span>@article.Category</span>
+                <h3>@article.Title</h3>
+                <p>@article.Excerpt</p>
+            </a>
+        }
+    </div>
+</section>

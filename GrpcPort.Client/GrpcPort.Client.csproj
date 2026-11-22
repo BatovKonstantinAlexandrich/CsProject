@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Consoles_ActionsClient\Console_ActionsClient.csproj" />
+	  <ProjectReference Include="..\Consoles_ActionsClient\Console_ActionsClient.csproj" />
     <ProjectReference Include="..\GrpcPort.Contracts\GrpcPort.Contracts.csproj" />
     <ProjectReference Include="..\GrpcPort.SamplePlugin\GrpcPort.SamplePlugin.csproj">
       <ReferenceOutputAssembly>true</ReferenceOutputAssembly>

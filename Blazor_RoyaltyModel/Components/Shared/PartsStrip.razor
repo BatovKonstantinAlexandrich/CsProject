@@ -1,0 +1,20 @@
+@inject ICatalogService Catalog
+
+<section class="wrap section">
+    <div class="parts-row">
+        @foreach (var part in Catalog.GetParts())
+        {
+            <a class="part-card @(part.Slug == "zapchasti" ? "highlight" : null)" href="@($"/parts/{part.Slug}")">
+                @if (part.Slug == "zapchasti")
+                {
+                    <strong>@part.Title</strong>
+                }
+                else
+                {
+                    <EaIcon Name="@part.Icon" />
+                    <span>@part.Title</span>
+                }
+            </a>
+        }
+    </div>
+</section>

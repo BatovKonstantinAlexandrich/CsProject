@@ -507,6 +507,7 @@ namespace pickpoint_delivery_service
         }
         public static void ConfigureDeliveryServices(IServiceCollection services, IConfiguration config)
         {
+            
             services.AddDbContext<DeliveryDbContext>(OnConfiguringDbContext);
             services.AddScoped<DbContextUser>(sp => sp.Get<DeliveryDbContext>());
 

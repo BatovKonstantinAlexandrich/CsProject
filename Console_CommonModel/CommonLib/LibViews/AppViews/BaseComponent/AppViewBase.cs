@@ -253,7 +253,7 @@ namespace Console_CommonModel.CommonLib.LibViews.AppViews.BaseComponent
         /// </summary>
         [Newtonsoft.Json.JsonIgnore]
         [System.Text.Json.Serialization.JsonIgnore]
-        public virtual IControlBase control { get => Get<IControlBase>(nameof(control)); set=> Set<IControlBase>(nameof(control),value); }
+        public virtual IControlBase control { get; set; }
 
         [OnChange(nameof(control))]
         public void OnControlChanged()
